@@ -9,11 +9,11 @@
 
 | Phase | US | Tâches | Complétées |
 |-------|-----|--------|------------|
-| Phase 1 - MVP Minimal | 13 | 65 | 10 |
+| Phase 1 - MVP Minimal | 13 | 65 | 22 |
 | Phase 2 - MVP Complet | 18 | 68 | 0 |
 | Phase 3 - Production Ready | 16 | 58 | 0 |
 | Phase 4 - Polish & Sécurité | 9 | 27 | 0 |
-| **Total** | **56** | **218** | **10** |
+| **Total** | **56** | **218** | **22** |
 
 ---
 
@@ -33,19 +33,19 @@
 - [x] Tester `nx serve api` et `nx serve web`
 - [x] Tester `nx run-many -t build`
 
-#### US-002: Configuration base de données Supabase [3/5]
-- [ ] Créer projet Supabase (dashboard)
-- [ ] Récupérer DATABASE_URL et configurer `.env`
-- [ ] Installer `drizzle-orm` et `drizzle-kit` dans packages/db
-- [ ] Créer `packages/db/src/client.ts` avec connexion pooler
-- [ ] Créer schema `child_profiles` (id, firstName, age, gender, preferences, timestamps)
-- [ ] Créer schema `stories` (id, childProfileId, initialPrompt, enrichedConcept, script, finalAudioUrl, duration, status, timestamps)
-- [ ] Créer schema `story_segments` (id, storyId, order, type, content, timing, audioUrl, audioDuration)
-- [ ] Créer schema `audio_assets` (id, type, promptHash, url, duration, usageCount, cost)
-- [ ] Créer schema `generation_jobs` (id, storyId, status, currentStep, progress, result, error, timestamps)
-- [ ] Définir les relations Drizzle entre tables
-- [ ] Créer `drizzle.config.ts`
-- [ ] Tester `nx run db:generate` et `nx run db:push`
+#### US-002: Configuration base de données Supabase [3/5] ✅
+- [x] Créer projet Supabase (dashboard)
+- [x] Récupérer DATABASE_URL et configurer `.env`
+- [x] Installer `drizzle-orm` et `drizzle-kit` dans packages/db
+- [x] Créer `packages/db/src/client.ts` avec connexion pooler
+- [x] Créer schema `child_profiles` (id, firstName, age, gender, preferences, timestamps)
+- [x] Créer schema `stories` (id, childProfileId, initialPrompt, enrichedConcept, script, finalAudioUrl, duration, status, timestamps)
+- [x] Créer schema `story_segments` (id, storyId, order, type, content, timing, audioUrl, audioDuration)
+- [x] Créer schema `audio_assets` (id, type, promptHash, url, duration, usageCount, cost)
+- [x] Créer schema `generation_jobs` (id, storyId, status, currentStep, progress, result, error, timestamps)
+- [x] Définir les relations Drizzle entre tables
+- [x] Créer `drizzle.config.ts`
+- [x] Tester `nx run db:generate` et `nx run db:push`
 
 #### US-003: Configuration Supabase Storage [2/5]
 - [ ] Créer bucket `audio` sur Supabase Storage (dashboard)

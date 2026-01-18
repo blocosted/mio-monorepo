@@ -50,19 +50,19 @@ Permettre aux enfants (et leurs parents) de créer des histoires audio personnal
 
 ---
 
-### US-002: Configuration base de données Supabase [Complexité: 3/5]
+### US-002: Configuration base de données Supabase [Complexité: 3/5] ✅
 
 **En tant que** développeur,
 **Je veux** une base de données PostgreSQL configurée sur Supabase avec Drizzle ORM,
 **Afin de** persister les données de l'application.
 
 **Critères d'acceptation:**
-- [ ] Projet Supabase créé et configuré
-- [ ] Client Drizzle connecté à Supabase PostgreSQL
-- [ ] Schema initial avec tables: `child_profiles`, `stories`, `story_segments`, `audio_assets`, `generation_jobs`
-- [ ] Relations Drizzle définies entre les tables
-- [ ] Commandes `db:generate` et `db:push` fonctionnelles
-- [ ] Row Level Security préparée (désactivée pour MVP)
+- [x] Projet Supabase créé et configuré
+- [x] Client Drizzle connecté à Supabase PostgreSQL
+- [x] Schema initial avec tables: `child_profiles`, `stories`, `story_segments`, `audio_assets`, `generation_jobs`
+- [x] Relations Drizzle définies entre les tables
+- [x] Commandes `db:generate` et `db:push` fonctionnelles
+- [x] Row Level Security préparée (désactivée pour MVP)
 
 ---
 

@@ -1,6 +1,7 @@
 import type { VocabularyLevel } from '../models';
 
-// Re-export error constants and HTTP types
+// Re-export all constants
+export * from './environment.constants';
 export * from './error.constants';
 export * from './http.types';
 
@@ -116,6 +117,3 @@ export const CACHE_TTL = {
     jobProgress: 60 * 60, // 1 hour
     enrichedConcept: 24 * 60 * 60, // 24 hours
 } as const;
-
-export * from './error.constants';
-export * from './http.types';
