@@ -33,6 +33,12 @@ export enum ErrorCodes {
   NotFound = 'NotFound',
   ValidationError = 'ValidationError',
   UnauthorizedError = 'UnauthorizedError',
+
+  // storage
+  StorageUploadFailed = 'StorageUploadFailed',
+  StorageDownloadFailed = 'StorageDownloadFailed',
+  StorageDeleteFailed = 'StorageDeleteFailed',
+  StorageFileNotFound = 'StorageFileNotFound',
 }
 
 const errorDefinitions: {
@@ -55,6 +61,25 @@ const errorDefinitions: {
   [ErrorCodes.UnauthorizedError]: {
     message: 'Unauthorized',
     statusCode: HttpStatusCode.Unauthorized
+  },
+
+  // storage
+  [ErrorCodes.StorageUploadFailed]: {
+    code: 'STORAGE_UPLOAD_FAILED',
+    message: 'Failed to upload file to storage'
+  },
+  [ErrorCodes.StorageDownloadFailed]: {
+    code: 'STORAGE_DOWNLOAD_FAILED',
+    message: 'Failed to download file from storage'
+  },
+  [ErrorCodes.StorageDeleteFailed]: {
+    code: 'STORAGE_DELETE_FAILED',
+    message: 'Failed to delete file from storage'
+  },
+  [ErrorCodes.StorageFileNotFound]: {
+    code: 'STORAGE_FILE_NOT_FOUND',
+    message: 'File not found in storage',
+    statusCode: HttpStatusCode.NotFound
   },
 } as const;
 

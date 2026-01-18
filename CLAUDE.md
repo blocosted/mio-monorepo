@@ -1,8 +1,8 @@
-# CLAUDE.md — StoryForge Kids
+# CLAUDE.md — Mio
 
 ## 🎯 Vue d'ensemble du projet
 
-**StoryForge Kids** est une application de génération d'histoires audio personnalisées pour enfants. L'app permet aux parents de créer un profil pour leur enfant, puis de générer des histoires audio complètes (narration, dialogues, musique, effets sonores) à partir d'une simple idée.
+**Mio** est une application de génération d'histoires audio personnalisées pour enfants. L'app permet aux parents de créer un profil pour leur enfant, puis de générer des histoires audio complètes (narration, dialogues, musique, effets sonores) à partir d'une simple idée.
 
 **Document de référence** : Consulter `story-app-prd.md` pour les spécifications détaillées.
 

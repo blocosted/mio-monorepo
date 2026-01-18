@@ -7,7 +7,7 @@ export default function HomePage() {
                 {/* Hero */}
                 <div className="space-y-4">
                     <h1 className="text-5xl font-bold bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent">
-                        StoryForge Kids
+                        Mio
                     </h1>
                     <p className="text-xl text-gray-600 dark:text-gray-300">
                         Create magical, personalized audio stories for your children

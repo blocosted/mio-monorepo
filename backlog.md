@@ -1,4 +1,4 @@
-# Backlog — StoryForge Kids
+# Backlog — Mio
 
 **Dernière mise à jour:** Janvier 2026
 **Légende:** `[ ]` Todo | `[~]` In Progress | `[x]` Done | `[!]` Blocked
@@ -9,11 +9,11 @@
 
 | Phase | US | Tâches | Complétées |
 |-------|-----|--------|------------|
-| Phase 1 - MVP Minimal | 13 | 65 | 22 |
+| Phase 1 - MVP Minimal | 13 | 65 | 30 |
 | Phase 2 - MVP Complet | 18 | 68 | 0 |
 | Phase 3 - Production Ready | 16 | 58 | 0 |
 | Phase 4 - Polish & Sécurité | 9 | 27 | 0 |
-| **Total** | **56** | **218** | **22** |
+| **Total** | **56** | **218** | **30** |
 
 ---
 
@@ -47,15 +47,15 @@
 - [x] Créer `drizzle.config.ts`
 - [x] Tester `nx run db:generate` et `nx run db:push`
 
-#### US-003: Configuration Supabase Storage [2/5]
-- [ ] Créer bucket `audio` sur Supabase Storage (dashboard)
-- [ ] Configurer policies publiques pour lecture
-- [ ] Créer `apps/api/src/services/storage/supabase.ts`
-- [ ] Implémenter `upload(file: Buffer, path: string): Promise<string>`
-- [ ] Implémenter `download(path: string): Promise<Buffer>`
-- [ ] Implémenter `delete(path: string): Promise<void>`
-- [ ] Implémenter `getPublicUrl(path: string): string`
-- [ ] Tester upload/download d'un fichier audio
+#### US-003: Configuration Supabase Storage [2/5] ✅
+- [x] Créer bucket `audio` sur Supabase Storage (via CLI `s3:setup`)
+- [x] Configurer policies publiques pour lecture
+- [x] Créer `apps/api/src/services/storage/storage.service.ts`
+- [x] Implémenter `upload(file: Buffer, path: string): Promise<string>`
+- [x] Implémenter `download(path: string): Promise<Buffer>`
+- [x] Implémenter `delete(path: string): Promise<void>`
+- [x] Implémenter `getPublicUrl(path: string): string`
+- [x] Tester upload/download d'un fichier audio
 
 #### US-004: Configuration Upstash Redis [2/5]
 - [ ] Créer instance Upstash Redis (dashboard)
@@ -699,3 +699,4 @@ _Aucun blocker identifié pour le moment_
 | Date | Modification |
 |------|--------------|
 | Janvier 2026 | Création initiale du backlog |
+| 19 Janvier 2026 | US-003 complétée - Supabase Storage + Inversify DI |

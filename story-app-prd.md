@@ -1,4 +1,4 @@
-# PRD — StoryForge Kids
+# PRD — Mio
 ## Application de Génération d'Histoires Audio pour Enfants
 
 **Version:** 1.0.0  
@@ -2478,8 +2478,8 @@ ffmpeg -i input.wav -filter_complex "
 ```json
 // public/manifest.json
 {
-  "name": "StoryForge Kids",
-  "short_name": "StoryForge",
+  "name": "Mio",
+  "short_name": "Mio",
   "description": "Crée des histoires audio magiques",
   "start_url": "/",
   "display": "standalone",

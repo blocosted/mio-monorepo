@@ -3,18 +3,18 @@ import './globals.css';
 
 export const metadata: Metadata = {
     title: {
-        default: 'StoryForge Kids',
-        template: '%s | StoryForge Kids',
+        default: 'Mio',
+        template: '%s | Mio',
     },
     description:
         'Create personalized audio stories for your children with AI-powered storytelling',
-    keywords: ['stories', 'children', 'audio', 'personalized', 'AI', 'kids'],
-    authors: [{ name: 'StoryForge Kids' }],
+    keywords: ['stories', 'children', 'audio', 'personalized', 'AI', 'kids', 'mio'],
+    authors: [{ name: 'Mio' }],
     manifest: '/manifest.json',
     appleWebApp: {
         capable: true,
         statusBarStyle: 'default',
-        title: 'StoryForge Kids',
+        title: 'Mio',
     },
 };
 

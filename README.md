@@ -1,4 +1,4 @@
-# StoryForge Kids (mio)
+# Mio
 
 Application de génération d'histoires audio personnalisées pour enfants.
 
@@ -55,6 +55,16 @@ bun run db:generate
 bun run db:migrate
 ```
 
+### Storage Setup
+
+Create the required storage buckets:
+
+```bash
+bun run s3:setup
+```
+
+This creates all buckets defined in `packages/scripts/src/s3/config.ts`.
+
 ### Development
 
 ```bash
@@ -82,6 +92,10 @@ bun run dev:web
 | `bun run db:push` | Push schema to database |
 | `bun run db:migrate` | Run migrations |
 | `bun run db:studio` | Open Drizzle Studio |
+| `bun run s3:setup` | Create all storage buckets |
+| `bun run s3:list` | List existing storage buckets |
+| `bun run s3 -- show <name>` | Show bucket details |
+| `bun run s3 -- delete <name>` | Delete a bucket |
 
 ## 📁 Project Structure
 
@@ -92,6 +106,7 @@ mio/
 │   └── web/          # Next.js 15 PWA
 ├── packages/
 │   ├── db/           # Drizzle ORM schemas & migrations
+│   ├── scripts/      # CLI tools (s3, etc.)
 │   ├── shared/       # Shared types, constants, utilities
 │   └── test-utils/   # Test helpers & fixtures
 ├── CLAUDE.md         # AI assistant guidelines

@@ -13,18 +13,24 @@
     "db:generate": "nx run db:generate",
     "db:push": "nx run db:push",
     "db:migrate": "nx run db:migrate",
-    "db:studio": "nx run db:studio"
+    "db:studio": "nx run db:studio",
+    "s3": "nx run scripts:s3 --",
+    "s3:setup": "nx run scripts:s3:setup",
+    "s3:list": "nx run scripts:s3:list"
   },
   "dependencies": {
     "@elysiajs/cors": "^1.1.0",
     "@elysiajs/swagger": "^1.1.0",
+    "@supabase/supabase-js": "^2.90.1",
     "@tailwindcss/postcss": "^4.0.0",
     "drizzle-orm": "^0.38.0",
     "elysia": "^1.1.0",
+    "inversify": "^7.11.0",
     "next": "^15.1.0",
     "postgres": "^3.4.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "reflect-metadata": "^0.2.2",
     "tailwindcss": "^4.0.0"
   },
   "devDependencies": {
@@ -40,6 +46,7 @@
     "@types/node": "^20.19.9",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@types/yargs": "^17.0.35",
     "dotenv": "^17.2.3",
     "drizzle-kit": "^0.30.0",
     "eslint": "^9.8.0",
@@ -50,7 +57,8 @@
     "prettier": "~3.6.2",
     "tslib": "^2.3.0",
     "typescript": "~5.9.2",
-    "typescript-eslint": "^8.40.0"
+    "typescript-eslint": "^8.40.0",
+    "yargs": "^18.0.0"
   },
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

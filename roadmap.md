@@ -1,4 +1,4 @@
-# Roadmap — StoryForge Kids
+# Roadmap — Mio
 
 **Version:** 1.0.0
 **Dernière mise à jour:** Janvier 2026
@@ -66,17 +66,17 @@ Permettre aux enfants (et leurs parents) de créer des histoires audio personnal
 
 ---
 
-### US-003: Configuration Supabase Storage [Complexité: 2/5]
+### US-003: Configuration Supabase Storage [Complexité: 2/5] ✅
 
 **En tant que** développeur,
 **Je veux** un bucket Supabase Storage configuré pour les fichiers audio,
 **Afin de** stocker les histoires générées.
 
 **Critères d'acceptation:**
-- [ ] Bucket `audio` créé sur Supabase Storage
-- [ ] Service `storageService` implémenté avec méthodes upload/download/delete/getPublicUrl
-- [ ] URLs publiques accessibles pour la lecture audio
-- [ ] Configuration CORS pour le frontend
+- [x] Bucket `audio` créé sur Supabase Storage
+- [x] Service `storageService` implémenté avec méthodes upload/download/delete/getPublicUrl
+- [x] URLs publiques accessibles pour la lecture audio
+- [x] Configuration CORS pour le frontend
 
 ---
 

@@ -1,7 +1,7 @@
 /**
  * @mio/shared
  *
- * Shared types, constants, and errors for StoryForge Kids
+ * Shared types, constants, and errors for Mio
  *
  * Note: Service interfaces are declared in apps/api at the service level,
  * not in this shared package.
