@@ -1,15 +1,34 @@
 {
   "name": "mio",
-  "module": "index.ts",
-  "type": "module",
   "private": true,
-  "workspaces": [
-    "packages/*"
-  ],
   "scripts": {
-    "story:create": "bun packages/shared/src/cli/story-cli.ts story:create"
+    "dev": "nx run-many -t serve -p api web",
+    "dev:api": "nx serve api",
+    "dev:web": "nx serve web",
+    "build": "nx run-many -t build",
+    "test": "nx run-many -t test",
+    "lint": "nx run-many -t lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "db:generate": "nx run db:generate",
+    "db:push": "nx run db:push",
+    "db:migrate": "nx run db:migrate",
+    "db:studio": "nx run db:studio"
+  },
+  "dependencies": {
+    "@elysiajs/cors": "^1.1.0",
+    "@elysiajs/swagger": "^1.1.0",
+    "@tailwindcss/postcss": "^4.0.0",
+    "drizzle-orm": "^0.38.0",
+    "elysia": "^1.1.0",
+    "next": "^15.1.0",
+    "postgres": "^3.4.5",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tailwindcss": "^4.0.0"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.2.0",
     "@eslint/js": "^9.8.0",
     "@nx/eslint": "22.3.3",
     "@nx/eslint-plugin": "22.3.3",
@@ -18,8 +37,12 @@
     "@swc/core": "~1.5.7",
     "@swc/helpers": "~0.5.11",
     "@types/bun": "latest",
-    "@types/node": "20.19.9",
+    "@types/node": "^20.19.9",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "drizzle-kit": "^0.30.0",
     "eslint": "^9.8.0",
+    "eslint-config-next": "^15.1.0",
     "eslint-config-prettier": "^10.0.0",
     "jsonc-eslint-parser": "^2.1.0",
     "nx": "22.3.3",
@@ -28,10 +51,5 @@
     "typescript": "~5.9.2",
     "typescript-eslint": "^8.40.0"
   },
-  "peerDependencies": {
-    "typescript": "^5"
-  },
-  "dependencies": {
-    "yargs": "^18.0.0"
-  }
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

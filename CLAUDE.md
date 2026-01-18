@@ -29,7 +29,7 @@
 ### Structure du Monorepo
 
 ```
-story-forge/
+mio/
 ├── apps/
 │   ├── web/                    # Next.js PWA
 │   └── api/                    # Elysia API
@@ -76,7 +76,9 @@ Le projet suit les principes de **Clean Architecture** pour garantir maintenabil
 
 #### 📁 `packages/shared/` — Domain Layer
 
-Contient les **types**, **interfaces** et **constantes** partagés. **Aucune dépendance externe** (sauf types).
+Contient les **types**, **constantes** et **erreurs** partagés. **Aucune dépendance externe** (sauf types).
+
+> **Note:** Les interfaces de services sont déclarées dans `apps/api` au niveau des services concernés, pas dans le package shared.
 
 ```typescript
 // packages/shared/src/models/story.ts
@@ -96,24 +98,6 @@ export interface Story {
 }
 
 export type StoryStatus = 'draft' | 'generating' | 'ready' | 'failed';
-
-// Interfaces pour l'injection de dépendances
-export interface IStoryRepository {
-  findById(id: string): Promise<Story | null>;
-  create(data: CreateStoryInput): Promise<Story>;
-  update(id: string, data: Partial<Story>): Promise<Story>;
-}
-
-export interface IAudioGenerator {
-  generateSpeech(params: SpeechParams): Promise<AudioResult>;
-  generateSFX(params: SFXParams): Promise<AudioResult>;
-}
-
-export interface IStorageService {
-  upload(file: Buffer, path: string): Promise<string>;
-  download(path: string): Promise<Buffer>;
-  getPublicUrl(path: string): string;
-}
 ```
 
 ```typescript
@@ -151,7 +135,7 @@ Contient **Drizzle schemas**, **migrations** et le **client DB**. Implémente le
 // ✅ Schema Drizzle, spécifique à l'infrastructure
 
 import { pgTable, uuid, text, timestamp, jsonb, integer } from 'drizzle-orm/pg-core';
-import type { EnrichedConcept, StoryScript } from '@story-forge/shared';
+import type { EnrichedConcept, StoryScript } from '@mio/shared';
 
 export const stories = pgTable('stories', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -170,15 +154,15 @@ export const stories = pgTable('stories', {
 ```
 
 ```typescript
-// packages/db/src/repositories/storyRepository.ts
-// ✅ Implémentation du repository, isole Drizzle
+// apps/api/src/services/stories/stories.service.store.ts
+// ✅ Database access isolé avec Drizzle
 
 import { eq } from 'drizzle-orm';
-import { db } from '../client';
-import { stories } from '../schema';
-import type { IStoryRepository, Story, CreateStoryInput } from '@story-forge/shared';
+import { db } from '../../database/client';
+import { stories } from '../../database/models';
+import type { Story, CreateStoryInput } from '@mio/shared';
 
-export const storyRepository: IStoryRepository = {
+export const storyStore = {
   async findById(id: string): Promise<Story | null> {
     const result = await db.query.stories.findFirst({
       where: eq(stories.id, id),
@@ -204,107 +188,156 @@ export const storyRepository: IStoryRepository = {
 
 #### 📁 `apps/api/` — Application Layer
 
-Contient les **routes Elysia**, **use cases** et **services**. Orchestre les opérations.
+Contient les **handlers Elysia**, **services** et **database access**. Orchestre les opérations.
 
+### File Organization
+
+#### Service Structure
+```
+services/[feature]/
+├── [feature].service.ts           # Service implementation
+├── [feature].service.types.ts     # Service types and interfaces
+├── [feature].service.store.ts     # Database access (Drizzle/Redis)
+├── [feature].service.map.ts       # DB ↔ Service type mapping
+└── [feature].service.test.ts      # Service-specific tests
+```
+
+#### Handler Structure
+```
+handlers/[feature]/
+├── [feature].handlers.ts          # Elysia routes
+├── [feature].handlers.types.ts    # Validation schemas + inferred types
+├── [feature].handlers.map.ts      # Service ↔ API type mapping
+└── [feature].handlers.test.ts     # Application tests for all routes
+```
+
+#### Database Structure
+```
+database/models/
+└── [feature].models.ts            # Drizzle schema definitions
+```
+
+#### Complete API Structure
 ```
 apps/api/src/
-├── index.ts                 # Entry point Elysia
-├── routes/                  # Couche présentation API
-│   ├── profiles.ts
-│   ├── stories.ts
-│   └── jobs.ts
-├── usecases/                # Logique métier orchestrée
-│   ├── createStory.ts
-│   ├── enrichStory.ts
-│   └── generateStory.ts
-├── services/                # Infrastructure wrappers
+├── index.ts                       # Entry point Elysia
+├── handlers/                      # Couche présentation API
+│   ├── profiles/
+│   │   ├── profiles.handlers.ts
+│   │   ├── profiles.handlers.types.ts
+│   │   └── profiles.handlers.map.ts
+│   ├── stories/
+│   │   ├── stories.handlers.ts
+│   │   ├── stories.handlers.types.ts
+│   │   └── stories.handlers.map.ts
+│   └── jobs/
+│       ├── jobs.handlers.ts
+│       └── jobs.handlers.types.ts
+├── services/                      # Business logic + infrastructure
 │   ├── llm/
-│   │   ├── index.ts         # Interface
-│   │   ├── openai.ts        # Implémentation OpenAI
-│   │   └── anthropic.ts     # Implémentation Anthropic
+│   │   ├── llm.service.ts
+│   │   ├── llm.service.types.ts
+│   │   └── llm.service.store.ts
 │   ├── audio/
-│   │   ├── elevenLabs.ts
-│   │   ├── suno.ts
-│   │   └── ffmpegMixer.ts
+│   │   ├── audio.service.ts
+│   │   ├── audio.service.types.ts
+│   │   └── audio.service.store.ts
 │   ├── cache/
-│   │   └── redis.ts
+│   │   └── cache.service.ts
 │   └── storage/
-│       └── supabase.ts
-├── workflows/               # Upstash Workflow definitions
+│       └── storage.service.ts
+├── database/                      # Drizzle schemas
+│   └── models/
+│       ├── profiles.models.ts
+│       ├── stories.models.ts
+│       └── index.ts
+├── workflows/                     # Upstash Workflow definitions
 │   └── storyGeneration.ts
-└── plugins/                 # Elysia plugins
+└── plugins/                       # Elysia plugins
     ├── auth.ts
     └── errorHandler.ts
 ```
 
-**Pattern Use Case :**
+**Example Service with Types :**
 
 ```typescript
-// apps/api/src/usecases/createStory.ts
-// ✅ Use case isolé, dépend des interfaces (pas des implémentations)
+// apps/api/src/services/llm/llm.service.types.ts
+// ✅ Types locaux au service
 
-import type { IStoryRepository, IChildProfileRepository } from '@story-forge/shared';
-import { NotFoundError } from '../errors';
+import type { ChildProfile, EnrichedConcept, StoryScript, StoryAnswer } from '@mio/shared';
 
-interface CreateStoryInput {
-  childProfileId: string;
+export interface EnrichStoryParams {
   prompt: string;
+  profile: ChildProfile;
+  duration: string;
 }
 
-interface CreateStoryDeps {
-  storyRepo: IStoryRepository;
-  profileRepo: IChildProfileRepository;
+export interface GenerateScriptParams {
+  concept: EnrichedConcept;
+  profile: ChildProfile;
+  answers: StoryAnswer[];
+  duration: string;
 }
 
-export async function createStory(
-  input: CreateStoryInput,
-  deps: CreateStoryDeps
-) {
-  // 1. Vérifier que le profil existe
-  const profile = await deps.profileRepo.findById(input.childProfileId);
-  if (!profile) {
-    throw new NotFoundError('Child profile not found');
-  }
-
-  // 2. Créer l'histoire
-  const story = await deps.storyRepo.create({
-    childProfileId: input.childProfileId,
-    initialPrompt: input.prompt,
-    status: 'draft',
-  });
-
-  return story;
+export interface ILLMService {
+  enrichStory(params: EnrichStoryParams): Promise<EnrichedConcept>;
+  generateScript(params: GenerateScriptParams): Promise<StoryScript>;
 }
 ```
 
-**Injection dans les routes :**
+```typescript
+// apps/api/src/services/llm/llm.service.ts
+// ✅ Implémentation du service
+
+import type { ILLMService, EnrichStoryParams, GenerateScriptParams } from './llm.service.types';
+import type { EnrichedConcept, StoryScript } from '@mio/shared';
+
+export const llmService: ILLMService = {
+  async enrichStory(params: EnrichStoryParams): Promise<EnrichedConcept> {
+    // Implementation...
+  },
+
+  async generateScript(params: GenerateScriptParams): Promise<StoryScript> {
+    // Implementation...
+  },
+};
+```
+
+**Example Handler with Types :**
 
 ```typescript
-// apps/api/src/routes/stories.ts
-// ✅ Route thin, délègue au use case
+// apps/api/src/handlers/stories/stories.handlers.types.ts
+// ✅ Validation schemas avec types inférés
 
-import { Elysia, t } from 'elysia';
-import { createStory } from '../usecases/createStory';
-import { storyRepository } from '@story-forge/db/repositories';
-import { childProfileRepository } from '@story-forge/db/repositories';
+import { t } from 'elysia';
 
-export const storiesRoutes = new Elysia({ prefix: '/stories' })
+export const createStorySchema = t.Object({
+  childProfileId: t.String({ format: 'uuid' }),
+  prompt: t.String({ minLength: 3, maxLength: 500 }),
+});
+
+export type CreateStoryInput = typeof createStorySchema.static;
+```
+
+```typescript
+// apps/api/src/handlers/stories/stories.handlers.ts
+// ✅ Handler thin, délègue au service
+
+import { Elysia } from 'elysia';
+import { createStorySchema } from './stories.handlers.types';
+import { storyService } from '../../services/stories/stories.service';
+
+export const storiesHandlers = new Elysia({ prefix: '/stories' })
   .post('/', async ({ body }) => {
-    return createStory(body, {
-      storyRepo: storyRepository,
-      profileRepo: childProfileRepository,
-    });
+    return storyService.create(body);
   }, {
-    body: t.Object({
-      childProfileId: t.String({ format: 'uuid' }),
-      prompt: t.String({ minLength: 3, maxLength: 500 }),
-    }),
+    body: createStorySchema,
   });
 ```
 
 #### 📁 `apps/web/` — Presentation Layer
 
-Contient le **frontend Next.js**. Communique avec l'API via **Eden** (client type-safe).
+Contient le **frontend Next.js**. Communique avec l'API via **Treaty** (client type-safe).
 
 ```
 apps/web/src/
@@ -328,9 +361,32 @@ apps/web/src/
 ├── stores/                  # Zustand stores
 │   └── appStore.ts
 └── lib/
-    ├── api.ts               # Client Eden
+    ├── api.ts               # Client Treaty
     └── utils.ts
 ```
+
+---
+
+### Shared Package Rules
+
+Le package `@mio/shared` contient uniquement les **types**, **constantes** et **erreurs** partagés entre les applications.
+
+**Critical:** Toutes les variables d'environnement DOIVENT être déclarées dans :
+```
+packages/shared/src/constants/environment.constants.ts
+```
+
+**Error Handling:** Toutes les erreurs métier DOIVENT être déclarées dans :
+```
+packages/shared/src/constants/error.constants.ts
+```
+
+**API Client:** Le package shared exporte un client Treaty pour les appels API type-safe :
+```
+packages/shared/src/clients/mio-client.ts
+```
+
+> **Important:** Les interfaces de services (ILLMService, IAudioGenerator, etc.) sont déclarées dans `apps/api` au niveau des services concernés, pas dans le package shared.
 
 ---
 
@@ -345,8 +401,8 @@ export function createStory(input: CreateStoryInput): Promise<Story>
 // ❌ DON'T: any ou types implicites sur les APIs
 export function createStory(input: any)
 
-// ✅ DO: Utiliser les types de @story-forge/shared
-import type { Story, ChildProfile } from '@story-forge/shared';
+// ✅ DO: Utiliser les types de @mio/shared
+import type { Story, ChildProfile } from '@mio/shared';
 
 // ❌ DON'T: Redéfinir les types localement
 interface Story { ... } // Dupliqué !
@@ -472,58 +528,103 @@ export async function generateMetadata({ params }): Promise<Metadata> {
 
 ### Gestion des erreurs
 
+Les erreurs sont gérées via un système centralisé basé sur des codes d'erreur (`ErrorCodes`) définis dans `packages/shared/src/constants/error.constants.ts`.
+
 ```typescript
-// packages/shared/src/errors.ts
-// ✅ DO: Erreurs typées et hiérarchisées
+// packages/shared/src/constants/error.constants.ts
+// ✅ DO: Erreurs centralisées avec codes et définitions
+
+import { type HttpErrorStatusCode, HttpStatusCode } from './http.types';
+
+export enum ErrorCodes {
+  InternalError = 'InternalError',
+  NotFound = 'NotFound',
+  ValidationError = 'ValidationError',
+  UnauthorizedError = 'UnauthorizedError',
+}
+
+const errorDefinitions: {
+  [key in ErrorCodes]: { code?: string; message: string; statusCode?: HttpErrorStatusCode };
+} = {
+  [ErrorCodes.InternalError]: {
+    code: 'INTERNAL_SERVER_ERROR',
+    message: 'An unexpected error occurred'
+  },
+  [ErrorCodes.NotFound]: {
+    code: 'NOT_FOUND',
+    message: 'Not found'
+  },
+  [ErrorCodes.ValidationError]: {
+    code: 'VALIDATION',
+    message: 'Validation failed',
+    statusCode: HttpStatusCode.BadRequest
+  },
+  [ErrorCodes.UnauthorizedError]: {
+    message: 'Unauthorized',
+    statusCode: HttpStatusCode.Unauthorized
+  },
+};
 
 export class AppError extends Error {
-  constructor(
-    message: string,
-    public code: string,
-    public statusCode: number = 500
-  ) {
-    super(message);
-    this.name = 'AppError';
+  public readonly code: ErrorCodes;
+  public readonly diagnoses: Diagnose[];
+
+  constructor(code: ErrorCodes, options?: { name?: string; diagnoses?: Diagnose[]; error?: Error }) {
+    super(errorDefinitions[code].message);
+    this.code = code;
+    this.name = options?.name ?? httpErrorStatusCodeToName[this.statusCode];
+    this.diagnoses = options?.diagnoses ?? [];
+  }
+
+  public get statusCode(): HttpErrorStatusCode {
+    return errorDefinitions[this.code]?.statusCode ?? HttpStatusCode.InternalServerError;
   }
 }
 
-export class NotFoundError extends AppError {
-  constructor(resource: string) {
-    super(`${resource} not found`, 'NOT_FOUND', 404);
-  }
-}
-
-export class ValidationError extends AppError {
-  constructor(message: string) {
-    super(message, 'VALIDATION_ERROR', 400);
-  }
-}
-
-export class ExternalServiceError extends AppError {
-  constructor(service: string, originalError: Error) {
-    super(`${service} error: ${originalError.message}`, 'EXTERNAL_ERROR', 502);
-  }
+// ✅ Helper pour créer une erreur depuis un code
+export function errorFromCode(code: ErrorCodes, options?: { diagnoses?: Diagnose[] }) {
+  return new AppError(code, options);
 }
 ```
 
 ```typescript
 // apps/api/src/plugins/errorHandler.ts
-// ✅ DO: Handler centralisé
+// ✅ DO: Handler centralisé utilisant AppError
 
 import { Elysia } from 'elysia';
-import { AppError } from '@story-forge/shared';
+import { AppError, ErrorCodes, errorFromCode } from '@mio/shared';
 
-export const errorHandler = new Elysia()
+export const errorHandler = new Elysia({ name: 'errorHandler' })
   .onError(({ error, set }) => {
     if (error instanceof AppError) {
       set.status = error.statusCode;
-      return { error: error.message, code: error.code };
+      return {
+        error: error.message,
+        code: error.code,
+        name: error.name,
+        diagnoses: error.diagnoses,
+      };
     }
 
-    // Erreur inattendue
+    // Validation errors from Elysia
+    if (error instanceof Error && error.name === 'ValidationError') {
+      const validationError = errorFromCode(ErrorCodes.ValidationError);
+      set.status = validationError.statusCode;
+      return {
+        error: validationError.message,
+        code: validationError.code,
+        details: error.message,
+      };
+    }
+
+    // Unexpected errors
     console.error('Unexpected error:', error);
-    set.status = 500;
-    return { error: 'Internal server error', code: 'INTERNAL_ERROR' };
+    const internalError = errorFromCode(ErrorCodes.InternalError);
+    set.status = internalError.statusCode;
+    return {
+      error: internalError.message,
+      code: internalError.code,
+    };
   });
 ```
 
@@ -534,10 +635,22 @@ export const errorHandler = new Elysia()
 ### Services avec Injection de Dépendances
 
 ```typescript
-// apps/api/src/services/llm/index.ts
-// ✅ Interface + Factory pattern
+// apps/api/src/services/llm/llm.service.types.ts
+// ✅ Interface définie localement au service
 
-import type { ILLMService } from '@story-forge/shared';
+import type { ChildProfile, EnrichedConcept, StoryScript } from '@mio/shared';
+
+export interface ILLMService {
+  enrichStory(params: { prompt: string; profile: ChildProfile }): Promise<EnrichedConcept>;
+  generateScript(params: { concept: EnrichedConcept; profile: ChildProfile }): Promise<StoryScript>;
+}
+```
+
+```typescript
+// apps/api/src/services/llm/llm.service.ts
+// ✅ Factory pattern avec interface locale
+
+import type { ILLMService } from './llm.service.types';
 import { openaiService } from './openai';
 import { anthropicService } from './anthropic';
 
@@ -655,7 +768,7 @@ export const { POST } = serve<StoryGenerationPayload>(
 ### Structure des Tests
 
 ```
-story-forge/
+mio/
 ├── packages/
 │   └── test-utils/              # Helpers partagés
 │       ├── src/
@@ -815,9 +928,9 @@ export async function flushRedis(redis: Redis) {
 ```typescript
 // apps/api/src/usecases/__tests__/createStory.test.ts
 import { describe, test, expect, beforeAll, afterAll, beforeEach } from 'bun:test';
-import { setupPostgres, teardownPostgres, cleanupTables } from '@story-forge/test-utils';
+import { setupPostgres, teardownPostgres, cleanupTables } from '@mio/test-utils';
 import { createStory } from '../createStory';
-import { profileFixture } from '@story-forge/test-utils/fixtures';
+import { profileFixture } from '@mio/test-utils/fixtures';
 
 describe('createStory', () => {
   let db: DrizzleDb;
@@ -867,7 +980,8 @@ describe('createStory', () => {
 ```typescript
 // packages/test-utils/src/mocks/llm.ts
 import { mock } from 'bun:test';
-import type { ILLMService, EnrichedConcept, StoryScript } from '@story-forge/shared';
+import type { EnrichedConcept, StoryScript } from '@mio/shared';
+import type { ILLMService } from 'apps/api/src/services/llm/llm.service.types';
 
 export function createMockLLMService(): ILLMService {
   return {
@@ -887,6 +1001,8 @@ export function createMockLLMService(): ILLMService {
 }
 
 // packages/test-utils/src/mocks/elevenlabs.ts
+import type { IAudioGenerator } from 'apps/api/src/services/audio/audio.service.types';
+
 export function createMockElevenLabsService(): IAudioGenerator {
   return {
     generateSpeech: mock(async () => ({
@@ -906,7 +1022,7 @@ export function createMockElevenLabsService(): IAudioGenerator {
 
 ```typescript
 // packages/test-utils/src/fixtures/profiles.ts
-import type { ChildProfile } from '@story-forge/shared';
+import type { ChildProfile } from '@mio/shared';
 
 export function profileFixture(overrides: Partial<ChildProfile> = {}): Omit<ChildProfile, 'id' | 'createdAt' | 'updatedAt'> {
   return {
@@ -1103,7 +1219,7 @@ nx format:write                 # Formater tout
 ```bash
 # 1. Cloner et installer
 git clone <repo>
-cd story-forge
+cd mio
 bun install
 
 # 2. Configurer les variables d'environnement

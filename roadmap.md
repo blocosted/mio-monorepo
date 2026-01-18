@@ -40,13 +40,13 @@ Permettre aux enfants (et leurs parents) de créer des histoires audio personnal
 **Afin de** pouvoir développer l'application de manière organisée et maintenable.
 
 **Critères d'acceptation:**
-- [ ] Workspace Nx initialisé avec Bun comme runtime
-- [ ] Package `apps/web` configuré avec Next.js 15 (App Router)
-- [ ] Package `apps/api` configuré avec Elysia
-- [ ] Package `packages/db` configuré avec Drizzle
-- [ ] Package `packages/shared` pour les types et constantes partagées
-- [ ] Configuration ESLint/Prettier partagée
-- [ ] Scripts Nx pour serve, build, test fonctionnels
+- [x] Workspace Nx initialisé avec Bun comme runtime
+- [x] Package `apps/web` configuré avec Next.js 15 (App Router)
+- [x] Package `apps/api` configuré avec Elysia
+- [x] Package `packages/db` configuré avec Drizzle
+- [x] Package `packages/shared` pour les types et constantes partagées
+- [x] Configuration ESLint/Prettier partagée
+- [x] Scripts Nx pour serve, build, test fonctionnels
 
 ---
 

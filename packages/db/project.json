@@ -1,0 +1,50 @@
+{
+    "name": "db",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "projectType": "library",
+    "sourceRoot": "packages/db/src",
+    "targets": {
+        "generate": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "drizzle-kit generate",
+                "cwd": "packages/db"
+            }
+        },
+        "push": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "drizzle-kit push",
+                "cwd": "packages/db"
+            }
+        },
+        "migrate": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "drizzle-kit migrate",
+                "cwd": "packages/db"
+            }
+        },
+        "studio": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "drizzle-kit studio",
+                "cwd": "packages/db"
+            }
+        },
+        "lint": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "eslint packages/db/src/",
+                "cwd": "."
+            }
+        },
+        "typecheck": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "tsc --noEmit",
+                "cwd": "packages/db"
+            }
+        }
+    }
+}

@@ -1,6 +1,8 @@
 {
   "compilerOptions": {
-    "lib": ["ESNext"],
+    "lib": [
+      "ESNext"
+    ],
     "target": "ESNext",
     "module": "Preserve",
     "moduleDetection": "force",
@@ -18,9 +20,26 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false,
+    "baseUrl": ".",
     "paths": {
-      "@mio/shared": ["packages/shared/src/index.ts"],
-      "@mio/story-services": ["packages/story-services/src/index.ts"]
+      "@mio/shared": [
+        "packages/shared/src/index.ts"
+      ],
+      "@mio/shared/*": [
+        "packages/shared/src/*"
+      ],
+      "@mio/db": [
+        "packages/db/src/index.ts"
+      ],
+      "@mio/db/*": [
+        "packages/db/src/*"
+      ],
+      "@mio/test-utils": [
+        "packages/test-utils/src/index.ts"
+      ],
+      "@mio/test-utils/*": [
+        "packages/test-utils/src/*"
+      ]
     }
   }
 }

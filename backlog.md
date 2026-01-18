@@ -9,11 +9,11 @@
 
 | Phase | US | Tâches | Complétées |
 |-------|-----|--------|------------|
-| Phase 1 - MVP Minimal | 13 | 65 | 0 |
+| Phase 1 - MVP Minimal | 13 | 65 | 10 |
 | Phase 2 - MVP Complet | 18 | 68 | 0 |
 | Phase 3 - Production Ready | 16 | 58 | 0 |
 | Phase 4 - Polish & Sécurité | 9 | 27 | 0 |
-| **Total** | **56** | **218** | **0** |
+| **Total** | **56** | **218** | **10** |
 
 ---
 
@@ -21,17 +21,17 @@
 
 ### Epic 1: Infrastructure & Setup
 
-#### US-001: Configuration du Monorepo Nx [3/5]
-- [ ] Initialiser le workspace Nx avec `bunx create-nx-workspace@latest`
-- [ ] Créer `apps/web` avec Next.js 15 App Router
-- [ ] Créer `apps/api` avec Elysia (template custom Bun)
-- [ ] Créer `packages/db` avec Drizzle ORM
-- [ ] Créer `packages/shared` pour types/constantes
-- [ ] Configurer les alias TypeScript (`@story-forge/*`)
-- [ ] Configurer ESLint partagé (nx.json)
-- [ ] Configurer Prettier partagé (.prettierrc)
-- [ ] Tester `nx serve api` et `nx serve web`
-- [ ] Tester `nx run-many -t build`
+#### US-001: Configuration du Monorepo Nx [3/5] ✅
+- [x] Initialiser le workspace Nx avec `bunx create-nx-workspace@latest`
+- [x] Créer `apps/web` avec Next.js 15 App Router
+- [x] Créer `apps/api` avec Elysia (template custom Bun)
+- [x] Créer `packages/db` avec Drizzle ORM
+- [x] Créer `packages/shared` pour types/constantes
+- [x] Configurer les alias TypeScript (`@mio/*`)
+- [x] Configurer ESLint partagé (nx.json)
+- [x] Configurer Prettier partagé (.prettierrc)
+- [x] Tester `nx serve api` et `nx serve web`
+- [x] Tester `nx run-many -t build`
 
 #### US-002: Configuration base de données Supabase [3/5]
 - [ ] Créer projet Supabase (dashboard)

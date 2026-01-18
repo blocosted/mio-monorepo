@@ -545,7 +545,7 @@ async function mixStory(segments: GeneratedAudio[], script: StoryScript): Promis
 ### 6.2 Structure du Projet
 
 ```
-story-forge/
+mio/
 ├── apps/
 │   ├── web/                    # Next.js PWA (Vercel)
 │   │   ├── src/
@@ -717,8 +717,8 @@ Upstash Workflow permet d'orchestrer des jobs longue durée en serverless avec r
 ```typescript
 // apps/api/src/workflows/storyGeneration.ts
 import { serve } from '@upstash/workflow/nextjs'; // ou elysia adapter
-import { db } from '@story-forge/db';
-import { stories, storySegments, generationJobs } from '@story-forge/db/schema';
+import { db } from '@mio/db';
+import { stories, storySegments, generationJobs } from '@mio/db/schema';
 
 interface StoryGenerationPayload {
   storyId: string;
@@ -1250,8 +1250,8 @@ export const generationJobs = pgTable('generation_jobs', {
 ```typescript
 // apps/api/src/routes/childProfiles.ts
 import { Elysia, t } from 'elysia';
-import { db } from '@story-forge/db';
-import { childProfiles } from '@story-forge/db/schema';
+import { db } from '@mio/db';
+import { childProfiles } from '@mio/db/schema';
 
 export const childProfilesRoutes = new Elysia({ prefix: '/profiles' })
   
@@ -1366,8 +1366,8 @@ export const childProfilesRoutes = new Elysia({ prefix: '/profiles' })
 
 // apps/api/src/routes/stories.ts
 import { Elysia, t } from 'elysia';
-import { db } from '@story-forge/db';
-import { stories, childProfiles } from '@story-forge/db/schema';
+import { db } from '@mio/db';
+import { stories, childProfiles } from '@mio/db/schema';
 
 export const storiesRoutes = new Elysia({ prefix: '/stories' })
   
@@ -1491,7 +1491,7 @@ console.log(`🦊 Elysia running at ${app.server?.hostname}:${app.server?.port}`
 ```typescript
 // apps/web/src/lib/api.ts
 import { treaty } from '@elysiajs/eden';
-import type { App } from '@story-forge/api';
+import type { App } from '@mio/api';
 
 export const api = treaty<App>('http://localhost:3001');
 

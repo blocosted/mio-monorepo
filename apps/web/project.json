@@ -1,0 +1,42 @@
+{
+    "name": "web",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "projectType": "application",
+    "sourceRoot": "apps/web/src",
+    "targets": {
+        "serve": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "next dev --turbopack -p 3000",
+                "cwd": "apps/web"
+            }
+        },
+        "build": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "next build",
+                "cwd": "apps/web"
+            },
+            "outputs": [
+                "{projectRoot}/.next"
+            ]
+        },
+        "start": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "next start -p 3000",
+                "cwd": "apps/web"
+            },
+            "dependsOn": [
+                "build"
+            ]
+        },
+        "lint": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "next lint",
+                "cwd": "apps/web"
+            }
+        }
+    }
+}
