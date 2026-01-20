@@ -12,12 +12,15 @@ import path from 'node:path';
 
 import { sql } from 'drizzle-orm';
 import { migrate } from 'drizzle-orm/postgres-js/migrator';
-import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import { drizzle } from 'drizzle-orm/postgres-js';
+import { treaty } from '@elysiajs/eden';
 
 import { environment, getProcessEnv } from '@mio/shared/constants/environment.constants';
 import monorepoRoot from '@mio/helpers/getMonorepoRoot';
+import type { DatabaseConnection } from '@mio/shared/server/connections/db';
+import { createApiApp } from '@mio/api';
+import { MioApiClient } from '@mio/shared/clients/mio';
 
 const isCI = environment.CI === 'true';
 
@@ -219,7 +222,7 @@ export async function runTests(containerNames?: string[]): Promise<void> {
 /**
  * Create a test database connection
  */
-export function createTestDatabase(config: TestEnvConfig = DEFAULT_TEST_CONFIG): PostgresJsDatabase {
+export function createTestDatabase(config: TestEnvConfig = DEFAULT_TEST_CONFIG): DatabaseConnection {
     const client = postgres(config.databaseUrl, { max: 1 });
     return drizzle(client);
 }
@@ -227,7 +230,7 @@ export function createTestDatabase(config: TestEnvConfig = DEFAULT_TEST_CONFIG):
 /**
  * Run database migrations
  */
-export async function migrateDatabase(db: PostgresJsDatabase): Promise<void> {
+export async function migrateDatabase(db: DatabaseConnection): Promise<void> {
     console.info('Migrating database...');
     const migrationPath = path.join(monorepoRoot, 'packages/db/src/migrations');
     await migrate(db, { migrationsFolder: migrationPath });
@@ -237,7 +240,7 @@ export async function migrateDatabase(db: PostgresJsDatabase): Promise<void> {
 /**
  * Configure silent database mode (reduce log noise in tests)
  */
-export async function configureSilentDatabase(db: PostgresJsDatabase): Promise<void> {
+export async function configureSilentDatabase(db: DatabaseConnection): Promise<void> {
     try {
         await db.execute(sql`SET client_min_messages = 'error'`);
         await db.execute(sql`SET log_min_messages = 'error'`);
@@ -249,7 +252,7 @@ export async function configureSilentDatabase(db: PostgresJsDatabase): Promise<v
 /**
  * Clean all test data from PostgreSQL
  */
-export async function cleanTestPostgresData(db: PostgresJsDatabase): Promise<void> {
+export async function cleanTestPostgresData(db: DatabaseConnection): Promise<void> {
     try {
         await configureSilentDatabase(db);
 
@@ -302,10 +305,16 @@ export async function cleanTestRedisData(
  * Clean all test data
  */
 export async function cleanTestData(
-    db: PostgresJsDatabase,
+    db: DatabaseConnection,
     redisContainerName = 'mio-test-redis',
     redisPassword = DEFAULT_TEST_CONFIG.redisPassword
 ): Promise<void> {
     await cleanTestPostgresData(db);
     await cleanTestRedisData(redisContainerName, redisPassword);
+}
+
+export function createMioApiClient(): MioApiClient {
+    const app = createApiApp();
+    const api = treaty(app);
+    return new MioApiClient({ apiClient: api });
 }

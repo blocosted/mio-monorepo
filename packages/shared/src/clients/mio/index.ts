@@ -1,11 +1,12 @@
 import { treaty } from '@elysiajs/eden';
-
-import type { MioApi } from '@mio/api';
+import type { Treaty } from '@elysiajs/eden';
+import type { MioApi } from '@mio/api/api.server';
 import { DiagnoseSeverity, ErrorCodes, errorFromCode, type Diagnose } from '../../constants/error.constants';
 import { publicEnvironment } from '../../constants/public-environment.constants';
 
-import { MioApiStoriesClient } from './stories';
-import { MioApiProfilesClient } from './profiles';
+import { MioApiStoriesClient } from './stories/stories.client';
+import { MioApiProfilesClient } from './profiles/profiles.client';
+import { MioApiJobsClient } from './jobs/jobs.client';
 
 export type MioErrorResponse = {
     error: string;
@@ -15,22 +16,25 @@ export type MioErrorResponse = {
     details?: string;
 };
 
-export const createApiClient = (apiUrl?: string) => {
+export type MioApiApp = MioApi;
+export type MioTreatyClient = Treaty.Create<MioApiApp>;
+
+export const createApiClient = (
+    apiUrl?: string
+): MioTreatyClient => {
     const url = apiUrl ?? publicEnvironment.NEXT_PUBLIC_API_URL;
 
     if (typeof url !== 'string' || !url) {
         throw new Error(`Invalid API URL: ${String(url)}. Expected a non-empty string.`);
     }
 
-    return treaty<MioApi>(url, {
+    return treaty<MioApiApp>(url, {
         fetch: {
             mode: 'cors',
             credentials: 'include',
         },
     });
 };
-
-export type MioTreatyClient = ReturnType<typeof createApiClient>;
 
 function isMioErrorResponse(value: unknown): value is MioErrorResponse {
     if (!value || typeof value !== 'object') return false;
@@ -55,8 +59,8 @@ function throwFromTreatyError(error: unknown): never {
         wrapper && wrapper.status === 422 && wrapper.value && typeof wrapper.value === 'object'
             ? (wrapper.value as Record<string, unknown>)
             : payload && typeof payload === 'object'
-              ? (payload as Record<string, unknown>)
-              : null;
+                ? (payload as Record<string, unknown>)
+                : null;
 
     if (validationValue?.type === 'validation') {
         throw errorFromCode(ErrorCodes.ValidationError, {
@@ -103,6 +107,7 @@ export class MioApiClient {
 
     public readonly stories: MioApiStoriesClient;
     public readonly profiles: MioApiProfilesClient;
+    public readonly jobs: MioApiJobsClient;
 
     constructor(options?: { apiClient?: MioTreatyClient; apiUrl?: string }) {
         if (options?.apiClient) {
@@ -113,6 +118,7 @@ export class MioApiClient {
 
         this.stories = new MioApiStoriesClient(this);
         this.profiles = new MioApiProfilesClient(this);
+        this.jobs = new MioApiJobsClient(this);
     }
 
     public set headers(headers: Record<string, string>) {
@@ -128,6 +134,10 @@ export class MioApiClient {
     }
 }
 
-export * from './stories';
-export * from './profiles';
+export * from './stories/index';
+export * from './stories/stories.client';
+export * from './profiles/index';
+export * from './profiles/profiles.client';
+export * from './jobs/index';
+export * from './jobs/jobs.client';
 

@@ -13,9 +13,7 @@ import {
   CreateProfileBodySchema,
   ProfileIdParamsSchema,
   UpdateProfileBodySchema,
-  type CreateProfileBody,
-  type UpdateProfileBody,
-} from './profiles.handlers.types';
+} from '@mio/shared/clients/mio/profiles';
 import {
   mapProfileToResponse,
   mapProfilesToResponse,
@@ -39,7 +37,7 @@ export const profilesHandlers = new Elysia({
     '/',
     async ({ body, set }) => {
       const service = getInstance<IProfilesService>(IocService.PROFILES);
-      const input = mapCreateBodyToInput(body as CreateProfileBody);
+      const input = mapCreateBodyToInput(body);
       const profile = await service.create(input);
       set.status = 201;
       return mapProfileToResponse(profile);
@@ -73,7 +71,7 @@ export const profilesHandlers = new Elysia({
     '/:id',
     async ({ params, body, set }) => {
       const service = getInstance<IProfilesService>(IocService.PROFILES);
-      const input = mapUpdateBodyToInput(body as UpdateProfileBody);
+      const input = mapUpdateBodyToInput(body);
       const profile = await service.update(params.id, input);
 
       if (!profile) {

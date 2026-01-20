@@ -7,10 +7,9 @@ import {
   CreateStoryBodySchema,
   EnrichStoryBodySchema,
   GenerateStoryBodySchema,
-  ProfileIdParamsSchema,
+  StoryProfileIdParamsSchema,
   StoryIdParamsSchema,
-  type CreateStoryBody,
-} from './stories.handlers.types';
+} from '@mio/shared/clients/mio/stories';
 import { mapCreateBodyToInput, mapStoryToResponse } from './stories.handlers.map';
 
 export const storiesHandlers = new Elysia({ prefix: '/stories', tags: ['stories'] })
@@ -19,7 +18,7 @@ export const storiesHandlers = new Elysia({ prefix: '/stories', tags: ['stories'
     '/',
     async ({ body, set }) => {
       const service = getInstance<IStoriesService>(IocService.STORIES);
-      const input = mapCreateBodyToInput(body as CreateStoryBody);
+      const input = mapCreateBodyToInput(body);
       const story = await service.create(input);
 
       set.status = 201;
@@ -62,7 +61,7 @@ export const storiesHandlers = new Elysia({ prefix: '/stories', tags: ['stories'
       return [];
     },
     {
-      params: ProfileIdParamsSchema,
+      params: StoryProfileIdParamsSchema,
     }
   )
 

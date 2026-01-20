@@ -5,7 +5,7 @@
  */
 
 import { randomUUID } from 'node:crypto';
-import { mock } from 'bun:test';
+import { mock, expect } from 'bun:test';
 
 import type { ICacheService } from '../services/cache';
 import type { IStorageService } from '../services/storage';
@@ -150,6 +150,17 @@ export function getCallAt<T>(mockFn: unknown, index: number): T {
         throw new Error(`Expected call at index ${index} but found ${calls.length} calls`);
     }
     return call;
+}
+
+/**
+ * Assert a nullable value is not null (and narrow the type).
+ */
+export function assertNotNull<T>(
+    value: T | null,
+    message = 'Expected value not to be null'
+): asserts value is T {
+    expect(value).not.toBeNull();
+    if (value === null) throw new Error(message);
 }
 
 /**

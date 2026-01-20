@@ -4,7 +4,7 @@
  * Ensures TypeBox validation rejects invalid inputs.
  */
 
-import { describe, it, expect } from 'bun:test';
+import { describe, it, expect, beforeAll } from 'bun:test';
 
 import { treaty } from '@elysiajs/eden';
 
@@ -13,11 +13,16 @@ import { MioApiClient } from '@mio/shared/clients/mio';
 import { ErrorCodes } from '@mio/shared';
 
 describe('storiesHandlers validation', () => {
-  it('rejects prompt too short', async () => {
+  // Shared setup to avoid repeating app/client initialization per test.
+  let mio: MioApiClient;
+
+  beforeAll(() => {
     const app = createApiApp();
     const testApiClient = treaty(app);
-    const mio = new MioApiClient({ apiClient: testApiClient });
+    mio = new MioApiClient({ apiClient: testApiClient });
+  });
 
+  it('rejects prompt too short', async () => {
     await expect(
       mio.stories.createStory({
         childProfileId: '00000000-0000-0000-0000-000000000000',
@@ -27,9 +32,6 @@ describe('storiesHandlers validation', () => {
   });
 
   it('rejects prompt too long', async () => {
-    const app = createApiApp();
-    const testApiClient = treaty(app);
-    const mio = new MioApiClient({ apiClient: testApiClient });
     const longPrompt = 'a'.repeat(501);
 
     await expect(

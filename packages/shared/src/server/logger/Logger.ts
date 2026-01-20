@@ -33,28 +33,38 @@ function getLogLevel(): LogLevel {
 
 @injectable()
 export class Logger {
-  private logger!: LogLayer;
+  private logger: LogLayer;
 
-  constructor() {
-    const isDev = environment.NODE_ENV !== 'production';
-    if (isDev) {
-      // In development: Pretty terminal with colors
-      this.initializeDevLogger();
-    } else {
-      // In production: Console transport JSON structured
-      this.initializeProdLogger();
-    }
+  /**
+   * Private constructor - use Logger.create() instead
+   */
+  private constructor(logger: LogLayer) {
+    this.logger = logger;
   }
 
-  private initializeDevLogger() {
+  /**
+   * Async factory method to create a Logger instance
+   */
+  public static async create(): Promise<Logger> {
+    const isDev = environment.NODE_ENV !== 'production';
+    const logLayer = isDev
+      ? await Logger.createDevLogger()
+      : Logger.createProdLogger();
+
+    return new Logger(logLayer);
+  }
+
+  private static async createDevLogger(): Promise<LogLayer> {
     if (environment.NODE_ENV === 'production') {
       throw new Error('Dev logger should not be used in production');
     }
 
-    // Dynamic import to avoid inclusion in production bundle
-    const { getSimplePrettyTerminal, neon } = require('@loglayer/transport-simple-pretty-terminal');
+    // Dynamic import to avoid bundling dev dependency in production
+    const { getSimplePrettyTerminal, neon } = await import(
+      '@loglayer/transport-simple-pretty-terminal'
+    );
 
-    this.logger = new LogLayer({
+    return new LogLayer({
       errorSerializer: serializeError,
       transport: getSimplePrettyTerminal({
         enabled: isLogEnabled(),
@@ -66,8 +76,8 @@ export class Logger {
     });
   }
 
-  private initializeProdLogger() {
-    this.logger = new LogLayer({
+  private static createProdLogger(): LogLayer {
+    return new LogLayer({
       errorSerializer: serializeError,
       transport: new ConsoleTransport({
         enabled: isLogEnabled(),
@@ -158,4 +168,3 @@ export class Logger {
     return this.logger.setLevel(level);
   }
 }
-

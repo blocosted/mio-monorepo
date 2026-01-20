@@ -4,42 +4,28 @@
  * Tests the ProfilesService and ProfilesStore with a real PostgreSQL database.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'bun:test';
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
-
-import * as schema from '@mio/db/schema';
+import { describe, it, expect, beforeAll, beforeEach, afterEach } from 'bun:test';
 import { Gender, StoryDuration, Language } from '@mio/shared/types';
 
-import { DEFAULT_TEST_CONFIG, cleanTestPostgresData } from '../../../tests/test-utils';
-import { ProfilesStore } from '../profiles.service.store';
-import { ProfilesService } from '../profiles.service';
-import type { IProfilesStore } from '../profiles.service.types';
-
-// Create test database connection
-const client = postgres(DEFAULT_TEST_CONFIG.databaseUrl, { max: 1 });
-const db = drizzle(client, { schema });
-
-// Create a mock store that uses the test database
-class TestProfilesStore extends ProfilesStore {
-    constructor() {
-        // Bypass DI by directly assigning the db
-        super(undefined as never);
-        (this as { db: typeof db }).db = db;
-    }
-}
+import { cleanTestPostgresData } from '../../../tests/test-utils';
+import { assertNotNull } from '../../../tests/test.helpers';
+import { getInstance, IocInfrastructure, IocService } from '../../../ioc';
+import type { DatabaseConnection } from '@mio/shared/server/connections/db';
+import type { IProfilesService } from '../profiles.service.types';
 
 describe('ProfilesService', () => {
-    let store: IProfilesStore;
-    let service: ProfilesService;
+    let db: DatabaseConnection;
+    let service: IProfilesService;
+
+    beforeAll(() => {
+        // Use IoC to resolve real instances with injected dependencies.
+        db = getInstance<DatabaseConnection>(IocInfrastructure.DATABASE_CLIENT);
+        service = getInstance<IProfilesService>(IocService.PROFILES);
+    });
 
     beforeEach(async () => {
         // Clean up database before each test
         await cleanTestPostgresData(db);
-
-        // Create fresh instances
-        store = new TestProfilesStore();
-        service = new ProfilesService(store);
     });
 
     afterEach(async () => {
@@ -135,9 +121,9 @@ describe('ProfilesService', () => {
 
             const found = await service.getById(created.id);
 
-            expect(found).not.toBeNull();
-            expect(found!.id).toBe(created.id);
-            expect(found!.firstName).toBe('Emma');
+            assertNotNull(found);
+            expect(found.id).toBe(created.id);
+            expect(found.firstName).toBe('Emma');
         });
 
         it('returns null when profile not found', async () => {
@@ -175,9 +161,9 @@ describe('ProfilesService', () => {
 
             const updated = await service.update(created.id, { firstName: 'Emilie' });
 
-            expect(updated).not.toBeNull();
-            expect(updated!.firstName).toBe('Emilie');
-            expect(updated!.age).toBe(7);
+            assertNotNull(updated);
+            expect(updated.firstName).toBe('Emilie');
+            expect(updated.age).toBe(7);
         });
 
         it('updates age', async () => {
@@ -189,8 +175,8 @@ describe('ProfilesService', () => {
 
             const updated = await service.update(created.id, { age: 8 });
 
-            expect(updated).not.toBeNull();
-            expect(updated!.age).toBe(8);
+            assertNotNull(updated);
+            expect(updated.age).toBe(8);
         });
 
         it('updates gender', async () => {
@@ -202,8 +188,8 @@ describe('ProfilesService', () => {
 
             const updated = await service.update(created.id, { gender: Gender.Neutral });
 
-            expect(updated).not.toBeNull();
-            expect(updated!.gender).toBe(Gender.Neutral);
+            assertNotNull(updated);
+            expect(updated.gender).toBe(Gender.Neutral);
         });
 
         it('updates preferences', async () => {
@@ -220,9 +206,9 @@ describe('ProfilesService', () => {
                 },
             });
 
-            expect(updated).not.toBeNull();
-            expect(updated!.preferences.favoriteThemes).toEqual(['princesses']);
-            expect(updated!.preferences.language).toBe(Language.English);
+            assertNotNull(updated);
+            expect(updated.preferences.favoriteThemes).toEqual(['princesses']);
+            expect(updated.preferences.language).toBe(Language.English);
         });
 
         it('returns null when profile not found', async () => {
@@ -245,7 +231,8 @@ describe('ProfilesService', () => {
 
             const updated = await service.update(created.id, { firstName: 'Emilie' });
 
-            expect(updated!.updatedAt.getTime()).toBeGreaterThan(created.updatedAt.getTime());
+            assertNotNull(updated);
+            expect(updated.updatedAt.getTime()).toBeGreaterThan(created.updatedAt.getTime());
         });
     });
 

@@ -1,6 +1,6 @@
 import { Elysia } from 'elysia';
 
-import { JobIdParamsSchema } from './jobs.handlers.types';
+import { JobIdParamsSchema } from '@mio/shared/clients/mio/jobs';
 
 export const jobsHandlers = new Elysia({ prefix: '/jobs', tags: ['jobs'] })
   // Get job status

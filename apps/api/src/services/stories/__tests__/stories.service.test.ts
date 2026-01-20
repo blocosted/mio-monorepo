@@ -4,54 +4,30 @@
  * Tests the StoriesService and StoriesStore with a real PostgreSQL database.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'bun:test';
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
-
-import * as schema from '@mio/db/schema';
+import { describe, it, expect, beforeAll, beforeEach, afterEach } from 'bun:test';
 import { ErrorCodes, Gender, StoryStatus } from '@mio/shared';
 
-import { DEFAULT_TEST_CONFIG, cleanTestPostgresData } from '../../../tests/test-utils';
-import { ProfilesStore } from '../../profiles/profiles.service.store';
-import { StoriesStore } from '../stories.service.store';
-import { StoriesService } from '../stories.service';
+import { cleanTestPostgresData } from '../../../tests/test-utils';
+import { getInstance, IocInfrastructure, IocService } from '../../../ioc';
+import type { DatabaseConnection } from '@mio/shared/server/connections/db';
 import type { IProfilesStore } from '../../profiles/profiles.service.types';
-import type { IStoriesStore } from '../stories.service.types';
-
-// Create test database connection
-const client = postgres(DEFAULT_TEST_CONFIG.databaseUrl, { max: 1 });
-const db = drizzle(client, { schema });
-
-// Create a mock store that uses the test database
-class TestProfilesStore extends ProfilesStore {
-    constructor() {
-        // Bypass DI by directly assigning the db
-        super(undefined as never);
-        (this as { db: typeof db }).db = db;
-    }
-}
-
-class TestStoriesStore extends StoriesStore {
-    constructor() {
-        // Bypass DI by directly assigning the db
-        super(undefined as never);
-        (this as { db: typeof db }).db = db;
-    }
-}
+import type { IStoriesService } from '../stories.service.types';
 
 describe('StoriesService', () => {
+    let db: DatabaseConnection;
     let profilesStore: IProfilesStore;
-    let storiesStore: IStoriesStore;
-    let service: StoriesService;
+    let service: IStoriesService;
+
+    beforeAll(() => {
+        // Use IoC to resolve real instances with injected dependencies.
+        db = getInstance<DatabaseConnection>(IocInfrastructure.DATABASE_CLIENT);
+        profilesStore = getInstance<IProfilesStore>(IocService.PROFILES_STORE);
+        service = getInstance<IStoriesService>(IocService.STORIES);
+    });
 
     beforeEach(async () => {
         // Clean up database before each test
         await cleanTestPostgresData(db);
-
-        // Create fresh instances
-        profilesStore = new TestProfilesStore();
-        storiesStore = new TestStoriesStore();
-        service = new StoriesService(storiesStore, profilesStore);
     });
 
     afterEach(async () => {

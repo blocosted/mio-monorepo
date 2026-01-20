@@ -1,18 +1,5 @@
 import type { MioApiClient } from '..';
-
-export type CreateStoryParams = {
-    childProfileId: string;
-    prompt: string;
-};
-
-export type StoryResponse = {
-    id: string;
-    childProfileId: string;
-    initialPrompt: string;
-    status: string;
-    createdAt: string;
-    updatedAt: string;
-};
+import type { CreateStoryBody as CreateStoryParams, StoryResponse } from './index';
 
 export class MioApiStoriesClient {
     public readonly client: MioApiClient;

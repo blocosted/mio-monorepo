@@ -1,20 +1,5 @@
 import type { MioApiClient } from '..';
-
-export type CreateProfileParams = {
-    firstName: string;
-    age: number;
-    gender: 'boy' | 'girl' | 'neutral';
-};
-
-export type ProfileResponse = {
-    id: string;
-    firstName: string;
-    age: number;
-    gender: 'boy' | 'girl' | 'neutral';
-    preferences: Record<string, unknown>;
-    createdAt: string;
-    updatedAt: string;
-};
+import type { CreateProfileBody as CreateProfileParams, ProfileResponse } from './index';
 
 export class MioApiProfilesClient {
     public readonly client: MioApiClient;

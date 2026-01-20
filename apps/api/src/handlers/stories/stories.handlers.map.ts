@@ -5,21 +5,8 @@
  * Keep handlers thin: map request/response here.
  */
 
-import type { StoryStatus } from '@mio/shared';
 import type { CreateStoryInput, Story } from '../../services/stories';
-import type { CreateStoryBody } from './stories.handlers.types';
-
-/**
- * API Response DTO for a story (minimal)
- */
-export interface StoryResponseDto {
-  id: string;
-  childProfileId: string;
-  initialPrompt: string;
-  status: StoryStatus;
-  createdAt: string;
-  updatedAt: string;
-}
+import type { CreateStoryBody, StoryResponse } from '@mio/shared/clients/mio/stories';
 
 /**
  * Map API request body to service input for creation
@@ -34,7 +21,7 @@ export function mapCreateBodyToInput(body: CreateStoryBody): CreateStoryInput {
 /**
  * Map a service Story to API response DTO
  */
-export function mapStoryToResponse(story: Story): StoryResponseDto {
+export function mapStoryToResponse(story: Story): StoryResponse {
   return {
     id: story.id,
     childProfileId: story.childProfileId,

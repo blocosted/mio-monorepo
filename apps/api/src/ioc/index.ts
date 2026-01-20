@@ -13,7 +13,7 @@ export {
 } from './ioc.types';
 
 // Container configuration
-export { container, getInstance, resetContainer } from './ioc.config';
+export { container, getInstance, resetContainer, initializeContainer } from './ioc.config';
 
 // Re-export connection types for convenience
 export type { StorageS3Config, IStorageClient } from '@mio/shared/server/connections/storage';

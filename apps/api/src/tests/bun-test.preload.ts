@@ -28,6 +28,8 @@ import {
     syncEnvironmentToProcessEnv,
 } from '@mio/shared/constants/environment.constants';
 
+import { initializeContainer } from '../ioc';
+
 const DB_CONTAINER = 'mio-test-db';
 const REDIS_CONTAINER = 'mio-test-redis';
 
@@ -82,6 +84,9 @@ loadEnvironmentFromValues(
     { override: true }
 );
 syncEnvironmentToProcessEnv();
+
+// Initialize IoC container (creates Logger asynchronously)
+await initializeContainer();
 
 afterAll(() => {
     if (startedContainers.length === 0) return;

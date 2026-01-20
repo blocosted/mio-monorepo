@@ -1,36 +1,20 @@
 /**
  * Profiles Handler Mappers
  *
- * Maps between API request/response DTOs and service layer models.
- * Uses only primitive/shared types (enum-like literals) from @mio/shared/types.
- * Uses layer-specific types (handlers ↔ service) without `unknown`.
+ * Maps between API request/response and service layer models.
  */
 
-import type { Gender } from '@mio/shared/types';
 import type {
     ChildProfile,
     CreateChildProfileInput,
     UpdateChildProfileInput,
 } from '../../services/profiles/profiles.service.types';
-import type { CreateProfileBody, UpdateProfileBody, ProfilePreferences } from './profiles.handlers.types';
-
-/**
- * API Response DTO for a profile
- */
-export interface ProfileResponseDto {
-    id: string;
-    firstName: string;
-    age: number;
-    gender: Gender;
-    preferences: ProfilePreferences;
-    createdAt: string;
-    updatedAt: string;
-}
+import type { CreateProfileBody, UpdateProfileBody, ProfileResponse } from '@mio/shared/clients/mio/profiles';
 
 /**
  * Map a service ChildProfile to API response DTO
  */
-export function mapProfileToResponse(profile: ChildProfile): ProfileResponseDto {
+export function mapProfileToResponse(profile: ChildProfile): ProfileResponse {
     return {
         id: profile.id,
         firstName: profile.firstName,
@@ -45,7 +29,7 @@ export function mapProfileToResponse(profile: ChildProfile): ProfileResponseDto 
 /**
  * Map multiple profiles to API response DTOs
  */
-export function mapProfilesToResponse(profiles: ChildProfile[]): ProfileResponseDto[] {
+export function mapProfilesToResponse(profiles: ChildProfile[]): ProfileResponse[] {
     return profiles.map(mapProfileToResponse);
 }
 

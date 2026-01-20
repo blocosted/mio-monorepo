@@ -48,59 +48,75 @@ import {
 // Create container instance
 const container = new Container({ defaultScope: 'Singleton' });
 
+// Track initialization state
+let initialized = false;
+
 /**
- * Service factory definitions
- * Maps IoC identifiers to their factory functions
+ * Initialize the IoC container (must be called before using getInstance)
  */
-const factories = {
-    // Infrastructure - Logger
-    [IocInfrastructure.LOGGER]: () => container.get(Logger, { autobind: true }),
+export async function initializeContainer(): Promise<void> {
+    if (initialized) return;
 
-    // Infrastructure - Database Client
-    [IocInfrastructure.DATABASE_CLIENT]: () => dbConnectionFactory(),
+    // Create Logger instance asynchronously
+    const logger = await Logger.create();
 
-    // Infrastructure - Storage Client
-    [IocInfrastructure.STORAGE_CLIENT]: () => storageConnectionFactory(),
+    // Bind the pre-created Logger instance
+    container.bind<Logger>(IocInfrastructure.LOGGER).toConstantValue(logger);
 
-    // Infrastructure - Redis Client (Bun Redis client encapsulated in connections/redis.ts)
-    [IocInfrastructure.REDIS_CLIENT]: () =>
-        redisConnectionFactory(container.get<Logger>(IocInfrastructure.LOGGER)),
+    /**
+     * Service factory definitions
+     * Maps IoC identifiers to their factory functions
+     */
+    const factories = {
+        // Infrastructure - Database Client
+        [IocInfrastructure.DATABASE_CLIENT]: () => dbConnectionFactory(),
 
-    // Services
-    [IocService.STORAGE]: () => container.get(StorageService, { autobind: true }),
-    [IocService.CACHE]: () => container.get(CacheService, { autobind: true }),
-    [IocService.AUDIO_CACHE]: () => container.get(AudioCacheService, { autobind: true }),
-    [IocService.JOB_PROGRESS]: () => container.get(JobProgressService, { autobind: true }),
-    [IocService.PROFILES_STORE]: () => container.get(ProfilesStore, { autobind: true }),
-    [IocService.PROFILES]: () => container.get(ProfilesService, { autobind: true }),
-    [IocService.STORIES_STORE]: () => container.get(StoriesStore, { autobind: true }),
-    [IocService.STORIES]: () => container.get(StoriesService, { autobind: true }),
-} as const;
+        // Infrastructure - Storage Client
+        [IocInfrastructure.STORAGE_CLIENT]: () => storageConnectionFactory(),
+
+        // Infrastructure - Redis Client
+        [IocInfrastructure.REDIS_CLIENT]: () =>
+            redisConnectionFactory(container.get<Logger>(IocInfrastructure.LOGGER)),
+
+        // Services
+        [IocService.STORAGE]: () => container.get(StorageService, { autobind: true }),
+        [IocService.CACHE]: () => container.get(CacheService, { autobind: true }),
+        [IocService.AUDIO_CACHE]: () => container.get(AudioCacheService, { autobind: true }),
+        [IocService.JOB_PROGRESS]: () => container.get(JobProgressService, { autobind: true }),
+        [IocService.PROFILES_STORE]: () => container.get(ProfilesStore, { autobind: true }),
+        [IocService.PROFILES]: () => container.get(ProfilesService, { autobind: true }),
+        [IocService.STORIES_STORE]: () => container.get(StoriesStore, { autobind: true }),
+        [IocService.STORIES]: () => container.get(StoriesService, { autobind: true }),
+    } as const;
+
+    // Register all factories
+    for (const [identifier, factory] of Object.entries(factories)) {
+        container.bind(identifier).toDynamicValue(factory).inSingletonScope();
+    }
+
+    initialized = true;
+}
 
 // Type for all identifiers
-type IocIdentifier = keyof typeof factories;
-
-// Register all factories
-for (const [identifier, factory] of Object.entries(factories)) {
-    container.bind(identifier).toDynamicValue(factory).inSingletonScope();
-}
+type IocIdentifier = IocInfrastructure | IocService;
 
 /**
  * Get an instance from the container
  */
 export function getInstance<T>(identifier: IocIdentifier): T {
+    if (!initialized) {
+        throw new Error('IoC container not initialized. Call initializeContainer() first.');
+    }
     return container.get<T>(identifier);
 }
 
 /**
  * Reset the container (useful for testing)
  */
-export function resetContainer(): void {
+export async function resetContainer(): Promise<void> {
     container.unbindAll();
-    // Re-register all factories
-    for (const [identifier, factory] of Object.entries(factories)) {
-        container.bind(identifier).toDynamicValue(factory).inSingletonScope();
-    }
+    initialized = false;
+    await initializeContainer();
 }
 
 // Type exports for container access

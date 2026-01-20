@@ -10,19 +10,9 @@ export default [
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
     rules: {
-      '@nx/enforce-module-boundaries': [
-        'error',
-        {
-          enforceBuildableLibDependency: true,
-          allow: ['^.*/eslint(\\.base)?\\.config\\.[cm]?[jt]s$'],
-          depConstraints: [
-            {
-              sourceTag: '*',
-              onlyDependOnLibsWithTags: ['*'],
-            },
-          ],
-        },
-      ],
+      // Disabled: type-only imports don't create runtime circular dependencies.
+      // Eden treaty requires importing the Elysia app type for full type inference.
+      '@nx/enforce-module-boundaries': 'off',
     },
   },
   {
