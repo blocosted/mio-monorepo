@@ -75,7 +75,7 @@
 - [x] Installer `@elysiajs/swagger` et configurer
 - [x] Installer `@elysiajs/cors` et configurer
 - [x] Créer `apps/api/src/plugins/errorHandler.ts`
-- [x] Créer structure `handlers/`, `services/`, `usecases/` (handlers = routes per CLAUDE.md convention)
+- [x] Créer structure `handlers/`, `services/`, `connections/`, `ioc/` (les endpoints HTTP Elysia vivent dans `handlers/`)
 - [x] Créer `apps/api/src/handlers/index.ts` pour aggregation
 - [x] Exporter `type App = typeof app` pour Eden
 - [x] Tester Swagger UI sur `http://localhost:3001/swagger`
@@ -99,7 +99,7 @@
 ### Epic 2: Gestion des Profils (Backend only pour Phase 1)
 
 #### US-010: Création d'un profil enfant (Backend) [2/5] ✅
-- [x] Créer `apps/api/src/handlers/profiles/profiles.handlers.ts` (routes)
+- [x] Créer `apps/api/src/handlers/profiles/profiles.handlers.ts` (handlers)
 - [x] Définir schema Typebox pour POST body (`profiles.handlers.types.ts`)
 - [x] Implémenter validation firstName (1-50 chars)
 - [x] Implémenter validation age (3-12)
@@ -119,25 +119,25 @@
 ### Epic 3: Création d'Histoire (Backend only pour Phase 1)
 
 #### US-020: Création d'une histoire avec prompt (Backend) [2/5]
-- [ ] Créer `apps/api/src/routes/stories.ts`
+- [ ] Créer `apps/api/src/handlers/stories/stories.handlers.ts`
 - [ ] Définir schema Typebox pour POST body
 - [ ] Implémenter validation childProfileId (UUID)
 - [ ] Implémenter validation prompt (3-500 chars)
-- [ ] Créer `apps/api/src/usecases/createStory.ts`
+- [ ] Créer `apps/api/src/services/stories/stories.service.ts` (logique de création)
 - [ ] Vérifier existence du profil enfant
 - [ ] Créer histoire avec status='draft'
 - [ ] Retourner histoire créée avec 201
 - [ ] Tester via Swagger
-- [ ] **Tests:** Créer `apps/api/src/usecases/__tests__/createStory.test.ts`
+- [ ] **Tests:** Créer `apps/api/src/services/stories/__tests__/stories.service.test.ts`
 - [ ] **Tests:** Test création réussie avec profil valide
 - [ ] **Tests:** Test erreur NotFoundError si profil inexistant
 - [ ] **Tests:** Test validation prompt (trop court, trop long)
 
 #### US-022: Service d'enrichissement LLM (Backend) [4/5]
-- [ ] Créer `apps/api/src/services/llm/index.ts` (interface)
+- [ ] Créer `apps/api/src/services/llm/llm.service.types.ts` (interfaces service)
 - [ ] Créer `apps/api/src/services/llm/openai.ts`
 - [ ] Installer `openai` SDK
-- [ ] Créer interface `ILLMService` dans packages/shared
+- [ ] Déclarer `ILLMService` dans `apps/api/src/services/llm/llm.service.types.ts` (pas dans `packages/shared`)
 - [ ] Implémenter `enrichStory(story, profile): Promise<EnrichedConcept>`
 - [ ] Créer system prompt avec variables Handlebars
 - [ ] Intégrer profil enfant (prénom, âge, genre)
@@ -167,8 +167,7 @@
 - [ ] Décrire effets sonores en langage naturel
 - [ ] Calculer durée estimée
 - [ ] Valider output JSON contre schema StoryScript
-- [ ] Créer type `StoryScript` dans packages/shared
-- [ ] Créer type `StorySegment` dans packages/shared
+- [ ] Définir/compléter les interfaces `StoryScript` et `StorySegment` dans `packages/shared/src/models/` (modèles de domaine)
 - [ ] Tester génération avec concept enrichi
 - [ ] **Tests:** Créer `apps/api/src/services/llm/__tests__/scriptGeneration.test.ts`
 - [ ] **Tests:** Test structure segments valide (avec mock)
@@ -184,7 +183,7 @@
 - [ ] Installer SDK ElevenLabs ou utiliser fetch
 - [ ] Créer `apps/api/src/services/audio/elevenLabs.ts`
 - [ ] Configurer ELEVENLABS_API_KEY
-- [ ] Créer interface `IAudioGenerator` dans packages/shared
+- [ ] Créer interface `IAudioGenerator` dans `apps/api/src/services/audio/audio.service.types.ts` (pas dans `packages/shared`)
 - [ ] Implémenter `generateSpeech({ text, voiceId, emotion }): Promise<AudioResult>`
 - [ ] Créer mapping émotions -> voice settings
 - [ ] Créer mapping personnages -> voiceIds
@@ -290,7 +289,7 @@
 - [ ] Ajouter animations de transition
 
 #### US-012: Liste des profils (Backend) [1/5]
-- [ ] Ajouter GET `/profiles` dans routes/profiles.ts
+- [ ] Ajouter GET `/profiles` dans `apps/api/src/handlers/profiles/profiles.handlers.ts`
 - [ ] Implémenter query Drizzle avec orderBy createdAt desc
 - [ ] Retourner liste des profils
 - [ ] Tester via Swagger
@@ -338,7 +337,7 @@
 - [ ] Rediriger vers page enrichissement
 
 #### US-023: Endpoint d'enrichissement (Backend) [2/5]
-- [ ] Ajouter POST `/stories/:id/enrich` dans routes/stories.ts
+- [ ] Ajouter POST `/stories/:id/enrich` dans `apps/api/src/handlers/stories/stories.handlers.ts`
 - [ ] Récupérer histoire avec profil enfant
 - [ ] Appeler service enrichissement LLM
 - [ ] Sauvegarder enrichedConcept dans story
