@@ -165,21 +165,21 @@ Permettre aux enfants (et leurs parents) de créer des histoires audio personnal
 
 ---
 
-### US-022: Service d'enrichissement LLM (Backend) [Complexité: 4/5]
+### US-022: Service d'enrichissement LLM (Backend) [Complexité: 4/5] ✅
 
 **En tant que** système,
 **Je veux** enrichir l'idée initiale via un appel LLM,
 **Afin de** créer un concept d'histoire détaillé.
 
 **Critères d'acceptation:**
-- [ ] Service LLM avec provider abstrait (OpenAI/Anthropic)
-- [ ] System prompt avec profil enfant intégré
-- [ ] Adaptation du vocabulaire selon l'âge
-- [ ] Génération de: titre, personnage principal, personnages secondaires, cadre, ton, thèmes
-- [ ] Output JSON structuré conforme à `EnrichedConcept`
-- [ ] Gestion des thèmes à éviter du profil
-- [ ] Intégration du prénom de l'enfant si `includeChildAsCharacter` actif
-- [ ] **Tests:** Parsing JSON, adaptation vocabulaire par âge, gestion thèmes évités (avec mock LLM)
+- [x] Service LLM avec provider abstrait (impl OpenAI; Anthropic à venir)
+- [x] System prompt avec profil enfant intégré
+- [x] Adaptation du vocabulaire selon l'âge
+- [x] Génération de: titre, personnage principal, personnages secondaires, cadre, ton, thèmes
+- [x] Output JSON structuré conforme à `EnrichedConcept`
+- [x] Gestion des thèmes à éviter du profil
+- [x] Intégration du prénom de l'enfant si `includeChildAsCharacter` actif
+- [x] **Tests:** Parsing JSON, adaptation vocabulaire par âge, gestion thèmes évités (avec mock LLM)
 
 ---
 
