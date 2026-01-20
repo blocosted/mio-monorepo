@@ -1,3 +1,10 @@
+/**
+ * Database Schema
+ *
+ * Drizzle ORM schema definitions for all tables.
+ * Uses centralized types from @mio/shared/types for enums.
+ */
+
 import { relations } from 'drizzle-orm';
 import {
     pgTable,
@@ -8,23 +15,46 @@ import {
     integer,
     real,
 } from 'drizzle-orm/pg-core';
-import type {
-    ChildPreferences,
-    EnrichedConcept,
-    StoryScript,
-    StoryAnswer,
-    JobStepProgress,
+
+import {
+    Gender,
+    StoryDuration,
+    NarratorVoice,
+    Language,
+    HeroGender,
+} from '@mio/shared/types';
+import {
+    StoryStatus,
+    SegmentType,
+    AudioAssetType,
+    JobStatus,
+    type EnrichedConcept,
+    type StoryScript,
+    type StoryAnswer,
+    type JobStepProgress,
 } from '@mio/shared';
 
 /**
  * Child Profiles Table
  */
+export interface ChildPreferencesDb {
+    favoriteThemes?: string[];
+    avoidThemes?: string[];
+    includeChildAsCharacter?: boolean;
+    preferredHeroGender?: HeroGender;
+    preferredStoryDuration?: StoryDuration;
+    narratorVoicePreference?: NarratorVoice;
+    language?: Language;
+}
+
 export const childProfiles = pgTable('child_profiles', {
     id: uuid('id').primaryKey().defaultRandom(),
     firstName: text('first_name').notNull(),
     age: integer('age').notNull(),
-    gender: text('gender', { enum: ['boy', 'girl', 'neutral'] }).notNull(),
-    preferences: jsonb('preferences').$type<ChildPreferences>().default({}),
+    gender: text('gender', {
+        enum: [Gender.Boy, Gender.Girl, Gender.Neutral],
+    }).notNull(),
+    preferences: jsonb('preferences').$type<ChildPreferencesDb>().default({}),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -44,9 +74,9 @@ export const stories = pgTable('stories', {
     finalAudioUrl: text('final_audio_url'),
     duration: integer('duration'),
     status: text('status', {
-        enum: ['draft', 'generating', 'ready', 'failed'],
+        enum: [StoryStatus.Draft, StoryStatus.Generating, StoryStatus.Ready, StoryStatus.Failed],
     })
-        .default('draft')
+        .default(StoryStatus.Draft)
         .notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -62,7 +92,13 @@ export const storySegments = pgTable('story_segments', {
         .references(() => stories.id, { onDelete: 'cascade' }),
     order: integer('order').notNull(),
     type: text('type', {
-        enum: ['narration', 'dialogue', 'pause', 'sound_effect', 'music_change'],
+        enum: [
+            SegmentType.Narration,
+            SegmentType.Dialogue,
+            SegmentType.Pause,
+            SegmentType.SoundEffect,
+            SegmentType.MusicChange,
+        ],
     }).notNull(),
     content: jsonb('content').notNull(),
     audioUrl: text('audio_url'),
@@ -80,7 +116,13 @@ export const audioAssets = pgTable('audio_assets', {
         onDelete: 'cascade',
     }),
     type: text('type', {
-        enum: ['voice', 'sfx', 'music', 'ambiance', 'final_mix'],
+        enum: [
+            AudioAssetType.Voice,
+            AudioAssetType.Sfx,
+            AudioAssetType.Music,
+            AudioAssetType.Ambiance,
+            AudioAssetType.FinalMix,
+        ],
     }).notNull(),
     url: text('url').notNull(),
     duration: real('duration').notNull(),
@@ -98,9 +140,15 @@ export const generationJobs = pgTable('generation_jobs', {
         .references(() => stories.id, { onDelete: 'cascade' })
         .unique(),
     status: text('status', {
-        enum: ['pending', 'processing', 'completed', 'failed', 'cancelled'],
+        enum: [
+            JobStatus.Pending,
+            JobStatus.Processing,
+            JobStatus.Completed,
+            JobStatus.Failed,
+            JobStatus.Cancelled,
+        ],
     })
-        .default('pending')
+        .default(JobStatus.Pending)
         .notNull(),
     progress: integer('progress').default(0).notNull(),
     currentStep: text('current_step'),

@@ -3,11 +3,14 @@
  *
  * Shared types, constants, and errors for Mio
  *
- * Note: Service interfaces are declared in apps/api at the service level,
- * not in this shared package.
+ * Note: Only primitive/shared types (enum-like literals) should live in `./types`.
+ * Each layer (handlers/services/store) declares its own interfaces.
  */
 
-// Models
+// Types (primitive/shared only)
+export * from './types';
+
+// Models (story/job models)
 export * from './models';
 
 // Constants (includes errors and HTTP types)

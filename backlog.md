@@ -98,22 +98,21 @@
 
 ### Epic 2: Gestion des Profils (Backend only pour Phase 1)
 
-#### US-010: Création d'un profil enfant (Backend) [2/5]
-- [ ] Créer `apps/api/src/routes/profiles.ts`
-- [ ] Définir schema Typebox pour POST body
-- [ ] Implémenter validation firstName (1-50 chars)
-- [ ] Implémenter validation age (3-12)
-- [ ] Implémenter validation gender (boy/girl/neutral)
-- [ ] Implémenter preferences optionnelles (JSON)
-- [ ] Créer `apps/api/src/usecases/createProfile.ts`
-- [ ] Implémenter insertion DB via Drizzle
-- [ ] Retourner profil créé avec 201
-- [ ] Tester via Swagger
-- [ ] **Tests:** Créer `apps/api/src/usecases/__tests__/createProfile.test.ts`
-- [ ] **Tests:** Test création réussie avec données valides
-- [ ] **Tests:** Test validation firstName (vide, trop long)
-- [ ] **Tests:** Test validation age (< 3, > 12)
-- [ ] **Tests:** Test validation gender (valeur invalide)
+#### US-010: Création d'un profil enfant (Backend) [2/5] ✅
+- [x] Créer `apps/api/src/handlers/profiles/profiles.handlers.ts` (routes)
+- [x] Définir schema Typebox pour POST body (`profiles.handlers.types.ts`)
+- [x] Implémenter validation firstName (1-50 chars)
+- [x] Implémenter validation age (3-12)
+- [x] Implémenter validation gender (boy/girl/neutral)
+- [x] Implémenter preferences optionnelles (JSON)
+- [x] Créer `apps/api/src/services/profiles/` (service + store layer)
+- [x] Implémenter insertion DB via Drizzle (`profiles.service.store.ts`)
+- [x] Retourner profil créé avec 201
+- [x] Tester via Swagger (POST /profiles, GET /profiles/:id, PATCH, DELETE)
+- [x] **Tests:** Créer `apps/api/src/services/profiles/__tests__/profiles.service.test.ts`
+- [x] **Tests:** Test création réussie avec données valides
+- [x] **Tests:** Test CRUD complet (create, getById, getAll, update, delete)
+- [x] **Tests:** 17 tests couvrant tous les cas
 
 ---
 

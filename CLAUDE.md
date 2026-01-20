@@ -38,7 +38,7 @@ mio/
 ```
 PRESENTATION   → Next.js pages, components
 APPLICATION    → Elysia routes, services
-DOMAIN         → Types, interfaces (@mio/shared)
+DOMAIN         → Shared primitives (enum-like literals) (@mio/shared/types)
 INFRASTRUCTURE → Drizzle, S3 (Bun), Redis (Bun)
 ```
 
@@ -82,10 +82,51 @@ apps/api/src/
 
 ### TypeScript
 - Explicit types for public interfaces
-- Use types from `@mio/shared`
 - Const assertions for literals
 - Discriminated unions for states
 - Prefer `environment.*` / `publicEnvironment.*` over direct `process.env`
+
+### Type Architecture (Clean Architecture)
+
+**Rule**: Only primitive types are shared (enum-like literals such as `Gender`, `StoryDuration`, etc.). Each layer defines its own interfaces.
+
+**Shared Primitive Types** (`@mio/shared/src/types/`):
+- `[feature].types.ts` — Feature-specific “enums” (prefer `const X = {...} as const` + `type X = ...` for TypeBox compatibility)
+- `common.types.ts` — Generic primitives (e.g., `SortDirection`)
+- Import: `import { Gender, StoryDuration } from '@mio/shared/types'`
+
+**Never add interfaces to `@mio/shared/types`**. If you need an interface, define it in the layer that owns it:
+- handlers: inferred from Elysia schemas (`typeof Schema.static`)
+- services: declared in `[feature].service.types.ts`
+- store: inferred from Drizzle schema (or mapped from it), but not exported from shared
+
+**Layer-specific Types**:
+
+| Layer | File | Type Source |
+|-------|------|-------------|
+| Handlers | `[feature].handlers.types.ts` | Inferred from Typebox schemas (`typeof Schema.static`) |
+| Services | `[feature].service.types.ts` | Declared interfaces using shared Enums |
+| Store | `[feature].service.store.ts` | Inferred from Drizzle schema (`typeof table.$inferSelect`) |
+
+**Mappers**: Use layer-specific types + shared Enums. No `unknown` types needed.
+
+```typescript
+// Handler types (inferred from Typebox)
+export type CreateProfileBody = typeof CreateProfileBodySchema.static;
+
+// Service types (declared with Enums)
+import { Gender } from '@mio/shared/types';
+export interface ChildProfile {
+    id: string;
+    gender: Gender;
+    // ...
+}
+
+// Mapper (handler → service)
+export function mapCreateBodyToInput(body: CreateProfileBody): CreateChildProfileInput {
+    return { ...body }; // Types are compatible via shared Enums
+}
+```
 
 ### Elysia
 - Validation with Typebox (`t.Object`, `t.String`, etc.)

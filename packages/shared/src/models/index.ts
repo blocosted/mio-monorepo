@@ -1,89 +1,129 @@
 /**
- * Story Models
+ * Domain Models
+ *
+ * Re-exports types from @mio/shared/types and defines story-related models.
  */
 
-export type StoryStatus = 'draft' | 'generating' | 'ready' | 'failed';
+// Re-export profile primitive types (shared)
+export {
+    Gender,
+    HeroGender,
+    StoryDuration,
+    NarratorVoice,
+    Language,
+} from '../types/profiles.types';
 
-export type Gender = 'boy' | 'girl' | 'neutral';
-
-export type StoryDuration = '2min' | '5min' | '10min';
-
-export type NarratorVoice = 'male' | 'female' | 'any';
-
-export type Language = 'fr' | 'en';
-
-export type VocabularyLevel = 'very_simple' | 'simple' | 'medium' | 'advanced';
-
-export type Emotion =
-    | 'neutral'
-    | 'happy'
-    | 'sad'
-    | 'excited'
-    | 'scared'
-    | 'angry'
-    | 'surprised'
-    | 'curious'
-    | 'calm';
-
-export type SegmentType = 'narration' | 'dialogue' | 'pause' | 'sound_effect' | 'music_change';
-
-export type Ambiance =
-    | 'forest'
-    | 'ocean'
-    | 'space'
-    | 'castle'
-    | 'city'
-    | 'magical_realm'
-    | 'underwater'
-    | 'mountain';
-
-export type Tone =
-    | 'adventurous'
-    | 'funny'
-    | 'mysterious'
-    | 'heartwarming'
-    | 'exciting'
-    | 'calm'
-    | 'educational';
+// Re-export common primitive types (shared)
+export {
+    SortDirection,
+} from '../types/common.types';
 
 /**
- * Child Profile Preferences
+ * Story Status
  */
-export interface ChildPreferences {
-    favoriteThemes?: string[];
-    avoidThemes?: string[];
-    includeChildAsCharacter?: boolean;
-    preferredHeroGender?: 'same' | 'any';
-    preferredStoryDuration?: StoryDuration;
-    narratorVoicePreference?: NarratorVoice;
-    language?: Language;
+export enum StoryStatus {
+    Draft = 'draft',
+    Generating = 'generating',
+    Ready = 'ready',
+    Failed = 'failed',
 }
 
 /**
- * Child Profile
+ * Vocabulary Level
  */
-export interface ChildProfile {
-    id: string;
-    firstName: string;
-    age: number;
-    gender: Gender;
-    preferences: ChildPreferences;
-    createdAt: Date;
-    updatedAt: Date;
+export enum VocabularyLevel {
+    VerySimple = 'very_simple',
+    Simple = 'simple',
+    Medium = 'medium',
+    Advanced = 'advanced',
 }
 
-export interface CreateChildProfileInput {
-    firstName: string;
-    age: number;
-    gender: Gender;
-    preferences?: ChildPreferences;
+/**
+ * Emotion for story segments
+ */
+export enum Emotion {
+    Neutral = 'neutral',
+    Happy = 'happy',
+    Sad = 'sad',
+    Excited = 'excited',
+    Scared = 'scared',
+    Angry = 'angry',
+    Surprised = 'surprised',
+    Curious = 'curious',
+    Calm = 'calm',
 }
 
-export interface UpdateChildProfileInput {
-    firstName?: string;
-    age?: number;
-    gender?: Gender;
-    preferences?: ChildPreferences;
+/**
+ * Segment Type
+ */
+export enum SegmentType {
+    Narration = 'narration',
+    Dialogue = 'dialogue',
+    Pause = 'pause',
+    SoundEffect = 'sound_effect',
+    MusicChange = 'music_change',
+}
+
+/**
+ * Story Ambiance
+ */
+export enum Ambiance {
+    Forest = 'forest',
+    Ocean = 'ocean',
+    Space = 'space',
+    Castle = 'castle',
+    City = 'city',
+    MagicalRealm = 'magical_realm',
+    Underwater = 'underwater',
+    Mountain = 'mountain',
+}
+
+/**
+ * Story Tone
+ */
+export enum Tone {
+    Adventurous = 'adventurous',
+    Funny = 'funny',
+    Mysterious = 'mysterious',
+    Heartwarming = 'heartwarming',
+    Exciting = 'exciting',
+    Calm = 'calm',
+    Educational = 'educational',
+}
+
+/**
+ * Job Status
+ */
+export enum JobStatus {
+    Pending = 'pending',
+    Processing = 'processing',
+    Completed = 'completed',
+    Failed = 'failed',
+    Cancelled = 'cancelled',
+}
+
+/**
+ * Job Step
+ */
+export enum JobStep {
+    ScriptGeneration = 'script_generation',
+    GeneratingVoice = 'generating_voice',
+    GeneratingSfx = 'generating_sfx',
+    GeneratingMusic = 'generating_music',
+    GeneratingAmbiance = 'generating_ambiance',
+    Mixing = 'mixing',
+    Finalizing = 'finalizing',
+}
+
+/**
+ * Audio Asset Type
+ */
+export enum AudioAssetType {
+    Voice = 'voice',
+    Sfx = 'sfx',
+    Music = 'music',
+    Ambiance = 'ambiance',
+    FinalMix = 'final_mix',
 }
 
 /**
@@ -197,27 +237,19 @@ export interface CreateStoryInput {
 }
 
 /**
- * Generation Job
+ * Job Step Progress
  */
-export type JobStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
-
-export type JobStep =
-    | 'script_generation'
-    | 'generating_voice'
-    | 'generating_sfx'
-    | 'generating_music'
-    | 'generating_ambiance'
-    | 'mixing'
-    | 'finalizing';
-
 export interface JobStepProgress {
     name: JobStep;
-    status: 'pending' | 'processing' | 'completed' | 'failed';
+    status: JobStatus;
     progress?: number;
     completedAt?: Date;
     error?: string;
 }
 
+/**
+ * Generation Job
+ */
 export interface GenerationJob {
     id: string;
     storyId: string;
@@ -237,8 +269,6 @@ export interface GenerationJob {
 /**
  * Audio Asset
  */
-export type AudioAssetType = 'voice' | 'sfx' | 'music' | 'ambiance' | 'final_mix';
-
 export interface AudioAsset {
     id: string;
     storyId: string;

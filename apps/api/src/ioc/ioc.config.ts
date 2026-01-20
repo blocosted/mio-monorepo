@@ -32,6 +32,12 @@ import {
     type IAudioCacheService,
     type IJobProgressService,
 } from '../services/cache';
+import {
+    ProfilesService,
+    ProfilesStore,
+    type IProfilesService,
+    type IProfilesStore,
+} from '../services/profiles';
 
 // Create container instance
 const container = new Container({ defaultScope: 'Singleton' });
@@ -59,6 +65,8 @@ const factories = {
     [IocService.CACHE]: () => container.get(CacheService, { autobind: true }),
     [IocService.AUDIO_CACHE]: () => container.get(AudioCacheService, { autobind: true }),
     [IocService.JOB_PROGRESS]: () => container.get(JobProgressService, { autobind: true }),
+    [IocService.PROFILES_STORE]: () => container.get(ProfilesStore, { autobind: true }),
+    [IocService.PROFILES]: () => container.get(ProfilesService, { autobind: true }),
 } as const;
 
 // Type for all identifiers
@@ -88,7 +96,7 @@ export function resetContainer(): void {
 }
 
 // Type exports for container access
-export type { IStorageService, ICacheService, IAudioCacheService, IJobProgressService };
+export type { IStorageService, ICacheService, IAudioCacheService, IJobProgressService, IProfilesService, IProfilesStore };
 export type { RedisClient, DatabaseConnection, Logger };
 
 export { container };

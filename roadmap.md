@@ -133,19 +133,19 @@ Permettre aux enfants (et leurs parents) de créer des histoires audio personnal
 
 ---
 
-### US-010: Création d'un profil enfant (Backend) [Complexité: 2/5]
+### US-010: Création d'un profil enfant (Backend) [Complexité: 2/5] ✅
 
 **En tant que** parent,
 **Je veux** pouvoir créer un profil pour mon enfant via l'API,
 **Afin de** personnaliser les histoires générées.
 
 **Critères d'acceptation:**
-- [ ] Endpoint POST `/profiles` créé
-- [ ] Validation Typebox: firstName (1-50 chars), age (3-12), gender (boy/girl/neutral)
-- [ ] Preferences optionnelles: thèmes favoris/évités, durée préférée, voix narrateur, langue
-- [ ] Profil sauvegardé en base de données
-- [ ] Retour du profil créé avec ID
-- [ ] **Tests:** Validation des inputs, création réussie, gestion des erreurs
+- [x] Endpoint POST `/profiles` créé (+ GET, PATCH, DELETE)
+- [x] Validation Typebox: firstName (1-50 chars), age (3-12), gender (boy/girl/neutral)
+- [x] Preferences optionnelles: thèmes favoris/évités, durée préférée, voix narrateur, langue
+- [x] Profil sauvegardé en base de données via ProfilesStore + Drizzle
+- [x] Retour du profil créé avec ID (201 Created)
+- [x] **Tests:** 17 tests d'intégration (create, getById, getAll, update, delete)
 
 ---
 

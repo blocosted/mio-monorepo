@@ -17,6 +17,8 @@ export enum IocService {
     CACHE = 'CacheService',
     AUDIO_CACHE = 'AudioCacheService',
     JOB_PROGRESS = 'JobProgressService',
+    PROFILES = 'ProfilesService',
+    PROFILES_STORE = 'ProfilesStore',
 }
 
 /**

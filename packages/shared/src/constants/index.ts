@@ -1,4 +1,4 @@
-import type { VocabularyLevel } from '../models';
+import { VocabularyLevel } from '../models';
 
 // Re-export all constants
 export * from './environment.constants';
@@ -30,16 +30,16 @@ export type Theme = (typeof THEMES)[number];
  * Age to vocabulary level mapping
  */
 export const AGE_TO_VOCABULARY: Record<number, VocabularyLevel> = {
-    3: 'very_simple',
-    4: 'very_simple',
-    5: 'simple',
-    6: 'simple',
-    7: 'medium',
-    8: 'medium',
-    9: 'advanced',
-    10: 'advanced',
-    11: 'advanced',
-    12: 'advanced',
+    3: VocabularyLevel.VerySimple,
+    4: VocabularyLevel.VerySimple,
+    5: VocabularyLevel.Simple,
+    6: VocabularyLevel.Simple,
+    7: VocabularyLevel.Medium,
+    8: VocabularyLevel.Medium,
+    9: VocabularyLevel.Advanced,
+    10: VocabularyLevel.Advanced,
+    11: VocabularyLevel.Advanced,
+    12: VocabularyLevel.Advanced,
 };
 
 /**
