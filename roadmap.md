@@ -74,23 +74,25 @@ Permettre aux enfants (et leurs parents) de créer des histoires audio personnal
 
 **Critères d'acceptation:**
 - [x] Bucket `audio` créé sur Supabase Storage
-- [x] Service `storageService` implémenté avec méthodes upload/download/delete/getPublicUrl
+- [x] Connexion Storage encapsulée dans `apps/api/src/connections/storage.ts` (Bun `S3Client`, protocole S3 Supabase)
+- [x] Variables S3 déclarées (`S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_REGION`, `S3_ENDPOINT`)
+- [x] Service `storageService` implémenté avec méthodes upload/download/delete/deleteMany/exists/getPublicUrl
 - [x] URLs publiques accessibles pour la lecture audio
 - [x] Configuration CORS pour le frontend
 
 ---
 
-### US-004: Configuration Upstash Redis [Complexité: 2/5]
+### US-004: Configuration Redis (Bun) [Complexité: 2/5]
 
 **En tant que** développeur,
-**Je veux** un cache Redis configuré sur Upstash,
+**Je veux** un cache Redis configuré (Upstash en prod, Redis local en dev/tests),
 **Afin de** cacher les assets audio et suivre la progression des jobs.
 
 **Critères d'acceptation:**
-- [ ] Instance Upstash Redis créée
-- [ ] Client Redis configuré dans l'API
+- [ ] Instance Upstash Redis créée (prod) + `REDIS_URL` configuré (TLS `rediss://...`)
+- [x] Client Redis encapsulé dans `apps/api/src/connections/redis.ts` (Bun `RedisClient`)
 - [ ] Service `audioCache` avec méthodes get/set et TTL 30 jours
-- [ ] Pattern cache-aside implémenté (`getOrSet`)
+- [x] Pattern cache-aside implémenté (`getOrSet`)
 - [ ] Stockage du progress des jobs dans Redis
 
 ---
@@ -125,7 +127,7 @@ Permettre aux enfants (et leurs parents) de créer des histoires audio personnal
 - [ ] Helper `teardownPostgres()` et `teardownRedis()` pour cleanup
 - [ ] Fixtures de base: `profileFixture()`, `storyFixture()`
 - [ ] Mocks de base: `createMockLLMService()`, `createMockElevenLabsService()`
-- [ ] Configuration `bun test` dans chaque package
+- [x] Configuration `bun test` (global) via `bunfig.toml` + preload Docker/migrations
 - [ ] Scripts Nx `nx run <package>:test` fonctionnels
 - [ ] Documentation des conventions de tests dans CLAUDE.md
 
@@ -913,7 +915,7 @@ Phase 1 (Infrastructure)
     │                                      │
     ├── US-003 Supabase Storage ──────────┤
     │                                      ▼
-    ├── US-004 Upstash Redis ────────► US-007 API Elysia
+    ├── US-004 Redis (Bun) ──────────► US-007 API Elysia
     │                                      │
     │                                      ▼
     │                              US-010 Profils API

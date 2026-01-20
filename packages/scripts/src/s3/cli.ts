@@ -25,7 +25,9 @@ yargs(hideBin(process.argv))
     .command(
         'setup',
         'Create all buckets defined in config',
-        () => {},
+        () => {
+            // No additional options for setup command
+        },
         async () => {
             try {
                 await setupBuckets();
@@ -38,7 +40,9 @@ yargs(hideBin(process.argv))
     .command(
         'list',
         'List all existing buckets',
-        () => {},
+        () => {
+            // No additional options for list command
+        },
         async () => {
             try {
                 await listBuckets();

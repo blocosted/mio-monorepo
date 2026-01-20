@@ -1,11 +1,16 @@
 import { Elysia } from 'elysia';
 import { AppError, ErrorCodes, errorFromCode } from '@mio/shared';
+import { container } from '../ioc';
+import { IocInfrastructure } from '../ioc/ioc.types';
+import type { Logger } from '../repositories/Logger';
 
 /**
  * Centralized error handler plugin for Elysia
  */
 export const errorHandler = new Elysia({ name: 'errorHandler' }).onError(
   ({ error, set }) => {
+    const logger = container.get<Logger>(IocInfrastructure.LOGGER);
+
     // Handle AppError instances
     if (error instanceof AppError) {
       set.status = error.statusCode;
@@ -30,7 +35,7 @@ export const errorHandler = new Elysia({ name: 'errorHandler' }).onError(
     }
 
     // Handle unexpected errors
-    console.error('Unexpected error:', error);
+    logger.withError(error as Error).error('Unexpected error');
     const internalError = errorFromCode(ErrorCodes.InternalError);
     set.status = internalError.statusCode;
     return {

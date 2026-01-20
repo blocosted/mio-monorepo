@@ -14,8 +14,8 @@
 | Backend | Elysia |
 | ORM | Drizzle |
 | Database | Supabase PostgreSQL |
-| Storage | Supabase Storage |
-| Cache | Upstash Redis |
+| Storage | Supabase Storage (S3 protocol) + Bun `S3Client` |
+| Cache | Redis (Upstash in prod) + Bun `RedisClient` |
 | Jobs | Upstash Workflow |
 | Audio | fluent-ffmpeg |
 | Deploy | Vercel (web) + Scaleway (api) |
@@ -29,6 +29,7 @@ mio/
 │   └── api/                    # Elysia API
 ├── packages/
 │   ├── db/                     # Drizzle schemas, migrations
+│   ├── helpers/                # Env loader + process helpers
 │   └── shared/                 # Types, constants, errors
 ```
 
@@ -38,7 +39,7 @@ mio/
 PRESENTATION   → Next.js pages, components
 APPLICATION    → Elysia routes, services
 DOMAIN         → Types, interfaces (@mio/shared)
-INFRASTRUCTURE → Drizzle, Supabase, Redis
+INFRASTRUCTURE → Drizzle, S3 (Bun), Redis (Bun)
 ```
 
 **Rule**: Inner layers NEVER depend on outer layers.
@@ -58,17 +59,24 @@ apps/api/src/
 │   └── [feature].service.map.ts     # DB ↔ Service mapping
 ├── database/models/
 │   └── [feature].models.ts          # Drizzle schemas
+├── ioc/                             # Inversify container wiring
+├── connections/                     # Infrastructure clients (Redis/S3/DB)
+├── plugins/                         # Elysia plugins
+├── repositories/                    # Cross-cutting (Logger)
 ├── workflows/                       # Upstash Workflow
-└── plugins/                         # Elysia plugins
+└── tests/                           # Test runner + helpers
 ```
 
 ## Critical Files
 
 | File | Content |
 |------|---------|
-| `packages/shared/src/constants/environment.constants.ts` | Environment variables |
+| `packages/shared/src/constants/environment.constants.ts` | Environment keys + `environment` singleton (server/runtime) |
+| `packages/shared/src/constants/public-environment.constants.ts` | Public env (`NEXT_PUBLIC_*`) for Next.js (build-time) |
 | `packages/shared/src/constants/error.constants.ts` | Business errors (AppError, ErrorCodes) |
-| `packages/shared/src/clients/mio-client.ts` | Type-safe Treaty client |
+| `packages/helpers/env.loader.ts` | Loads `.env.*` and hydrates `environment` |
+| `bunfig.toml` | `bun test` configuration + global preload |
+| `apps/api/src/tests/bun-test.preload.ts` | Docker+DB migrations bootstrap for tests |
 
 ## Conventions
 
@@ -77,6 +85,7 @@ apps/api/src/
 - Use types from `@mio/shared`
 - Const assertions for literals
 - Discriminated unions for states
+- Prefer `environment.*` / `publicEnvironment.*` over direct `process.env`
 
 ### Elysia
 - Validation with Typebox (`t.Object`, `t.String`, etc.)
@@ -95,14 +104,14 @@ apps/api/src/
 
 ## Tests
 
-- **Runner**: `bun:test`
-- **Containers**: Testcontainers (PostgreSQL, Redis)
-- **Helpers**: `packages/test-utils`
+- **Runner**: `bun test`
+- **Bootstrap**: `bunfig.toml` + preload (`apps/api/src/tests/bun-test.preload.ts`)
+- **Containers**: Docker (PostgreSQL + Redis) started by the test preload (local only)
 - **Convention**: `*.test.ts` (unit), `*.spec.ts` (integration)
 
 ```bash
 bun test                    # All tests
-nx run api:test             # API tests
+bun test <pattern>          # Filter tests
 bun test --coverage         # With coverage
 ```
 
@@ -119,6 +128,10 @@ nx run db:generate              # Generate migrations
 nx run db:push                  # Apply (dev)
 nx run db:studio                # Drizzle Studio
 
+# Storage (S3 buckets/policies)
+nx run scripts:s3 -- setup
+nx run scripts:s3 -- list
+
 # Build
 nx run-many -t build            # Build all
 nx run-many -t lint             # Lint all
@@ -127,6 +140,8 @@ nx run-many -t lint             # Lint all
 ## Key Considerations
 
 - **Validation**: Always validate inputs with Typebox
-- **Secrets**: Environment variables only
+- **Secrets**: Centralize access in `packages/shared/src/constants/environment.constants.ts` (future: secret manager)
 - **Supabase**: Use pooler for serverless
+- **Redis**: Prefer `REDIS_URL` (TLS `rediss://...` in production)
+- **Storage**: Use S3 protocol via Bun `S3Client` (Supabase Storage S3 endpoint)
 - **FFmpeg**: Limit to 1GB RAM, clean temp files

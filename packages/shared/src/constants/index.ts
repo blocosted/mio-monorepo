@@ -2,6 +2,7 @@ import type { VocabularyLevel } from '../models';
 
 // Re-export all constants
 export * from './environment.constants';
+export * from './public-environment.constants';
 export * from './error.constants';
 export * from './http.types';
 

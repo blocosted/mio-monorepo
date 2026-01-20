@@ -30,6 +30,12 @@
       "@mio/shared/*": [
         "packages/shared/src/*"
       ],
+      "@mio/helpers": [
+        "packages/helpers/index.ts"
+      ],
+      "@mio/helpers/*": [
+        "packages/helpers/*"
+      ],
       "@mio/db": [
         "packages/db/src/index.ts"
       ],

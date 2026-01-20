@@ -1,11 +1,12 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from './schema';
+import { environment } from '@mio/shared/constants/environment.constants';
 
 /**
  * Database connection string from environment
  */
-const connectionString = process.env.DATABASE_URL;
+const connectionString = environment.DATABASE_URL;
 
 if (!connectionString) {
     console.warn(

@@ -39,6 +39,12 @@ export enum ErrorCodes {
   StorageDownloadFailed = 'StorageDownloadFailed',
   StorageDeleteFailed = 'StorageDeleteFailed',
   StorageFileNotFound = 'StorageFileNotFound',
+
+  // cache
+  CacheConnectionFailed = 'CacheConnectionFailed',
+  CacheGetFailed = 'CacheGetFailed',
+  CacheSetFailed = 'CacheSetFailed',
+  CacheDeleteFailed = 'CacheDeleteFailed',
 }
 
 const errorDefinitions: {
@@ -80,6 +86,24 @@ const errorDefinitions: {
     code: 'STORAGE_FILE_NOT_FOUND',
     message: 'File not found in storage',
     statusCode: HttpStatusCode.NotFound
+  },
+
+  // cache
+  [ErrorCodes.CacheConnectionFailed]: {
+    code: 'CACHE_CONNECTION_FAILED',
+    message: 'Failed to connect to cache'
+  },
+  [ErrorCodes.CacheGetFailed]: {
+    code: 'CACHE_GET_FAILED',
+    message: 'Failed to get value from cache'
+  },
+  [ErrorCodes.CacheSetFailed]: {
+    code: 'CACHE_SET_FAILED',
+    message: 'Failed to set value in cache'
+  },
+  [ErrorCodes.CacheDeleteFailed]: {
+    code: 'CACHE_DELETE_FAILED',
+    message: 'Failed to delete value from cache'
   },
 } as const;
 

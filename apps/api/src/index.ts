@@ -8,10 +8,10 @@ import { errorHandler } from './plugins/errorHandler';
 import { profilesRoutes } from './routes/profiles';
 import { storiesRoutes } from './routes/stories';
 import { jobsRoutes } from './routes/jobs';
-import { getContainer } from './container';
-
-// Initialize IoC container (loads environment and creates services)
-const container = getContainer();
+import { container } from './ioc';
+import { IocInfrastructure } from './ioc/ioc.types';
+import type { Logger } from './repositories/Logger';
+import { ENV_DEFAULTS, environment } from '@mio/shared/constants/environment.constants';
 
 // Export container for use in routes/handlers
 export { container };
@@ -35,7 +35,7 @@ const app = new Elysia()
   )
   .use(
     cors({
-      origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+      origin: environment.CORS_ORIGIN ?? ENV_DEFAULTS.CORS_ORIGIN,
       credentials: true,
     })
   )
@@ -44,9 +44,11 @@ const app = new Elysia()
   .use(storiesRoutes)
   .use(jobsRoutes)
   .get('/health', () => ({ status: 'ok', timestamp: new Date().toISOString() }))
-  .listen(process.env.PORT || 3001);
+  .listen(parseInt(environment.API_PORT ?? ENV_DEFAULTS.API_PORT, 10));
 
-console.log(`🦊 Mio API running at ${app.server?.hostname}:${app.server?.port}`);
-console.log(`📚 Swagger docs at http://${app.server?.hostname}:${app.server?.port}/swagger`);
+// Log server startup
+const logger = container.get<Logger>(IocInfrastructure.LOGGER);
+logger.info(`Mio API running at ${app.server?.hostname}:${app.server?.port}`);
+logger.info(`Swagger docs at http://${app.server?.hostname}:${app.server?.port}/swagger`);
 
 export type App = typeof app;

@@ -1,17 +1,17 @@
 /**
  * Storage Service Implementation
  *
- * Handles file storage operations using Supabase Storage.
+ * Handles file storage operations using S3-compatible storage (Supabase via Bun.S3Client).
  * Uses Inversify for dependency injection.
  */
 
 import 'reflect-metadata';
 import { injectable, inject } from 'inversify';
-import type { SupabaseClient } from '@supabase/supabase-js';
 import { AppError, ErrorCodes, DiagnoseSeverity } from '@mio/shared';
 
-import { TYPES } from '../../container/types';
-import type { StorageConfig } from '../../container/container';
+import { IocInfrastructure, BUCKETS } from '../../ioc';
+import type { IStorageClient } from '../../connections/storage';
+import { environment } from '@mio/shared/constants/environment.constants';
 import type { IStorageService, UploadResult, UploadOptions } from './storage.service.types';
 
 /**
@@ -22,14 +22,9 @@ import type { IStorageService, UploadResult, UploadOptions } from './storage.ser
  */
 @injectable()
 export class StorageService implements IStorageService {
-    private readonly storage: ReturnType<SupabaseClient['storage']['from']>;
-
     constructor(
-        @inject(TYPES.SupabaseClient) private readonly client: SupabaseClient,
-        @inject(TYPES.StorageConfig) private readonly config: StorageConfig
-    ) {
-        this.storage = this.client.storage.from(this.config.defaultBucket);
-    }
+        @inject(IocInfrastructure.STORAGE_CLIENT) private readonly client: IStorageClient
+    ) { }
 
     /**
      * Upload a file to storage
@@ -40,18 +35,24 @@ export class StorageService implements IStorageService {
         options: UploadOptions = {}
     ): Promise<UploadResult> {
         const { contentType = 'audio/mpeg', upsert = true } = options;
+        try {
+            await this.client.upload(BUCKETS.AUDIO, path, file, {
+                contentType,
+                upsert,
+            });
 
-        const { data, error } = await this.storage.upload(path, file, {
-            contentType,
-            upsert,
-        });
+            const publicUrl = this.getPublicUrl(path);
 
-        if (error) {
+            return {
+                url: publicUrl,
+                path,
+            };
+        } catch (error) {
             throw new AppError(ErrorCodes.StorageUploadFailed, {
                 diagnoses: [
                     {
                         name: 'storage_error',
-                        message: error.message,
+                        message: error instanceof Error ? error.message : 'Unknown error',
                         severity: DiagnoseSeverity.Error,
                     },
                     {
@@ -62,23 +63,17 @@ export class StorageService implements IStorageService {
                 ],
             });
         }
-
-        const publicUrl = this.getPublicUrl(path);
-
-        return {
-            url: publicUrl,
-            path: data.path,
-        };
     }
 
     /**
      * Download a file from storage
      */
     async download(path: string): Promise<Buffer> {
-        const { data, error } = await this.storage.download(path);
-
-        if (error) {
-            if (error.message.includes('not found') || error.message.includes('404')) {
+        try {
+            return await this.client.download(BUCKETS.AUDIO, path);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            if (/not found|nosuchkey|404/i.test(message)) {
                 throw new AppError(ErrorCodes.StorageFileNotFound, {
                     diagnoses: [
                         {
@@ -94,29 +89,26 @@ export class StorageService implements IStorageService {
                 diagnoses: [
                     {
                         name: 'storage_error',
-                        message: error.message,
+                        message,
                         severity: DiagnoseSeverity.Error,
                     },
                 ],
             });
         }
-
-        const arrayBuffer = await data.arrayBuffer();
-        return Buffer.from(arrayBuffer);
     }
 
     /**
      * Delete a file from storage
      */
     async delete(path: string): Promise<void> {
-        const { error } = await this.storage.remove([path]);
-
-        if (error) {
+        try {
+            await this.client.delete(BUCKETS.AUDIO, path);
+        } catch (error) {
             throw new AppError(ErrorCodes.StorageDeleteFailed, {
                 diagnoses: [
                     {
                         name: 'storage_error',
-                        message: error.message,
+                        message: error instanceof Error ? error.message : 'Unknown error',
                         severity: DiagnoseSeverity.Error,
                     },
                     {
@@ -134,15 +126,14 @@ export class StorageService implements IStorageService {
      */
     async deleteMany(paths: string[]): Promise<void> {
         if (paths.length === 0) return;
-
-        const { error } = await this.storage.remove(paths);
-
-        if (error) {
+        try {
+            await this.client.deleteMany(BUCKETS.AUDIO, paths);
+        } catch (error) {
             throw new AppError(ErrorCodes.StorageDeleteFailed, {
                 diagnoses: [
                     {
                         name: 'storage_error',
-                        message: error.message,
+                        message: error instanceof Error ? error.message : 'Unknown error',
                         severity: DiagnoseSeverity.Error,
                     },
                     {
@@ -159,26 +150,29 @@ export class StorageService implements IStorageService {
      * Get the public URL for a file
      */
     getPublicUrl(path: string): string {
-        const { data } = this.storage.getPublicUrl(path);
-        return data.publicUrl;
+        const supabaseUrl = environment.SUPABASE_URL;
+        if (!supabaseUrl) {
+            throw new Error('SUPABASE_URL environment variable is not set');
+        }
+
+        const base = supabaseUrl.replace(/\/$/, '');
+        const encodedPath = path
+            .split('/')
+            .map((segment) => encodeURIComponent(segment))
+            .join('/');
+
+        // Public bucket URL format for Supabase Storage
+        return `${base}/storage/v1/object/public/${BUCKETS.AUDIO}/${encodedPath}`;
     }
 
     /**
      * Check if a file exists in storage
      */
     async exists(path: string): Promise<boolean> {
-        const dirPath = path.split('/').slice(0, -1).join('/');
-        const fileName = path.split('/').pop();
-
-        const { data, error } = await this.storage.list(dirPath, {
-            limit: 100,
-            search: fileName,
-        });
-
-        if (error) {
+        try {
+            return await this.client.exists(BUCKETS.AUDIO, path);
+        } catch {
             return false;
         }
-
-        return data.some((file) => file.name === fileName);
     }
 }

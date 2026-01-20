@@ -52,7 +52,7 @@ export const storiesRoutes = new Elysia({ prefix: '/stories', tags: ['stories'] 
   // List stories for a profile
   .get(
     '/profile/:profileId',
-    async ({ params: _params }) => {
+    async () => {
       // TODO: Implement with database
       return [];
     },
@@ -66,7 +66,7 @@ export const storiesRoutes = new Elysia({ prefix: '/stories', tags: ['stories'] 
   // Enrich a story
   .post(
     '/:id/enrich',
-    async ({ params: _params, body: _body }) => {
+    async () => {
       // TODO: Implement with LLM service
       return {
         title: 'Le Dragon Timide',
@@ -98,7 +98,7 @@ export const storiesRoutes = new Elysia({ prefix: '/stories', tags: ['stories'] 
   // Generate a story (launch workflow)
   .post(
     '/:id/generate',
-    async ({ params: _params, body: _body }) => {
+    async () => {
       // TODO: Implement with Upstash Workflow
       const jobId = crypto.randomUUID();
       return {
@@ -124,7 +124,7 @@ export const storiesRoutes = new Elysia({ prefix: '/stories', tags: ['stories'] 
   // Delete a story
   .delete(
     '/:id',
-    async ({ params: _params, set }) => {
+    async ({ set }) => {
       // TODO: Implement with database and storage cleanup
       set.status = 204;
       return null;

@@ -1,0 +1,5 @@
+[test]
+# Global test setup for `bun test`
+preload = ["./apps/api/src/tests/bun-test.preload.ts"]
+timeout = 60000
+

@@ -111,7 +111,7 @@ export async function setupBuckets(): Promise<void> {
 /**
  * Delete a bucket
  */
-export async function deleteBucket(name: string, force: boolean = false): Promise<void> {
+export async function deleteBucket(name: string, force = false): Promise<void> {
     const client = getSupabaseAdmin();
 
     console.log(`\n🗑️  Deleting bucket: ${name}...`);

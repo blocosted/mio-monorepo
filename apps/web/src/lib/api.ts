@@ -5,7 +5,9 @@
  * This file serves as the entry point for API communication
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import { publicEnvironment } from '@mio/shared/constants/public-environment.constants';
+
+const API_URL = publicEnvironment.NEXT_PUBLIC_API_URL;
 
 /**
  * Base fetch wrapper with error handling

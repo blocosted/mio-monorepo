@@ -51,22 +51,24 @@
 - [x] Créer bucket `audio` sur Supabase Storage (via CLI `s3:setup`)
 - [x] Configurer policies publiques pour lecture
 - [x] Créer `apps/api/src/services/storage/storage.service.ts`
-- [x] Implémenter `upload(file: Buffer, path: string): Promise<string>`
+- [x] Encapsuler le client dans `apps/api/src/connections/storage.ts` (Bun `S3Client`)
+- [x] Déclarer les variables `S3_*` dans `packages/shared/src/constants/environment.constants.ts` + `env.template`
+- [x] Implémenter `upload(file: Buffer, path: string): Promise<UploadResult>`
 - [x] Implémenter `download(path: string): Promise<Buffer>`
 - [x] Implémenter `delete(path: string): Promise<void>`
+- [x] Implémenter `deleteMany(paths: string[]): Promise<void>`
+- [x] Implémenter `exists(path: string): Promise<boolean>`
 - [x] Implémenter `getPublicUrl(path: string): string`
 - [x] Tester upload/download d'un fichier audio
 
-#### US-004: Configuration Upstash Redis [2/5]
-- [ ] Créer instance Upstash Redis (dashboard)
-- [ ] Récupérer UPSTASH_REDIS_URL et UPSTASH_REDIS_TOKEN
-- [ ] Installer `@upstash/redis` dans apps/api
-- [ ] Créer `apps/api/src/services/cache/redis.ts`
-- [ ] Implémenter client Redis singleton
-- [ ] Implémenter `get<T>(key: string): Promise<T | null>`
-- [ ] Implémenter `set(key: string, value: any, options: { ex?: number }): Promise<void>`
-- [ ] Implémenter `getOrSet<T>(key, fetcher, ttl): Promise<T>`
-- [ ] Tester get/set avec TTL
+#### US-004: Configuration Redis (Bun) [4/5]
+- [ ] Créer instance Upstash Redis (dashboard) (prod)
+- [ ] Récupérer l'URL **TLS** (format `rediss://...`) et la définir dans `REDIS_URL`
+- [x] Encapsuler Redis dans `apps/api/src/connections/redis.ts` (Bun `RedisClient`)
+- [x] Supprimer `@upstash/redis` et le code d'adaptation de tests
+- [x] Implémenter cache-aside (`getOrSet`) + TTL dans `CacheService`
+- [x] Passer les tests cache/job-progress/audio-cache sur un vrai Redis (Docker)
+- [x] Standardiser la config via `REDIS_URL` (et fallback `REDIS_HOST/PORT/PASSWORD`)
 
 #### US-007: API Elysia de base [2/5]
 - [ ] Créer `apps/api/src/index.ts` avec Elysia
@@ -100,7 +102,7 @@
 - [ ] Créer `packages/test-utils/src/mocks/storage.ts`
 - [ ] Implémenter `createMockStorageService()` avec mock upload/download
 - [ ] Créer `packages/test-utils/src/index.ts` avec exports
-- [ ] Configurer `bun test` dans chaque package (package.json scripts)
+- [x] Configurer `bun test` globalement (via `bunfig.toml` + preload)
 - [ ] Ajouter target `test` dans project.json de chaque package
 - [ ] Tester `nx run test-utils:test` et `nx run api:test`
 
@@ -700,3 +702,4 @@ _Aucun blocker identifié pour le moment_
 |------|--------------|
 | Janvier 2026 | Création initiale du backlog |
 | 19 Janvier 2026 | US-003 complétée - Supabase Storage + Inversify DI |
+| 20 Janvier 2026 | Refactor infra: `bun test` via preload, Redis via Bun, Storage via Bun S3 |
