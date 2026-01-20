@@ -44,6 +44,7 @@ import {
     type IStoriesService,
     type IStoriesStore,
 } from '../services/stories';
+import { OpenAILLMService, type ILLMService } from '../services/llm';
 
 // Create container instance
 const container = new Container({ defaultScope: 'Singleton' });
@@ -87,6 +88,7 @@ export async function initializeContainer(): Promise<void> {
         [IocService.PROFILES]: () => container.get(ProfilesService, { autobind: true }),
         [IocService.STORIES_STORE]: () => container.get(StoriesStore, { autobind: true }),
         [IocService.STORIES]: () => container.get(StoriesService, { autobind: true }),
+        [IocService.LLM]: () => container.get(OpenAILLMService, { autobind: true }),
     } as const;
 
     // Register all factories
@@ -129,6 +131,7 @@ export type {
     IProfilesStore,
     IStoriesService,
     IStoriesStore,
+    ILLMService,
 };
 export type { RedisClient, DatabaseConnection, Logger };
 

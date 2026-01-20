@@ -21,6 +21,7 @@ export enum IocService {
     PROFILES_STORE = 'ProfilesStore',
     STORIES = 'StoriesService',
     STORIES_STORE = 'StoriesStore',
+    LLM = 'LLMService',
 }
 
 /**

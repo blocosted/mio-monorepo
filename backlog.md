@@ -9,11 +9,11 @@
 
 | Phase | US | Tâches | Complétées |
 |-------|-----|--------|------------|
-| Phase 1 - MVP Minimal | 13 | 65 | 30 |
+| Phase 1 - MVP Minimal | 13 | 65 | 47 |
 | Phase 2 - MVP Complet | 18 | 68 | 0 |
 | Phase 3 - Production Ready | 16 | 58 | 0 |
 | Phase 4 - Polish & Sécurité | 9 | 27 | 0 |
-| **Total** | **56** | **218** | **30** |
+| **Total** | **56** | **218** | **47** |
 
 ---
 
@@ -133,25 +133,25 @@
 - [x] **Tests:** Test erreur NotFoundError si profil inexistant
 - [x] **Tests:** Test validation prompt (trop court, trop long)
 
-#### US-022: Service d'enrichissement LLM (Backend) [4/5]
-- [ ] Créer `apps/api/src/services/llm/llm.service.types.ts` (interfaces service)
-- [ ] Créer `apps/api/src/services/llm/openai.ts`
-- [ ] Installer `openai` SDK
-- [ ] Déclarer `ILLMService` dans `apps/api/src/services/llm/llm.service.types.ts` (pas dans `packages/shared`)
-- [ ] Implémenter `enrichStory(story, profile): Promise<EnrichedConcept>`
-- [ ] Créer system prompt avec variables Handlebars
-- [ ] Intégrer profil enfant (prénom, âge, genre)
-- [ ] Intégrer thèmes favoris/évités
-- [ ] Adapter vocabulaire selon âge (very_simple/simple/medium/advanced)
-- [ ] Parser réponse JSON avec validation
-- [ ] Gérer erreurs API (rate limit, timeout)
+#### US-022: Service d'enrichissement LLM (Backend) [4/5] ✅
+- [x] Créer `apps/api/src/services/llm/llm.service.types.ts` (interfaces service)
+- [x] Créer `apps/api/src/services/llm/openai.ts`
+- [x] Installer `openai` SDK
+- [x] Déclarer `ILLMService` dans `apps/api/src/services/llm/llm.service.types.ts` (pas dans `packages/shared`)
+- [x] Implémenter `enrichStory(story, profile): Promise<EnrichedConcept>`
+- [x] Créer system prompt avec variables Handlebars
+- [x] Intégrer profil enfant (prénom, âge, genre)
+- [x] Intégrer thèmes favoris/évités
+- [x] Adapter vocabulaire selon âge (very_simple/simple/medium/advanced)
+- [x] Parser réponse JSON avec validation
+- [x] Gérer erreurs API (rate limit, timeout)
 - [ ] Créer `apps/api/src/services/llm/anthropic.ts` (optionnel)
-- [ ] Tester enrichissement avec prompt simple
-- [ ] **Tests:** Créer `apps/api/src/services/llm/__tests__/enrichment.test.ts`
-- [ ] **Tests:** Test parsing JSON réponse LLM (avec mock)
-- [ ] **Tests:** Test adaptation vocabulaire selon âge (4 ans vs 10 ans)
-- [ ] **Tests:** Test exclusion thèmes à éviter
-- [ ] **Tests:** Test intégration prénom enfant
+- [x] Tester enrichissement avec prompt simple
+- [x] **Tests:** Créer `apps/api/src/services/llm/__tests__/enrichment.test.ts`
+- [x] **Tests:** Test parsing JSON réponse LLM (avec mock)
+- [x] **Tests:** Test adaptation vocabulaire selon âge (4 ans vs 10 ans)
+- [x] **Tests:** Test exclusion thèmes à éviter
+- [x] **Tests:** Test intégration prénom enfant
 
 ---
 

@@ -35,3 +35,6 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 .nx/cache
 .nx/workspace-data
+
+# Local CLI run artifacts (non-committed)
+.mio-data/
