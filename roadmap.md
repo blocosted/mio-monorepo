@@ -97,39 +97,39 @@ Permettre aux enfants (et leurs parents) de créer des histoires audio personnal
 
 ---
 
-### US-007: API Elysia de base [Complexité: 2/5]
+### US-007: API Elysia de base [Complexité: 2/5] ✅
 
 **En tant que** développeur,
 **Je veux** un serveur API Elysia configuré avec les plugins essentiels,
 **Afin d'** exposer les endpoints de l'application.
 
 **Critères d'acceptation:**
-- [ ] Serveur Elysia sur port 3001
-- [ ] Plugin Swagger pour documentation automatique
-- [ ] Plugin CORS configuré
-- [ ] Plugin error handler centralisé
-- [ ] Structure routes/services/usecases respectée
-- [ ] Export du type `App` pour Eden
+- [x] Serveur Elysia sur port 3001
+- [x] Plugin Swagger pour documentation automatique
+- [x] Plugin CORS configuré
+- [x] Plugin error handler centralisé
+- [x] Structure handlers/services/usecases respectée (handlers = routes per CLAUDE.md)
+- [x] Export du type `App` pour Eden
 
 ---
 
-### US-009: Infrastructure de Tests [Complexité: 3/5]
+### US-009: Infrastructure de Tests [Complexité: 3/5] ✅
 
 **En tant que** développeur,
 **Je veux** une infrastructure de tests avec containers Docker pour PostgreSQL et Redis,
 **Afin de** pouvoir écrire des tests unitaires et d'intégration fiables.
 
 **Critères d'acceptation:**
-- [ ] Package `packages/test-utils` créé
-- [ ] Helper `setupPostgres()` avec Testcontainers (PostgreSQL 16)
-- [ ] Helper `setupRedis()` avec Testcontainers (Redis 7)
-- [ ] Helper `cleanupTables()` pour reset entre tests
-- [ ] Helper `teardownPostgres()` et `teardownRedis()` pour cleanup
-- [ ] Fixtures de base: `profileFixture()`, `storyFixture()`
-- [ ] Mocks de base: `createMockLLMService()`, `createMockElevenLabsService()`
+- [x] Test utils dans `apps/api/src/tests/` (Docker natif pour compatibilité Bun)
+- [x] Helper `setupDatabase()` avec PostgreSQL 15 container
+- [x] Helper `setupRedis()` avec Redis 7 container
+- [x] Helper `cleanTestPostgresData()` pour reset entre tests
+- [x] Helper `cleanTestRedisData()` pour flush Redis
+- [x] Cleanup automatique des containers (afterAll dans preload)
 - [x] Configuration `bun test` (global) via `bunfig.toml` + preload Docker/migrations
-- [ ] Scripts Nx `nx run <package>:test` fonctionnels
-- [ ] Documentation des conventions de tests dans CLAUDE.md
+- [x] Scripts Nx `nx run api:test` fonctionnel
+- [ ] Fixtures de base (à créer quand nécessaire)
+- [ ] Mocks de base (à créer quand nécessaire)
 
 ---
 

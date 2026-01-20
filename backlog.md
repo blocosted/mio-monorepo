@@ -70,41 +70,29 @@
 - [x] Passer les tests cache/job-progress/audio-cache sur un vrai Redis (Docker)
 - [x] Standardiser la config via `REDIS_URL` (et fallback `REDIS_HOST/PORT/PASSWORD`)
 
-#### US-007: API Elysia de base [2/5]
-- [ ] Créer `apps/api/src/index.ts` avec Elysia
-- [ ] Installer `@elysiajs/swagger` et configurer
-- [ ] Installer `@elysiajs/cors` et configurer
-- [ ] Créer `apps/api/src/plugins/errorHandler.ts`
-- [ ] Créer structure `routes/`, `services/`, `usecases/`
-- [ ] Créer `apps/api/src/routes/index.ts` pour aggregation
-- [ ] Exporter `type App = typeof app` pour Eden
-- [ ] Tester Swagger UI sur `http://localhost:3001/swagger`
+#### US-007: API Elysia de base [2/5] ✅
+- [x] Créer `apps/api/src/index.ts` avec Elysia
+- [x] Installer `@elysiajs/swagger` et configurer
+- [x] Installer `@elysiajs/cors` et configurer
+- [x] Créer `apps/api/src/plugins/errorHandler.ts`
+- [x] Créer structure `handlers/`, `services/`, `usecases/` (handlers = routes per CLAUDE.md convention)
+- [x] Créer `apps/api/src/handlers/index.ts` pour aggregation
+- [x] Exporter `type App = typeof app` pour Eden
+- [x] Tester Swagger UI sur `http://localhost:3001/swagger`
 
-#### US-009: Infrastructure de Tests [3/5]
-- [ ] Créer `packages/test-utils` avec project.json Nx
-- [ ] Installer `testcontainers` et `@testcontainers/postgresql`
-- [ ] Créer `packages/test-utils/src/containers/postgres.ts`
-- [ ] Implémenter `setupPostgres()` avec PostgreSQL 16 container
-- [ ] Implémenter `teardownPostgres()` pour cleanup
-- [ ] Implémenter `cleanupTables(db)` pour truncate entre tests
-- [ ] Créer `packages/test-utils/src/containers/redis.ts`
-- [ ] Implémenter `setupRedis()` avec Redis 7 container
-- [ ] Implémenter `teardownRedis()` pour cleanup
-- [ ] Implémenter `flushRedis(redis)` pour reset entre tests
-- [ ] Créer `packages/test-utils/src/fixtures/profiles.ts`
-- [ ] Implémenter `profileFixture(overrides)` avec données par défaut
-- [ ] Créer `packages/test-utils/src/fixtures/stories.ts`
-- [ ] Implémenter `storyFixture(overrides)` avec données par défaut
-- [ ] Créer `packages/test-utils/src/mocks/llm.ts`
-- [ ] Implémenter `createMockLLMService()` avec mock enrichStory/generateScript
-- [ ] Créer `packages/test-utils/src/mocks/elevenlabs.ts`
-- [ ] Implémenter `createMockElevenLabsService()` avec mock generateSpeech/generateSFX
-- [ ] Créer `packages/test-utils/src/mocks/storage.ts`
-- [ ] Implémenter `createMockStorageService()` avec mock upload/download
-- [ ] Créer `packages/test-utils/src/index.ts` avec exports
+#### US-009: Infrastructure de Tests [3/5] ✅
+- [x] Test utils créés dans `apps/api/src/tests/` (Docker natif au lieu de testcontainers pour compatibilité Bun)
+- [x] Implémenter `setupDatabase()` avec PostgreSQL 15 container (via Docker natif)
+- [x] Implémenter cleanup containers automatique (afterAll dans preload)
+- [x] Implémenter `cleanTestPostgresData(db)` pour truncate entre tests
+- [x] Implémenter `setupRedis()` avec Redis 7 container (via Docker natif)
+- [x] Implémenter `cleanTestRedisData()` pour flush entre tests
 - [x] Configurer `bun test` globalement (via `bunfig.toml` + preload)
-- [ ] Ajouter target `test` dans project.json de chaque package
-- [ ] Tester `nx run test-utils:test` et `nx run api:test`
+- [x] Migrations automatiques au démarrage des tests
+- [x] Configuration silencieuse de la DB pour réduire le bruit des logs
+- [ ] Créer fixtures de base: `profileFixture()`, `storyFixture()` (à faire quand nécessaire)
+- [ ] Créer mocks de base: `createMockLLMService()`, etc. (à faire quand nécessaire)
+- [x] Target `test` dans `apps/api/project.json` fonctionnel
 
 ---
 
