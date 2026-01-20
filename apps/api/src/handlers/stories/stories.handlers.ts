@@ -1,6 +1,14 @@
-import { Elysia, t } from 'elysia';
+import { Elysia } from 'elysia';
 
-export const storiesRoutes = new Elysia({ prefix: '/stories', tags: ['stories'] })
+import {
+  CreateStoryBodySchema,
+  EnrichStoryBodySchema,
+  GenerateStoryBodySchema,
+  ProfileIdParamsSchema,
+  StoryIdParamsSchema,
+} from './stories.handlers.types';
+
+export const storiesHandlers = new Elysia({ prefix: '/stories', tags: ['stories'] })
   // Create a new story
   .post(
     '/',
@@ -16,10 +24,7 @@ export const storiesRoutes = new Elysia({ prefix: '/stories', tags: ['stories'] 
       };
     },
     {
-      body: t.Object({
-        childProfileId: t.String({ format: 'uuid' }),
-        prompt: t.String({ minLength: 3, maxLength: 500 }),
-      }),
+      body: CreateStoryBodySchema,
     }
   )
 
@@ -43,9 +48,7 @@ export const storiesRoutes = new Elysia({ prefix: '/stories', tags: ['stories'] 
       };
     },
     {
-      params: t.Object({
-        id: t.String({ format: 'uuid' }),
-      }),
+      params: StoryIdParamsSchema,
     }
   )
 
@@ -57,9 +60,7 @@ export const storiesRoutes = new Elysia({ prefix: '/stories', tags: ['stories'] 
       return [];
     },
     {
-      params: t.Object({
-        profileId: t.String({ format: 'uuid' }),
-      }),
+      params: ProfileIdParamsSchema,
     }
   )
 
@@ -84,14 +85,8 @@ export const storiesRoutes = new Elysia({ prefix: '/stories', tags: ['stories'] 
       };
     },
     {
-      params: t.Object({
-        id: t.String({ format: 'uuid' }),
-      }),
-      body: t.Object({
-        duration: t.Optional(
-          t.Union([t.Literal('2min'), t.Literal('5min'), t.Literal('10min')])
-        ),
-      }),
+      params: StoryIdParamsSchema,
+      body: EnrichStoryBodySchema,
     }
   )
 
@@ -107,17 +102,8 @@ export const storiesRoutes = new Elysia({ prefix: '/stories', tags: ['stories'] 
       };
     },
     {
-      params: t.Object({
-        id: t.String({ format: 'uuid' }),
-      }),
-      body: t.Object({
-        answers: t.Array(
-          t.Object({
-            questionId: t.String(),
-            value: t.String(),
-          })
-        ),
-      }),
+      params: StoryIdParamsSchema,
+      body: GenerateStoryBodySchema,
     }
   )
 
@@ -130,8 +116,7 @@ export const storiesRoutes = new Elysia({ prefix: '/stories', tags: ['stories'] 
       return null;
     },
     {
-      params: t.Object({
-        id: t.String({ format: 'uuid' }),
-      }),
+      params: StoryIdParamsSchema,
     }
   );
+

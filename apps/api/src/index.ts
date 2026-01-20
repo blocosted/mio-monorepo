@@ -5,9 +5,7 @@ import { Elysia } from 'elysia';
 import { swagger } from '@elysiajs/swagger';
 import { cors } from '@elysiajs/cors';
 import { errorHandler } from './plugins/errorHandler';
-import { profilesRoutes } from './routes/profiles';
-import { storiesRoutes } from './routes/stories';
-import { jobsRoutes } from './routes/jobs';
+import { profilesHandlers, storiesHandlers, jobsHandlers } from './handlers';
 import { container } from './ioc';
 import { IocInfrastructure } from './ioc/ioc.types';
 import type { Logger } from './repositories/Logger';
@@ -40,9 +38,9 @@ const app = new Elysia()
     })
   )
   .use(errorHandler)
-  .use(profilesRoutes)
-  .use(storiesRoutes)
-  .use(jobsRoutes)
+  .use(profilesHandlers)
+  .use(storiesHandlers)
+  .use(jobsHandlers)
   .get('/health', () => ({ status: 'ok', timestamp: new Date().toISOString() }))
   .listen(parseInt(environment.API_PORT ?? ENV_DEFAULTS.API_PORT, 10));
 

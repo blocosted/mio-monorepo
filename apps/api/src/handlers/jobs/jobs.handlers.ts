@@ -1,11 +1,13 @@
-import { Elysia, t } from 'elysia';
+import { Elysia } from 'elysia';
 
-export const jobsRoutes = new Elysia({ prefix: '/jobs', tags: ['jobs'] })
+import { JobIdParamsSchema } from './jobs.handlers.types';
+
+export const jobsHandlers = new Elysia({ prefix: '/jobs', tags: ['jobs'] })
   // Get job status
   .get(
     '/:id',
     async ({ params }) => {
-      // TODO: Implement with Upstash Redis
+      // TODO: Implement with Redis
       return {
         id: params.id,
         storyId: crypto.randomUUID(),
@@ -25,9 +27,7 @@ export const jobsRoutes = new Elysia({ prefix: '/jobs', tags: ['jobs'] })
       };
     },
     {
-      params: t.Object({
-        id: t.String({ format: 'uuid' }),
-      }),
+      params: JobIdParamsSchema,
     }
   )
 
@@ -35,7 +35,7 @@ export const jobsRoutes = new Elysia({ prefix: '/jobs', tags: ['jobs'] })
   .get(
     '/:id/stream',
     async function* ({ params }) {
-      // TODO: Implement with Upstash Redis pub/sub
+      // TODO: Implement with Redis pub/sub
       // This is a generator for SSE streaming
       yield {
         event: 'progress',
@@ -48,9 +48,7 @@ export const jobsRoutes = new Elysia({ prefix: '/jobs', tags: ['jobs'] })
       };
     },
     {
-      params: t.Object({
-        id: t.String({ format: 'uuid' }),
-      }),
+      params: JobIdParamsSchema,
     }
   )
 
@@ -66,8 +64,7 @@ export const jobsRoutes = new Elysia({ prefix: '/jobs', tags: ['jobs'] })
       };
     },
     {
-      params: t.Object({
-        id: t.String({ format: 'uuid' }),
-      }),
+      params: JobIdParamsSchema,
     }
   );
+
