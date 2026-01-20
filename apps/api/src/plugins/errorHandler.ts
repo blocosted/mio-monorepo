@@ -2,7 +2,7 @@ import { Elysia } from 'elysia';
 import { AppError, ErrorCodes, errorFromCode } from '@mio/shared';
 import { container } from '../ioc';
 import { IocInfrastructure } from '../ioc/ioc.types';
-import type { Logger } from '../repositories/Logger';
+import type { Logger } from '@mio/shared/server/logger';
 
 /**
  * Centralized error handler plugin for Elysia

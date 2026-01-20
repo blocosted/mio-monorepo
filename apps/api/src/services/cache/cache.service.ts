@@ -10,7 +10,7 @@ import { injectable, inject } from 'inversify';
 import { AppError, ErrorCodes, DiagnoseSeverity } from '@mio/shared';
 
 import { IocInfrastructure } from '../../ioc';
-import type { IRedisClient } from '../../connections/redis';
+import type { IRedisClient } from '@mio/shared/server/connections/redis';
 import type { ICacheService, CacheSetOptions } from './cache.service.types';
 
 /** Default TTL: 1 hour */

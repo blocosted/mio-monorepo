@@ -10,7 +10,7 @@ import { mock } from 'bun:test';
 import type { ICacheService } from '../services/cache';
 import type { IStorageService } from '../services/storage';
 import { DEFAULT_TEST_CONFIG } from './test-utils';
-import { RedisClient } from '../connections/redis';
+import { RedisClient } from '@mio/shared/server/connections/redis';
 
 /**
  * Generate a random test ID

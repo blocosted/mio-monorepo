@@ -2,11 +2,13 @@
  * Storage Connection Factory (S3)
  *
  * Encapsulates Bun's S3 client for S3-compatible storage (Supabase).
+ *
+ * NOTE: Server-only module (Bun).
  */
 
 import { S3Client as BunS3Client } from 'bun';
 
-import { environment } from '@mio/shared/constants/environment.constants';
+import { environment } from '../../constants/environment.constants';
 
 /**
  * S3 configuration (explicit, so we don't rely on implicit env reading).
@@ -130,3 +132,4 @@ export function storageConnectionFactory(): StorageClient {
         sessionToken,
     });
 }
+

@@ -1,0 +1,5 @@
+[test]
+# Local preload for `bun test` when running from `apps/api` (Nx runs tests with cwd=apps/api).
+preload = ["./src/tests/bun-test.preload.ts"]
+timeout = 60000
+

@@ -24,6 +24,12 @@
     "noPropertyAccessFromIndexSignature": false,
     "baseUrl": ".",
     "paths": {
+      "@mio/api": [
+        "apps/api/src/api.server.ts"
+      ],
+      "@mio/api/*": [
+        "apps/api/src/*"
+      ],
       "@mio/shared": [
         "packages/shared/src/index.ts"
       ],

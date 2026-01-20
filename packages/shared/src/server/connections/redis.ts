@@ -5,15 +5,15 @@
  *
  * - The rest of the codebase should not depend on the Redis client directly.
  * - This module provides JSON (de)serialization so consumers can store objects safely.
+ *
+ * NOTE: Server-only module (Bun).
  */
 
-import { inject, injectable, optional } from 'inversify';
 import { RedisClient as BunRedisClient } from 'bun';
 
-import { environment } from '@mio/shared/constants/environment.constants';
-import { AppError, ErrorCodes } from '@mio/shared/constants/error.constants';
-import { IocInfrastructure } from '../ioc/ioc.types';
-import { Logger } from '../repositories/Logger';
+import { environment } from '../../constants/environment.constants';
+import { AppError, ErrorCodes } from '../../constants/error.constants';
+import type { Logger } from '../logger/Logger';
 
 export interface RedisConfig {
     url?: string;
@@ -59,16 +59,12 @@ export function buildRedisUrl(config: {
     return `redis://${passwordPart}${config.host}:${config.port}${dbPart}`;
 }
 
-@injectable()
 export class RedisClient implements IRedisClient {
     private readonly client: BunRedisClient;
     private readonly logger?: ReturnType<Logger['withModule']>;
     private hasConnected = false;
 
-    constructor(
-        config: RedisConfig,
-        @inject(IocInfrastructure.LOGGER) @optional() logger?: Logger
-    ) {
+    constructor(config: RedisConfig, logger?: Logger) {
         const url =
             config.url ??
             (config.host && config.port
@@ -209,9 +205,13 @@ export function redisConnectionFactory(logger: Logger): RedisClient {
         throw new Error('REDIS_HOST and REDIS_PORT (or REDIS_URL) environment variables must be set');
     }
 
-    return new RedisClient({
-        host,
-        port: parseInt(port, 10),
-        password,
-    }, logger);
+    return new RedisClient(
+        {
+            host,
+            port: parseInt(port, 10),
+            password,
+        },
+        logger
+    );
 }
+

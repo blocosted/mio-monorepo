@@ -5,7 +5,7 @@ import { injectable } from 'inversify';
 import { ConsoleTransport, LogLayer, type LogLevel } from 'loglayer';
 import { serializeError } from 'serialize-error';
 
-import { ENV_DEFAULTS, environment } from '@mio/shared/constants/environment.constants';
+import { ENV_DEFAULTS, environment } from '../../constants/environment.constants';
 
 interface LogContext {
   module?: string;
@@ -158,3 +158,4 @@ export class Logger {
     return this.logger.setLevel(level);
   }
 }
+

@@ -9,7 +9,7 @@ import { CacheService } from '../cache.service';
 import { AudioCacheService } from '../audio-cache.service';
 import type { CachedAudio, AudioCacheKeyParams } from '../audio-cache.service.types';
 import { createTestRedisClient, cleanupRedisKeys } from '../../../tests/test.helpers';
-import type { RedisClient } from '../../../connections/redis';
+import type { RedisClient } from '@mio/shared/server/connections/redis';
 
 describe('AudioCacheService', () => {
     let redis: RedisClient;

@@ -529,7 +529,7 @@ async function mixStory(segments: GeneratedAudio[], script: StoryScript): Promis
 │  - End-to-end type safety avec Eden                             │
 │  - Drizzle ORM (PostgreSQL - Supabase)                          │
 │  - Upstash Workflow (orchestration jobs longue durée)           │
-│  - Upstash Redis (cache audio + progress tracking)              │
+│  - Redis (Upstash en prod) via `REDIS_URL` (cache + progress)    │
 │  - fluent-ffmpeg (mixage audio natif)                           │
 │  - Supabase Storage (stockage audio S3-compatible)              │
 └─────────────────────────────────────────────────────────────────┘
@@ -582,8 +582,7 @@ mio/
 │   │   │   │   └── useStory.ts
 │   │   │   ├── stores/
 │   │   │   └── lib/
-│   │   │       ├── api.ts      # Client Eden (type-safe)
-│   │   │       └── upstash.ts  # Redis client
+│   │   │       └── api.ts      # Client API (Eden/treaty ou wrapper)
 │   │   ├── public/
 │   │   │   └── manifest.json   # PWA manifest
 │   │   ├── next.config.js
@@ -591,48 +590,34 @@ mio/
 │   │
 │   └── api/                    # Elysia API (peut être déployé sur Vercel/Cloudflare)
 │       ├── src/
-│       │   ├── index.ts        # Entry point Elysia
-│       │   ├── routes/
-│       │   │   ├── index.ts    # Route aggregation
-│       │   │   ├── profiles.ts
-│       │   │   ├── stories.ts
-│       │   │   └── jobs.ts
+│       │   ├── api.server.ts   # createApiApp() (sans listen/side effects)
+│       │   ├── index.ts        # Entrypoint (listen)
+│       │   ├── handlers/       # Routes HTTP (Elysia)
+│       │   │   ├── profiles/
+│       │   │   ├── stories/
+│       │   │   └── jobs/
 │       │   ├── services/
-│       │   │   ├── llm/
-│       │   │   │   ├── client.ts
-│       │   │   │   ├── enrichment.ts
-│       │   │   │   └── scriptGeneration.ts
-│       │   │   ├── audio/
-│       │   │   │   ├── elevenLabs.ts
-│       │   │   │   ├── suno.ts
-│       │   │   │   └── ffmpegMixer.ts
+│       │   │   ├── profiles/
+│       │   │   ├── stories/
 │       │   │   ├── cache/
-│       │   │   │   └── audioCache.ts   # Upstash Redis
 │       │   │   └── storage/
-│       │   │       └── supabase.ts     # Supabase Storage
 │       │   ├── workflows/
 │       │   │   └── storyGeneration.ts  # Upstash Workflow
-│       │   └── plugins/
-│       │       └── swagger.ts
+│       │   ├── plugins/
+│       │   ├── ioc/
+│       │   └── tests/
 │       └── project.json        # Nx config
 │
 ├── packages/
 │   ├── db/                     # Drizzle schemas + migrations
 │   │   ├── src/
 │   │   │   ├── schema/
-│   │   │   │   ├── childProfiles.ts
-│   │   │   │   ├── stories.ts
-│   │   │   │   ├── segments.ts
-│   │   │   │   ├── audioAssets.ts
-│   │   │   │   ├── jobs.ts
 │   │   │   │   └── index.ts
 │   │   │   ├── migrations/
-│   │   │   ├── client.ts       # Drizzle client (Supabase PostgreSQL)
-│   │   │   └── seed.ts
 │   │   ├── drizzle.config.ts
 │   │   └── project.json
 │   │
-│   └── shared/                 # Types & constantes partagés
+│   └── shared/                 # Types & constantes partagés (+ server-only)
 │       ├── src/
 │       │   ├── models/
 │       │   │   ├── story.ts
@@ -644,64 +629,11 @@ mio/
 │       │   │   ├── ambiances.ts
 │       │   │   ├── themes.ts
 │       │   │   └── index.ts
-│       │   └── index.ts
-│       └── project.json
-│
-├── nx.json                     # Nx workspace config
-├── package.json
-└── bun.lockb
-```
-│   │
-│   └── api/                    # Bun + Elysia backend
-│       ├── src/
-│       │   ├── index.ts        # Entry point Elysia
-│       │   ├── routes/
-│       │   │   ├── index.ts    # Route aggregation
-│       │   │   ├── stories.ts
-│       │   │   ├── audio.ts
-│       │   │   └── jobs.ts
-│       │   ├── services/
-│       │   │   ├── llm/
-│       │   │   │   ├── client.ts
-│       │   │   │   ├── enrichment.ts
-│       │   │   │   └── scriptGeneration.ts
-│       │   │   ├── audio/
-│       │   │   │   ├── elevenLabs.ts
-│       │   │   │   ├── suno.ts
-│       │   │   │   └── ffmpegMixer.ts
-│       │   │   └── cache/
-│       │   │       └── audioCache.ts
-│       │   ├── jobs/
-│       │   │   ├── queue.ts    # BullMQ setup
-│       │   │   └── storyGeneration.ts
-│       │   └── plugins/
-│       │       └── swagger.ts  # Documentation auto
-│       └── project.json        # Nx config
-│
-├── packages/
-│   ├── db/                     # Drizzle schemas + migrations
-│   │   ├── src/
-│   │   │   ├── schema/
-│   │   │   │   ├── stories.ts
-│   │   │   │   ├── segments.ts
-│   │   │   │   ├── audioAssets.ts
-│   │   │   │   └── index.ts
-│   │   │   ├── migrations/
-│   │   │   ├── client.ts       # Drizzle client export
-│   │   │   └── seed.ts
-│   │   ├── drizzle.config.ts
-│   │   └── project.json
-│   │
-│   └── shared/                 # Types & constantes partagés
-│       ├── src/
-│       │   ├── models/
-│       │   │   ├── story.ts
-│       │   │   ├── audio.ts
-│       │   │   └── index.ts
-│       │   ├── constants/
-│       │   │   ├── emotions.ts
-│       │   │   ├── ambiances.ts
-│       │   │   └── index.ts
+│       │   ├── server/                 # Server-only infra (DB/Redis/S3, Logger)
+│       │   │   ├── connections/
+│       │   │   └── logger/
+│       │   └── clients/
+│       │       └── mio/                # Treaty/Eden client wrapper
 │       │   └── index.ts
 │       └── project.json
 │
@@ -717,7 +649,7 @@ Upstash Workflow permet d'orchestrer des jobs longue durée en serverless avec r
 ```typescript
 // apps/api/src/workflows/storyGeneration.ts
 import { serve } from '@upstash/workflow/nextjs'; // ou elysia adapter
-import { db } from '@mio/db';
+import { dbConnectionFactory } from '@mio/shared/server/connections/db';
 import { stories, storySegments, generationJobs } from '@mio/db/schema';
 
 interface StoryGenerationPayload {
@@ -728,6 +660,7 @@ interface StoryGenerationPayload {
 export const { POST } = serve<StoryGenerationPayload>(
   async (context) => {
     const { storyId, answers } = context.requestPayload;
+    const db = dbConnectionFactory();
 
     // ============================================
     // STEP 1: Récupérer l'histoire et le profil
@@ -991,57 +924,32 @@ async function updateJobProgress(storyId: string, step: string, progress: number
 ### 6.4 Progress Tracking (SSE ou Polling)
 
 ```typescript
-// apps/api/src/routes/jobs.ts
-import { Elysia, t } from 'elysia';
-import { Redis } from '@upstash/redis';
+// apps/api/src/handlers/jobs/jobs.handlers.ts (exemple simplifié)
+import { Elysia } from 'elysia';
+import { IocService, getInstance } from '../../ioc';
+import type { IJobProgressService } from '../../services/cache';
+import { JobIdParamsSchema } from './jobs.handlers.types';
 
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_URL!,
-  token: process.env.UPSTASH_REDIS_TOKEN!,
-});
-
-export const jobsRoutes = new Elysia({ prefix: '/jobs' })
-  
+export const jobsHandlers = new Elysia({ prefix: '/jobs', tags: ['jobs'] })
   // Polling endpoint (simple, fonctionne partout)
-  .get('/:jobId/status', async ({ params }) => {
-    const progress = await redis.get(`job:${params.jobId}:progress`);
-    
-    if (!progress) {
-      // Fallback sur la DB
-      const job = await db.query.generationJobs.findFirst({
-        where: eq(generationJobs.id, params.jobId),
-      });
-      return job || { status: 'not_found' };
-    }
-    
-    return JSON.parse(progress as string);
-  }, {
-    params: t.Object({ jobId: t.String({ format: 'uuid' }) }),
-  })
-  
-  // SSE endpoint (real-time, si supporté)
-  .get('/:jobId/stream', async function* ({ params }) {
-    const jobId = params.jobId;
-    let lastProgress = 0;
-    
-    while (lastProgress < 100) {
-      const data = await redis.get(`job:${jobId}:progress`);
-      if (data) {
-        const progress = JSON.parse(data as string);
-        if (progress.progress !== lastProgress) {
-          lastProgress = progress.progress;
-          yield { data: JSON.stringify(progress) };
-        }
+  .get(
+    '/:id',
+    async ({ params, set }) => {
+      const service = getInstance<IJobProgressService>(IocService.JOB_PROGRESS);
+      const progress = await service.get(params.id);
+      if (!progress) {
+        set.status = 404;
+        return { error: 'Job not found' };
       }
-      
-      // Check si terminé
-      if (lastProgress >= 100) break;
-      
-      // Attendre avant le prochain check
-      await new Promise(r => setTimeout(r, 1000));
-    }
-  }, {
-    params: t.Object({ jobId: t.String({ format: 'uuid' }) }),
+      return progress;
+    },
+    { params: JobIdParamsSchema }
+  )
+
+  // SSE endpoint (real-time, si supporté)
+  .get('/:id/stream', async function* () {
+    // En pratique: streamer via pub/sub (ou polling redis) selon infra.
+    yield { data: JSON.stringify({ status: 'processing', progress: 0 }) };
   });
 ```
 
@@ -1080,7 +988,7 @@ export function useJobProgress(jobId: string | null) {
     const startPolling = () => {
       const interval = setInterval(async () => {
         try {
-          const { data } = await api.jobs[jobId].status.get();
+          const { data } = await api.jobs({ id: jobId }).get();
           setProgress(data);
           
           if (data?.status === 'completed' || data?.status === 'failed') {
@@ -1248,12 +1156,14 @@ export const generationJobs = pgTable('generation_jobs', {
 ### 6.5 API Elysia (Type-Safe)
 
 ```typescript
-// apps/api/src/routes/childProfiles.ts
+// apps/api/src/handlers/profiles/profiles.handlers.ts (exemple simplifié)
 import { Elysia, t } from 'elysia';
-import { db } from '@mio/db';
+import { dbConnectionFactory } from '@mio/shared/server/connections/db';
 import { childProfiles } from '@mio/db/schema';
 
-export const childProfilesRoutes = new Elysia({ prefix: '/profiles' })
+const db = dbConnectionFactory();
+
+export const profilesHandlers = new Elysia({ prefix: '/profiles' })
   
   // Créer un profil enfant
   .post('/', async ({ body }) => {
@@ -1364,12 +1274,14 @@ export const childProfilesRoutes = new Elysia({ prefix: '/profiles' })
     });
   });
 
-// apps/api/src/routes/stories.ts
+// apps/api/src/handlers/stories/stories.handlers.ts (exemple simplifié)
 import { Elysia, t } from 'elysia';
-import { db } from '@mio/db';
+import { dbConnectionFactory } from '@mio/shared/server/connections/db';
 import { stories, childProfiles } from '@mio/db/schema';
 
-export const storiesRoutes = new Elysia({ prefix: '/stories' })
+const db = dbConnectionFactory();
+
+export const storiesHandlers = new Elysia({ prefix: '/stories' })
   
   // Créer une nouvelle histoire
   .post('/', async ({ body }) => {
@@ -1466,24 +1378,16 @@ export const storiesRoutes = new Elysia({ prefix: '/stories' })
     params: t.Object({ profileId: t.String({ format: 'uuid' }) }),
   });
 
-// apps/api/src/index.ts
-import { Elysia } from 'elysia';
-import { swagger } from '@elysiajs/swagger';
-import { cors } from '@elysiajs/cors';
-import { childProfilesRoutes } from './routes/childProfiles';
-import { storiesRoutes } from './routes/stories';
-import { jobsRoutes } from './routes/jobs';
+// apps/api/src/api.server.ts
+export type MioApi = ReturnType<typeof createApiApp>;
 
-const app = new Elysia()
-  .use(swagger())
-  .use(cors())
-  .use(childProfilesRoutes)
-  .use(storiesRoutes)
-  .use(jobsRoutes)
-  .listen(3001);
+// apps/api/src/index.ts
+import { createApiApp } from './api.server';
+import { ENV_DEFAULTS, environment } from '@mio/shared/constants/environment.constants';
+
+const app = createApiApp().listen(parseInt(environment.API_PORT ?? ENV_DEFAULTS.API_PORT, 10));
 
 export type App = typeof app;
-console.log(`🦊 Elysia running at ${app.server?.hostname}:${app.server?.port}`);
 ```
 
 ### 6.6 Client Eden (Frontend Type-Safe)
@@ -1491,13 +1395,13 @@ console.log(`🦊 Elysia running at ${app.server?.hostname}:${app.server?.port}`
 ```typescript
 // apps/web/src/lib/api.ts
 import { treaty } from '@elysiajs/eden';
-import type { App } from '@mio/api';
+import type { MioApi } from '@mio/api';
 
-export const api = treaty<App>('http://localhost:3001');
+export const api = treaty<MioApi>('http://localhost:3001');
 
 // Utilisation dans les composants
-const createStory = async (prompt: string) => {
-  const { data, error } = await api.stories.post({ prompt });
+const createStory = async (childProfileId: string, prompt: string) => {
+  const { data, error } = await api.stories.post({ childProfileId, prompt });
   if (error) throw error;
   return data;
 };
@@ -1840,16 +1744,11 @@ const createSeamlessLoop = async (audioUrl: string, targetDuration: number): Pro
 | Ambiance | ElevenLabs SFX | ~$0.02/ambiance | ~$0.04 |
 | **TOTAL** | | | **~$0.64** |
 
-### 8.6 Optimisations & Cache (Upstash Redis)
+### 8.6 Optimisations & Cache (Redis)
 
 ```typescript
-// packages/shared/src/services/audioCache.ts
-import { Redis } from '@upstash/redis';
-
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_URL!,
-  token: process.env.UPSTASH_REDIS_TOKEN!,
-});
+// apps/api/src/services/cache/audio-cache.service.ts (extrait)
+// Cache exact basé sur hash (prompt + voiceId), TTL 30 jours, + compteur d'usage.
 
 interface AudioCacheStrategy {
   // Niveau 1 : Cache exact (même prompt)
@@ -1867,33 +1766,10 @@ interface AudioCacheStrategy {
 }
 
 export const audioCache = {
-  // Hash du prompt pour clé unique
-  hashPrompt(prompt: string): string {
-    return Bun.hash(prompt.toLowerCase().trim()).toString(16);
-  },
-
-  async get(prompt: string): Promise<CachedAudio | null> {
-    const hash = this.hashPrompt(prompt);
-    const cached = await redis.get<CachedAudio>(`audio:exact:${hash}`);
-    return cached;
-  },
-
-  async set(prompt: string, audio: GeneratedAudio): Promise<void> {
-    const hash = this.hashPrompt(prompt);
-    await redis.set(
-      `audio:exact:${hash}`,
-      {
-        url: audio.url,
-        duration: audio.duration,
-        prompt,
-        createdAt: new Date().toISOString(),
-      },
-      { ex: 60 * 60 * 24 * 30 } // 30 jours
-    );
-    
-    // Incrémenter le compteur d'usage
-    await redis.incr(`audio:usage:${hash}`);
-  },
+  // Implémenté via `AudioCacheService` + `CacheService` (Redis Bun)
+  // - `AudioCacheService.get({prompt, voiceId})`
+  // - `AudioCacheService.set({prompt, voiceId}, {url, duration, voiceId})`
+  // - `AudioCacheService.incrementUsage({prompt, voiceId})`
 
   // Pour le cache sémantique, on utilise la DB avec pgvector
   async findSimilar(prompt: string, threshold: number): Promise<CachedAudio | null> {
@@ -2366,9 +2242,8 @@ nx run api:deploy      # Scaleway
 ```bash
 # Variables d'environnement requises
 
-# Upstash
-UPSTASH_REDIS_URL=
-UPSTASH_REDIS_TOKEN=
+# Redis (Upstash en prod) — une seule URL recommandée
+REDIS_URL=
 UPSTASH_WORKFLOW_URL=
 UPSTASH_WORKFLOW_TOKEN=
 

@@ -74,7 +74,7 @@ Permettre aux enfants (et leurs parents) de créer des histoires audio personnal
 
 **Critères d'acceptation:**
 - [x] Bucket `audio` créé sur Supabase Storage
-- [x] Connexion Storage encapsulée dans `apps/api/src/connections/storage.ts` (Bun `S3Client`, protocole S3 Supabase)
+- [x] Connexion Storage encapsulée dans `packages/shared/src/server/connections/storage.ts` (Bun `S3Client`, protocole S3 Supabase)
 - [x] Variables S3 déclarées (`S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_REGION`, `S3_ENDPOINT`)
 - [x] Service `storageService` implémenté avec méthodes upload/download/delete/deleteMany/exists/getPublicUrl
 - [x] URLs publiques accessibles pour la lecture audio
@@ -90,7 +90,7 @@ Permettre aux enfants (et leurs parents) de créer des histoires audio personnal
 
 **Critères d'acceptation:**
 - [ ] Instance Upstash Redis créée (prod) + `REDIS_URL` configuré (TLS `rediss://...`)
-- [x] Client Redis encapsulé dans `apps/api/src/connections/redis.ts` (Bun `RedisClient`)
+- [x] Client Redis encapsulé dans `packages/shared/src/server/connections/redis.ts` (Bun `RedisClient`)
 - [ ] Service `audioCache` avec méthodes get/set et TTL 30 jours
 - [x] Pattern cache-aside implémenté (`getOrSet`)
 - [ ] Stockage du progress des jobs dans Redis
@@ -156,12 +156,12 @@ Permettre aux enfants (et leurs parents) de créer des histoires audio personnal
 **Afin de** démarrer le processus de génération.
 
 **Critères d'acceptation:**
-- [ ] Endpoint POST `/stories` créé
-- [ ] Validation: childProfileId (UUID), prompt (3-500 chars)
-- [ ] Vérification que le profil enfant existe
-- [ ] Histoire créée avec status 'draft'
-- [ ] Retour de l'histoire avec ID
-- [ ] **Tests:** Création réussie, erreur si profil inexistant, validation du prompt
+- [x] Endpoint POST `/stories` créé
+- [x] Validation: childProfileId (UUID), prompt (3-500 chars)
+- [x] Vérification que le profil enfant existe
+- [x] Histoire créée avec status 'draft'
+- [x] Retour de l'histoire avec ID
+- [x] **Tests:** Création réussie, erreur si profil inexistant, validation du prompt
 
 ---
 

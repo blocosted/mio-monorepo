@@ -7,7 +7,7 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'bun:test';
 import { CacheService } from '../cache.service';
 import { createTestRedisClient, cleanupRedisKeys, generateTestId } from '../../../tests/test.helpers';
-import type { RedisClient } from '../../../connections/redis';
+import type { RedisClient } from '@mio/shared/server/connections/redis';
 
 describe('CacheService', () => {
     let redis: RedisClient;

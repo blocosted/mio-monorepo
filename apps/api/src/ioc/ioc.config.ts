@@ -15,12 +15,12 @@ import '@mio/shared/constants/environment.constants';
 import { IocInfrastructure, IocService } from './ioc.types';
 
 // Connections
-import { dbConnectionFactory, type DatabaseConnection } from '../connections/db';
-import { redisConnectionFactory, type RedisClient } from '../connections/redis';
-import { storageConnectionFactory } from '../connections/storage';
+import { dbConnectionFactory, type DatabaseConnection } from '@mio/shared/server/connections/db';
+import { redisConnectionFactory, type RedisClient } from '@mio/shared/server/connections/redis';
+import { storageConnectionFactory } from '@mio/shared/server/connections/storage';
 
-// Repositories
-import { Logger } from '../repositories/Logger';
+// Cross-cutting
+import { Logger } from '@mio/shared/server/logger';
 
 // Services
 import { StorageService, type IStorageService } from '../services/storage';
@@ -38,6 +38,12 @@ import {
     type IProfilesService,
     type IProfilesStore,
 } from '../services/profiles';
+import {
+    StoriesService,
+    StoriesStore,
+    type IStoriesService,
+    type IStoriesStore,
+} from '../services/stories';
 
 // Create container instance
 const container = new Container({ defaultScope: 'Singleton' });
@@ -67,6 +73,8 @@ const factories = {
     [IocService.JOB_PROGRESS]: () => container.get(JobProgressService, { autobind: true }),
     [IocService.PROFILES_STORE]: () => container.get(ProfilesStore, { autobind: true }),
     [IocService.PROFILES]: () => container.get(ProfilesService, { autobind: true }),
+    [IocService.STORIES_STORE]: () => container.get(StoriesStore, { autobind: true }),
+    [IocService.STORIES]: () => container.get(StoriesService, { autobind: true }),
 } as const;
 
 // Type for all identifiers
@@ -96,7 +104,16 @@ export function resetContainer(): void {
 }
 
 // Type exports for container access
-export type { IStorageService, ICacheService, IAudioCacheService, IJobProgressService, IProfilesService, IProfilesStore };
+export type {
+    IStorageService,
+    ICacheService,
+    IAudioCacheService,
+    IJobProgressService,
+    IProfilesService,
+    IProfilesStore,
+    IStoriesService,
+    IStoriesStore,
+};
 export type { RedisClient, DatabaseConnection, Logger };
 
 export { container };

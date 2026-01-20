@@ -10,7 +10,7 @@ import { injectable, inject } from 'inversify';
 import { AppError, ErrorCodes, DiagnoseSeverity } from '@mio/shared';
 
 import { IocInfrastructure, BUCKETS } from '../../ioc';
-import type { IStorageClient } from '../../connections/storage';
+import type { IStorageClient } from '@mio/shared/server/connections/storage';
 import { environment } from '@mio/shared/constants/environment.constants';
 import type { IStorageService, UploadResult, UploadOptions } from './storage.service.types';
 

@@ -19,6 +19,8 @@ export enum IocService {
     JOB_PROGRESS = 'JobProgressService',
     PROFILES = 'ProfilesService',
     PROFILES_STORE = 'ProfilesStore',
+    STORIES = 'StoriesService',
+    STORIES_STORE = 'StoriesStore',
 }
 
 /**

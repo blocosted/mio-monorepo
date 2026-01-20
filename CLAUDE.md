@@ -30,7 +30,7 @@ mio/
 ├── packages/
 │   ├── db/                     # Drizzle schemas, migrations
 │   ├── helpers/                # Env loader + process helpers
-│   └── shared/                 # Types, constants, errors
+│   └── shared/                 # Types, constants, errors (+ server-only infra)
 ```
 
 ## Architecture (Clean Architecture)
@@ -48,6 +48,7 @@ INFRASTRUCTURE → Drizzle, S3 (Bun), Redis (Bun)
 
 ```
 apps/api/src/
+├── api.server.ts                   # Create Elysia app (no listen/side effects)
 ├── handlers/[feature]/
 │   ├── [feature].handlers.ts        # Elysia routes
 │   ├── [feature].handlers.types.ts  # Validation schemas (Typebox)
@@ -60,12 +61,12 @@ apps/api/src/
 ├── database/models/
 │   └── [feature].models.ts          # Drizzle schemas
 ├── ioc/                             # Inversify container wiring
-├── connections/                     # Infrastructure clients (Redis/S3/DB)
 ├── plugins/                         # Elysia plugins
-├── repositories/                    # Cross-cutting (Logger)
 ├── workflows/                       # Upstash Workflow
 └── tests/                           # Test runner + helpers
 ```
+
+**Note (Infrastructure)**: les clients infra (DB/Redis/S3) et le logger ont été déplacés dans `packages/shared/src/server/` pour centraliser l’infrastructure **server-only** et éviter la duplication.
 
 ## Critical Files
 
@@ -76,7 +77,10 @@ apps/api/src/
 | `packages/shared/src/constants/error.constants.ts` | Business errors (AppError, ErrorCodes) |
 | `packages/helpers/env.loader.ts` | Loads `.env.*` and hydrates `environment` |
 | `bunfig.toml` | `bun test` configuration + global preload |
+| `apps/api/bunfig.toml` | `bun test` configuration for Nx (cwd=`apps/api`) |
 | `apps/api/src/tests/bun-test.preload.ts` | Docker+DB migrations bootstrap for tests |
+| `packages/shared/src/server/connections/*` | Server-only infra clients (DB/Redis/S3) |
+| `packages/shared/src/server/logger/Logger.ts` | Server-only Logger (LogLayer) |
 
 ## Conventions
 

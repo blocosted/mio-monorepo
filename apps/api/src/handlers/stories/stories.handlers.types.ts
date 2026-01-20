@@ -26,3 +26,9 @@ export const GenerateStoryBodySchema = t.Object({
   ),
 });
 
+export type StoryIdParams = typeof StoryIdParamsSchema.static;
+export type ProfileIdParams = typeof ProfileIdParamsSchema.static;
+export type CreateStoryBody = typeof CreateStoryBodySchema.static;
+export type EnrichStoryBody = typeof EnrichStoryBodySchema.static;
+export type GenerateStoryBody = typeof GenerateStoryBodySchema.static;
+

@@ -57,7 +57,8 @@ const errorDefinitions: {
   },
   [ErrorCodes.NotFound]: {
     code: 'NOT_FOUND',
-    message: 'Not found'
+    message: 'Not found',
+    statusCode: HttpStatusCode.NotFound
   },
   [ErrorCodes.ValidationError]: {
     code: 'VALIDATION',

@@ -37,7 +37,7 @@
 - [x] Créer projet Supabase (dashboard)
 - [x] Récupérer DATABASE_URL et configurer `.env`
 - [x] Installer `drizzle-orm` et `drizzle-kit` dans packages/db
-- [x] Créer `packages/db/src/client.ts` avec connexion pooler
+- [x] Centraliser la connexion DB **server-only** via `packages/shared/src/server/connections/db.ts` (factory Drizzle + pool postgres)
 - [x] Créer schema `child_profiles` (id, firstName, age, gender, preferences, timestamps)
 - [x] Créer schema `stories` (id, childProfileId, initialPrompt, enrichedConcept, script, finalAudioUrl, duration, status, timestamps)
 - [x] Créer schema `story_segments` (id, storyId, order, type, content, timing, audioUrl, audioDuration)
@@ -51,7 +51,7 @@
 - [x] Créer bucket `audio` sur Supabase Storage (via CLI `s3:setup`)
 - [x] Configurer policies publiques pour lecture
 - [x] Créer `apps/api/src/services/storage/storage.service.ts`
-- [x] Encapsuler le client dans `apps/api/src/connections/storage.ts` (Bun `S3Client`)
+- [x] Encapsuler le client **server-only** dans `packages/shared/src/server/connections/storage.ts` (Bun `S3Client`)
 - [x] Déclarer les variables `S3_*` dans `packages/shared/src/constants/environment.constants.ts` + `env.template`
 - [x] Implémenter `upload(file: Buffer, path: string): Promise<UploadResult>`
 - [x] Implémenter `download(path: string): Promise<Buffer>`
@@ -64,7 +64,7 @@
 #### US-004: Configuration Redis (Bun) [4/5]
 - [ ] Créer instance Upstash Redis (dashboard) (prod)
 - [ ] Récupérer l'URL **TLS** (format `rediss://...`) et la définir dans `REDIS_URL`
-- [x] Encapsuler Redis dans `apps/api/src/connections/redis.ts` (Bun `RedisClient`)
+- [x] Encapsuler Redis **server-only** dans `packages/shared/src/server/connections/redis.ts` (Bun `RedisClient`)
 - [x] Supprimer `@upstash/redis` et le code d'adaptation de tests
 - [x] Implémenter cache-aside (`getOrSet`) + TTL dans `CacheService`
 - [x] Passer les tests cache/job-progress/audio-cache sur un vrai Redis (Docker)
@@ -75,7 +75,7 @@
 - [x] Installer `@elysiajs/swagger` et configurer
 - [x] Installer `@elysiajs/cors` et configurer
 - [x] Créer `apps/api/src/plugins/errorHandler.ts`
-- [x] Créer structure `handlers/`, `services/`, `connections/`, `ioc/` (les endpoints HTTP Elysia vivent dans `handlers/`)
+- [x] Créer structure `handlers/`, `services/`, `ioc/` (les endpoints HTTP Elysia vivent dans `handlers/`) + infrastructure **server-only** dans `packages/shared/src/server/`
 - [x] Créer `apps/api/src/handlers/index.ts` pour aggregation
 - [x] Exporter `type App = typeof app` pour Eden
 - [x] Tester Swagger UI sur `http://localhost:3001/swagger`
@@ -118,20 +118,20 @@
 
 ### Epic 3: Création d'Histoire (Backend only pour Phase 1)
 
-#### US-020: Création d'une histoire avec prompt (Backend) [2/5]
-- [ ] Créer `apps/api/src/handlers/stories/stories.handlers.ts`
-- [ ] Définir schema Typebox pour POST body
-- [ ] Implémenter validation childProfileId (UUID)
-- [ ] Implémenter validation prompt (3-500 chars)
-- [ ] Créer `apps/api/src/services/stories/stories.service.ts` (logique de création)
-- [ ] Vérifier existence du profil enfant
-- [ ] Créer histoire avec status='draft'
-- [ ] Retourner histoire créée avec 201
-- [ ] Tester via Swagger
-- [ ] **Tests:** Créer `apps/api/src/services/stories/__tests__/stories.service.test.ts`
-- [ ] **Tests:** Test création réussie avec profil valide
-- [ ] **Tests:** Test erreur NotFoundError si profil inexistant
-- [ ] **Tests:** Test validation prompt (trop court, trop long)
+#### US-020: Création d'une histoire avec prompt (Backend) [2/5] ✅
+- [x] Créer `apps/api/src/handlers/stories/stories.handlers.ts`
+- [x] Définir schema Typebox pour POST body
+- [x] Implémenter validation childProfileId (UUID)
+- [x] Implémenter validation prompt (3-500 chars)
+- [x] Créer `apps/api/src/services/stories/stories.service.ts` (logique de création)
+- [x] Vérifier existence du profil enfant
+- [x] Créer histoire avec status='draft'
+- [x] Retourner histoire créée avec 201
+- [x] Tester (via tests handlers Elysia / Eden)
+- [x] **Tests:** Créer `apps/api/src/services/stories/__tests__/stories.service.test.ts`
+- [x] **Tests:** Test création réussie avec profil valide
+- [x] **Tests:** Test erreur NotFoundError si profil inexistant
+- [x] **Tests:** Test validation prompt (trop court, trop long)
 
 #### US-022: Service d'enrichissement LLM (Backend) [4/5]
 - [ ] Créer `apps/api/src/services/llm/llm.service.types.ts` (interfaces service)

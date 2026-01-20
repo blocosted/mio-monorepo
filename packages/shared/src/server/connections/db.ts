@@ -2,13 +2,15 @@
  * Database Connection Factory
  *
  * Creates a Drizzle ORM connection to PostgreSQL (Supabase).
+ *
+ * NOTE: Server-only module (Bun/Node).
  */
 
 import { drizzle, type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 
 import * as schema from '@mio/db/schema';
-import { environment } from '@mio/shared/constants/environment.constants';
+import { environment } from '../../constants/environment.constants';
 
 export type DatabaseConnection = PostgresJsDatabase<typeof schema>;
 export type DatabaseTransaction = DatabaseConnection;
@@ -40,3 +42,4 @@ export function createTestDatabaseConnection(url: string): DatabaseConnection {
     const client = postgres(url, { max: 1 });
     return drizzle(client, { schema });
 }
+

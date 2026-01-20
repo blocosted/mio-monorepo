@@ -11,7 +11,7 @@ import { eq } from 'drizzle-orm';
 import { childProfiles } from '@mio/db/schema';
 
 import { IocInfrastructure } from '../../ioc';
-import type { DatabaseConnection } from '../../connections/db';
+import type { DatabaseConnection } from '@mio/shared/server/connections/db';
 import type {
     CreateChildProfileInput,
     UpdateChildProfileInput,

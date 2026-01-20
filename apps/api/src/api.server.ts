@@ -1,0 +1,53 @@
+/**
+ * API Server Factory
+ *
+ * Exposes a function to create the Elysia app without side effects (no listen, no logs).
+ * This enables reuse for:
+ * - production entrypoint (`src/index.ts`)
+ * - handler tests via `treaty(app)` (Eden)
+ */
+
+// Reflect-metadata must be imported first for Inversify decorators
+import 'reflect-metadata';
+
+import { Elysia } from 'elysia';
+import { swagger } from '@elysiajs/swagger';
+import { cors } from '@elysiajs/cors';
+
+import { errorHandler } from './plugins/errorHandler';
+import { profilesHandlers, storiesHandlers, jobsHandlers } from './handlers';
+import { ENV_DEFAULTS, environment } from '@mio/shared/constants/environment.constants';
+
+export function createApiApp() {
+    return new Elysia()
+        .use(
+            swagger({
+                documentation: {
+                    info: {
+                        title: 'Mio API',
+                        version: '1.0.0',
+                        description: 'API for generating personalized audio stories for children',
+                    },
+                    tags: [
+                        { name: 'profiles', description: 'Child profile management' },
+                        { name: 'stories', description: 'Story generation and management' },
+                        { name: 'jobs', description: 'Generation job tracking' },
+                    ],
+                },
+            })
+        )
+        .use(
+            cors({
+                origin: environment.CORS_ORIGIN ?? ENV_DEFAULTS.CORS_ORIGIN,
+                credentials: true,
+            })
+        )
+        .use(errorHandler)
+        .use(profilesHandlers)
+        .use(storiesHandlers)
+        .use(jobsHandlers)
+        .get('/health', () => ({ status: 'ok', timestamp: new Date().toISOString() }));
+}
+
+export type MioApi = ReturnType<typeof createApiApp>;
+

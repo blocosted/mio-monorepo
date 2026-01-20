@@ -1,48 +1,13 @@
-// Reflect-metadata must be imported first for Inversify decorators
-import 'reflect-metadata';
-
-import { Elysia } from 'elysia';
-import { swagger } from '@elysiajs/swagger';
-import { cors } from '@elysiajs/cors';
-import { errorHandler } from './plugins/errorHandler';
-import { profilesHandlers, storiesHandlers, jobsHandlers } from './handlers';
+import { createApiApp } from './api.server';
 import { container } from './ioc';
 import { IocInfrastructure } from './ioc/ioc.types';
-import type { Logger } from './repositories/Logger';
+import type { Logger } from '@mio/shared/server/logger';
 import { ENV_DEFAULTS, environment } from '@mio/shared/constants/environment.constants';
 
 // Export container for use in routes/handlers
 export { container };
 
-const app = new Elysia()
-  .use(
-    swagger({
-      documentation: {
-        info: {
-          title: 'Mio API',
-          version: '1.0.0',
-          description: 'API for generating personalized audio stories for children',
-        },
-        tags: [
-          { name: 'profiles', description: 'Child profile management' },
-          { name: 'stories', description: 'Story generation and management' },
-          { name: 'jobs', description: 'Generation job tracking' },
-        ],
-      },
-    })
-  )
-  .use(
-    cors({
-      origin: environment.CORS_ORIGIN ?? ENV_DEFAULTS.CORS_ORIGIN,
-      credentials: true,
-    })
-  )
-  .use(errorHandler)
-  .use(profilesHandlers)
-  .use(storiesHandlers)
-  .use(jobsHandlers)
-  .get('/health', () => ({ status: 'ok', timestamp: new Date().toISOString() }))
-  .listen(parseInt(environment.API_PORT ?? ENV_DEFAULTS.API_PORT, 10));
+const app = createApiApp().listen(parseInt(environment.API_PORT ?? ENV_DEFAULTS.API_PORT, 10));
 
 // Log server startup
 const logger = container.get<Logger>(IocInfrastructure.LOGGER);

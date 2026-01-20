@@ -1,27 +1,29 @@
 import { Elysia } from 'elysia';
 
+import { IocService, getInstance } from '../../ioc';
+import type { IStoriesService } from '../../services/stories';
+
 import {
   CreateStoryBodySchema,
   EnrichStoryBodySchema,
   GenerateStoryBodySchema,
   ProfileIdParamsSchema,
   StoryIdParamsSchema,
+  type CreateStoryBody,
 } from './stories.handlers.types';
+import { mapCreateBodyToInput, mapStoryToResponse } from './stories.handlers.map';
 
 export const storiesHandlers = new Elysia({ prefix: '/stories', tags: ['stories'] })
   // Create a new story
   .post(
     '/',
-    async ({ body }) => {
-      // TODO: Implement with database - verify profile exists
-      return {
-        id: crypto.randomUUID(),
-        childProfileId: body.childProfileId,
-        initialPrompt: body.prompt,
-        status: 'draft',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+    async ({ body, set }) => {
+      const service = getInstance<IStoriesService>(IocService.STORIES);
+      const input = mapCreateBodyToInput(body as CreateStoryBody);
+      const story = await service.create(input);
+
+      set.status = 201;
+      return mapStoryToResponse(story);
     },
     {
       body: CreateStoryBodySchema,

@@ -9,7 +9,7 @@ import { CacheService } from '../cache.service';
 import { JobProgressService } from '../job-progress.service';
 import type { JobProgress } from '../job-progress.service.types';
 import { createTestRedisClient, cleanupRedisKeys, generateTestId } from '../../../tests/test.helpers';
-import type { RedisClient } from '../../../connections/redis';
+import type { RedisClient } from '@mio/shared/server/connections/redis';
 
 describe('JobProgressService', () => {
     let redis: RedisClient;
