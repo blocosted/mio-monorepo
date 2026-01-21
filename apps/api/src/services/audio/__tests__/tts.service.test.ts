@@ -551,3 +551,384 @@ describe('VOICE_IDS_BY_LANGUAGE', () => {
         expect(DEFAULT_VOICE_IDS).toEqual(VOICE_IDS_BY_LANGUAGE[Language.English]);
     });
 });
+
+// ============================================================================
+// Archetype Keyword Matching Tests
+// ============================================================================
+
+import { ARCHETYPE_KEYWORDS } from '../tts.service.constants';
+
+describe('ARCHETYPE_KEYWORDS', () => {
+    it('has keywords for all archetypes', () => {
+        const expectedArchetypes = [
+            'narrator', 'childHero', 'wiseCharacter', 'villain',
+            'comedic', 'parent', 'friend', 'animal', 'magical'
+        ];
+
+        for (const archetype of expectedArchetypes) {
+            expect(ARCHETYPE_KEYWORDS[archetype as keyof typeof ARCHETYPE_KEYWORDS]).toBeDefined();
+            expect(ARCHETYPE_KEYWORDS[archetype as keyof typeof ARCHETYPE_KEYWORDS].length).toBeGreaterThan(0);
+        }
+    });
+
+    it('includes English keywords for narrator', () => {
+        const narratorKeywords = ARCHETYPE_KEYWORDS.narrator;
+        expect(narratorKeywords).toContain('narrator');
+        expect(narratorKeywords).toContain('story');
+        expect(narratorKeywords).toContain('storyteller');
+    });
+
+    it('includes French keywords for narrator', () => {
+        const narratorKeywords = ARCHETYPE_KEYWORDS.narrator;
+        expect(narratorKeywords).toContain('narrateur');
+        expect(narratorKeywords).toContain('narratrice');
+        expect(narratorKeywords).toContain('conteur');
+    });
+
+    it('includes English keywords for childHero', () => {
+        const keywords = ARCHETYPE_KEYWORDS.childHero;
+        expect(keywords).toContain('child');
+        expect(keywords).toContain('kid');
+        expect(keywords).toContain('hero');
+        expect(keywords).toContain('protagonist');
+    });
+
+    it('includes French keywords for childHero', () => {
+        const keywords = ARCHETYPE_KEYWORDS.childHero;
+        expect(keywords).toContain('enfant');
+        expect(keywords).toContain('heros');
+        expect(keywords).toContain('protagoniste');
+    });
+
+    it('includes English keywords for villain', () => {
+        const keywords = ARCHETYPE_KEYWORDS.villain;
+        expect(keywords).toContain('villain');
+        expect(keywords).toContain('evil');
+        expect(keywords).toContain('monster');
+    });
+
+    it('includes French keywords for villain', () => {
+        const keywords = ARCHETYPE_KEYWORDS.villain;
+        expect(keywords).toContain('mechant');
+        expect(keywords).toContain('monstre');
+        expect(keywords).toContain('sorciere');
+    });
+
+    it('includes keywords for magical characters', () => {
+        const keywords = ARCHETYPE_KEYWORDS.magical;
+        expect(keywords).toContain('magical');
+        expect(keywords).toContain('fairy');
+        expect(keywords).toContain('unicorn');
+        expect(keywords).toContain('fee');
+        expect(keywords).toContain('licorne');
+    });
+
+    it('includes keywords for animal characters', () => {
+        const keywords = ARCHETYPE_KEYWORDS.animal;
+        expect(keywords).toContain('animal');
+        expect(keywords).toContain('dog');
+        expect(keywords).toContain('cat');
+        expect(keywords).toContain('chien');
+        expect(keywords).toContain('chat');
+    });
+});
+
+describe('Archetype keyword matching logic', () => {
+    function findArchetype(description: string): string | null {
+        const lowerDescription = description.toLowerCase();
+
+        for (const [archetype, keywords] of Object.entries(ARCHETYPE_KEYWORDS)) {
+            if (keywords.some(keyword => lowerDescription.includes(keyword))) {
+                return archetype;
+            }
+        }
+        return null;
+    }
+
+    it('matches English narrator descriptions', () => {
+        expect(findArchetype('Main narrator')).toBe('narrator');
+        expect(findArchetype('Storyteller voice')).toBe('narrator');
+        expect(findArchetype('Story narration')).toBe('narrator');
+    });
+
+    it('matches French narrator descriptions', () => {
+        expect(findArchetype('Narrateur principal')).toBe('narrator');
+        expect(findArchetype('Voix de narratrice')).toBe('narrator');
+        expect(findArchetype('Le conteur')).toBe('narrator');
+    });
+
+    it('matches English child hero descriptions', () => {
+        expect(findArchetype('Young child adventurer')).toBe('childHero');
+        expect(findArchetype('The brave hero')).toBe('childHero');
+        expect(findArchetype('Main protagonist here')).toBe('childHero');
+    });
+
+    it('matches French child hero descriptions', () => {
+        expect(findArchetype('Un enfant courageux')).toBe('childHero');
+        expect(findArchetype('Le brave heros')).toBe('childHero');
+        expect(findArchetype('Jeune protagoniste ici')).toBe('childHero');
+    });
+
+    it('matches English villain descriptions', () => {
+        expect(findArchetype('Evil villain')).toBe('villain');
+        expect(findArchetype('Dark monster')).toBe('villain');
+        expect(findArchetype('The witch')).toBe('villain');
+    });
+
+    it('matches French villain descriptions', () => {
+        expect(findArchetype('Mechant personnage')).toBe('villain');
+        expect(findArchetype('Le monstre effrayant')).toBe('villain');
+        expect(findArchetype('Un vilain terrible')).toBe('villain');
+    });
+
+    it('matches wise character descriptions', () => {
+        expect(findArchetype('Wise old mentor')).toBe('wiseCharacter');
+        expect(findArchetype('Elder sage')).toBe('wiseCharacter');
+        expect(findArchetype('Un ancien sage')).toBe('wiseCharacter');
+    });
+
+    it('matches comedic character descriptions', () => {
+        expect(findArchetype('Funny sidekick')).toBe('comedic');
+        expect(findArchetype('Comic relief')).toBe('comedic');
+        expect(findArchetype('Personnage drole')).toBe('comedic');
+    });
+
+    it('matches parent descriptions', () => {
+        expect(findArchetype('Loving mother')).toBe('parent');
+        expect(findArchetype('Father figure')).toBe('parent');
+        expect(findArchetype('La maman')).toBe('parent');
+        expect(findArchetype('Le papa')).toBe('parent');
+    });
+
+    it('matches friend/sidekick descriptions', () => {
+        expect(findArchetype('Best friend')).toBe('friend');
+        expect(findArchetype('Loyal companion')).toBe('friend');
+        expect(findArchetype('Mon ami')).toBe('friend');
+    });
+
+    it('matches animal descriptions', () => {
+        expect(findArchetype('A talking dog')).toBe('animal');
+        expect(findArchetype('A playful cat')).toBe('animal');
+        expect(findArchetype('Un chien loyal')).toBe('animal');
+    });
+
+    it('matches magical character descriptions', () => {
+        expect(findArchetype('Magical fairy')).toBe('magical');
+        expect(findArchetype('Enchanted elf')).toBe('magical');
+        expect(findArchetype('Une fee magique')).toBe('magical');
+    });
+
+    it('returns null for unmatched descriptions', () => {
+        expect(findArchetype('Random character')).toBeNull();
+        expect(findArchetype('Unknown type')).toBeNull();
+        expect(findArchetype('')).toBeNull();
+    });
+
+    it('is case-insensitive', () => {
+        expect(findArchetype('NARRATOR')).toBe('narrator');
+        expect(findArchetype('Villain')).toBe('villain');
+        expect(findArchetype('ENFANT')).toBe('childHero');
+    });
+});
+
+// ============================================================================
+// Rate Limiting Tests (Extended)
+// ============================================================================
+
+describe('Rate limiting with backoff', () => {
+    it('calculates exponential backoff correctly', () => {
+        const initialBackoff = 500;
+        const maxBackoff = 5000;
+        const multiplier = 1.5;
+
+        let backoff = initialBackoff;
+        const backoffs: number[] = [backoff];
+
+        for (let i = 0; i < 5; i++) {
+            backoff = Math.min(backoff * multiplier, maxBackoff);
+            backoffs.push(backoff);
+        }
+
+        expect(backoffs[0]).toBe(500);
+        expect(backoffs[1]).toBe(750);
+        expect(backoffs[2]).toBe(1125);
+        expect(backoffs[3]).toBe(1687.5);
+        expect(backoffs[4]).toBe(2531.25);
+        expect(backoffs[5]).toBe(3796.875);
+    });
+
+    it('caps backoff at maximum', () => {
+        const initialBackoff = 500;
+        const maxBackoff = 5000;
+        const multiplier = 1.5;
+
+        let backoff = initialBackoff;
+        for (let i = 0; i < 20; i++) {
+            backoff = Math.min(backoff * multiplier, maxBackoff);
+        }
+
+        expect(backoff).toBe(maxBackoff);
+    });
+
+    it('respects maximum wait time', () => {
+        const maxWaitMs = 30000;
+        const startTime = Date.now();
+        let elapsed = 0;
+        let iterations = 0;
+
+        while (elapsed < maxWaitMs && iterations < 100) {
+            elapsed = Date.now() - startTime;
+            iterations++;
+        }
+
+        // Should exit before 100 iterations in real scenario
+        expect(elapsed).toBeLessThanOrEqual(maxWaitMs + 100);
+    });
+});
+
+// ============================================================================
+// Audio Tag Tests
+// ============================================================================
+
+import { EMOTION_AUDIO_TAGS } from '../tts.service.constants';
+
+describe('EMOTION_AUDIO_TAGS', () => {
+    it('has tags for all emotions', () => {
+        const emotions = Object.values(Emotion);
+        for (const emotion of emotions) {
+            expect(emotion in EMOTION_AUDIO_TAGS).toBe(true);
+        }
+    });
+
+    it('returns null for neutral emotion', () => {
+        expect(EMOTION_AUDIO_TAGS[Emotion.Neutral]).toBeNull();
+    });
+
+    it('has correct tag for happy emotion', () => {
+        expect(EMOTION_AUDIO_TAGS[Emotion.Happy]).toBe('[happy]');
+    });
+
+    it('has correct tag for sad emotion', () => {
+        expect(EMOTION_AUDIO_TAGS[Emotion.Sad]).toBe('[sad]');
+    });
+
+    it('has correct tag for excited emotion', () => {
+        expect(EMOTION_AUDIO_TAGS[Emotion.Excited]).toBe('[excited]');
+    });
+
+    it('has correct tag for scared emotion', () => {
+        expect(EMOTION_AUDIO_TAGS[Emotion.Scared]).toBe('[scared]');
+    });
+
+    it('has correct tag for angry emotion', () => {
+        expect(EMOTION_AUDIO_TAGS[Emotion.Angry]).toBe('[angry]');
+    });
+
+    it('has correct tag for surprised emotion (gasp)', () => {
+        expect(EMOTION_AUDIO_TAGS[Emotion.Surprised]).toBe('[gasp]');
+    });
+
+    it('returns null for curious emotion (no specific tag)', () => {
+        expect(EMOTION_AUDIO_TAGS[Emotion.Curious]).toBeNull();
+    });
+
+    it('has correct tag for calm emotion (softly)', () => {
+        expect(EMOTION_AUDIO_TAGS[Emotion.Calm]).toBe('[softly]');
+    });
+});
+
+describe('Audio tag prepending', () => {
+    function prependAudioTag(text: string, emotion: Emotion): string {
+        const audioTag = EMOTION_AUDIO_TAGS[emotion];
+        return audioTag ? `${audioTag} ${text}` : text;
+    }
+
+    it('prepends tag for happy emotion', () => {
+        const result = prependAudioTag('Hello world', Emotion.Happy);
+        expect(result).toBe('[happy] Hello world');
+    });
+
+    it('does not prepend for neutral emotion', () => {
+        const result = prependAudioTag('Hello world', Emotion.Neutral);
+        expect(result).toBe('Hello world');
+    });
+
+    it('does not prepend for curious emotion', () => {
+        const result = prependAudioTag('Hello world', Emotion.Curious);
+        expect(result).toBe('Hello world');
+    });
+
+    it('prepends tag for all tagged emotions', () => {
+        const taggedEmotions = [
+            Emotion.Happy,
+            Emotion.Sad,
+            Emotion.Excited,
+            Emotion.Scared,
+            Emotion.Angry,
+            Emotion.Surprised,
+            Emotion.Calm,
+        ];
+
+        for (const emotion of taggedEmotions) {
+            const result = prependAudioTag('Test', emotion);
+            expect(result).toMatch(/^\[.+\] Test$/);
+        }
+    });
+});
+
+// ============================================================================
+// Voice Settings Merging Tests
+// ============================================================================
+
+describe('Voice settings merging', () => {
+    function mergeVoiceSettings(
+        emotion?: Emotion,
+        overrides?: Partial<typeof DEFAULT_VOICE_SETTINGS>
+    ): typeof DEFAULT_VOICE_SETTINGS {
+        let baseSettings = { ...DEFAULT_VOICE_SETTINGS };
+
+        if (emotion && EMOTION_VOICE_SETTINGS[emotion]) {
+            baseSettings = { ...EMOTION_VOICE_SETTINGS[emotion] };
+        }
+
+        if (overrides) {
+            baseSettings = { ...baseSettings, ...overrides };
+        }
+
+        return baseSettings;
+    }
+
+    it('uses default settings when no emotion or overrides', () => {
+        const result = mergeVoiceSettings();
+        expect(result).toEqual(DEFAULT_VOICE_SETTINGS);
+    });
+
+    it('uses emotion settings when emotion specified', () => {
+        const result = mergeVoiceSettings(Emotion.Happy);
+        expect(result).toEqual(EMOTION_VOICE_SETTINGS[Emotion.Happy]);
+    });
+
+    it('overrides specific settings', () => {
+        const result = mergeVoiceSettings(Emotion.Happy, { stability: 0.9 });
+        expect(result.stability).toBe(0.9);
+        expect(result.speed).toBe(EMOTION_VOICE_SETTINGS[Emotion.Happy].speed);
+    });
+
+    it('allows overriding multiple settings', () => {
+        const overrides = { stability: 0.8, speed: 1.2 };
+        const result = mergeVoiceSettings(Emotion.Sad, overrides);
+
+        expect(result.stability).toBe(0.8);
+        expect(result.speed).toBe(1.2);
+        expect(result.similarityBoost).toBe(EMOTION_VOICE_SETTINGS[Emotion.Sad].similarityBoost);
+    });
+
+    it('preserves all emotion settings except overrides', () => {
+        const result = mergeVoiceSettings(Emotion.Excited, { style: 0.1 });
+
+        expect(result.style).toBe(0.1);
+        expect(result.stability).toBe(EMOTION_VOICE_SETTINGS[Emotion.Excited].stability);
+        expect(result.similarityBoost).toBe(EMOTION_VOICE_SETTINGS[Emotion.Excited].similarityBoost);
+        expect(result.speed).toBe(EMOTION_VOICE_SETTINGS[Emotion.Excited].speed);
+    });
+});

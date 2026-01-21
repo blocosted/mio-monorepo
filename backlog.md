@@ -192,13 +192,16 @@
 - [x] CLI TTS fonctionnel (`tts generate`, `tts from-script`, `tts test-emotions`, `tts list-voices`, `tts sync-voices`)
 - [x] **Prosody Guide:** Guide de prosodie ElevenLabs intégré au prompt de génération de script (contexte narratif, ponctuation expressive, audio tags)
 - [x] **Multi-langue:** Exemples de prosodie spécifiques par langue (FR/EN) dans `scriptGeneration.prompts.ts`
-- [ ] Gérer rate limits (429)
-- [ ] Gérer erreurs API avec retry
-- [ ] **Tests:** Créer `apps/api/src/services/audio/__tests__/elevenLabs.test.ts`
-- [ ] **Tests:** Test mapping émotions -> voice settings
-- [ ] **Tests:** Test sélection voix par personnage
-- [ ] **Tests:** Test gestion erreur rate limit (avec mock)
-- [ ] **Tests:** Test retry sur erreur temporaire
+- [ ] Gérer rate limits (429) avec retry automatique
+- [ ] Gérer erreurs API avec retry exponentiel
+- [x] **Tests:** Créer `apps/api/src/services/audio/__tests__/elevenLabs.provider.test.ts`
+- [x] **Tests:** Créer `apps/api/src/services/audio/__tests__/tts.service.test.ts`
+- [x] **Tests:** Créer `apps/api/src/services/audio/__tests__/voice-registry.service.test.ts`
+- [x] **Tests:** Test mapping émotions -> voice settings
+- [x] **Tests:** Test sélection voix par personnage (multilingual)
+- [x] **Tests:** Test gestion erreur rate limit (avec mock)
+- [x] **Tests:** Test normalisation stability ElevenLabs
+- [x] **Tests:** Test ARCHETYPE_KEYWORDS matching (FR/EN)
 
 ---
 
