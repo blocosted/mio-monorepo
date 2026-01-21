@@ -145,7 +145,7 @@
 - [x] Adapter vocabulaire selon âge (very_simple/simple/medium/advanced)
 - [x] Parser réponse JSON avec validation
 - [x] Gérer erreurs API (rate limit, timeout)
-- [ ] Créer `apps/api/src/services/llm/anthropic.ts` (optionnel)
+- [x] Créer `apps/api/src/services/llm/anthropic.ts` (optionnel)
 - [x] Tester enrichissement avec prompt simple
 - [x] **Tests:** Créer `apps/api/src/services/llm/__tests__/enrichment.test.ts`
 - [x] **Tests:** Test parsing JSON réponse LLM (avec mock)

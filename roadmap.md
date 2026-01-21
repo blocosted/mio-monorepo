@@ -190,15 +190,15 @@ Permettre aux enfants (et leurs parents) de créer des histoires audio personnal
 **Afin de** produire le contenu narratif de l'histoire.
 
 **Critères d'acceptation:**
-- [ ] System prompt avec structure narrative (accroche, contexte, problème, aventure, climax, résolution)
-- [ ] Adaptation du vocabulaire selon `vocabularyLevel` du profil
-- [ ] Génération de segments: narration, dialogue, pause, sound_effect, music_change
-- [ ] Chaque segment contient: id, order, type, content, timing
-- [ ] Emotions spécifiées pour les dialogues
-- [ ] Effets sonores décrits en langage naturel
-- [ ] Durée estimée respectant la préférence du profil
-- [ ] Output JSON conforme à `StoryScript`
-- [ ] **Tests:** Structure segments valide, calcul durée, validation JSON (avec mock LLM)
+- [x] System prompt avec structure narrative (accroche, contexte, problème, aventure, climax, résolution)
+- [x] Adaptation du vocabulaire selon `vocabularyLevel` du profil
+- [x] Génération de segments: narration, dialogue, pause, sound_effect, music_change
+- [x] Chaque segment contient: id, order, type, content, timing
+- [x] Emotions spécifiées pour les dialogues
+- [x] Effets sonores décrits en langage naturel
+- [x] Durée estimée respectant la préférence du profil
+- [x] Output JSON conforme à `StoryScript`
+- [x] **Tests:** Structure segments valide, calcul durée, validation JSON (avec mock LLM)
 
 ---
 
