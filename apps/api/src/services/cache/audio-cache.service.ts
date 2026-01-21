@@ -2,7 +2,7 @@
  * Audio Cache Service Implementation
  *
  * Specialized caching for audio assets with 30-day TTL.
- * Uses prompt hashing for cache keys.
+ * Uses deterministic hashing of all TTS parameters for cache keys.
  */
 
 import 'reflect-metadata';
@@ -14,20 +14,52 @@ import type {
     IAudioCacheService,
     CachedAudio,
     AudioCacheKeyParams,
+    CacheVoiceSettings,
 } from './audio-cache.service.types';
 
 /** 30 days in seconds */
 const AUDIO_CACHE_TTL_SECONDS = 30 * 24 * 60 * 60;
 
 /** Cache key prefixes */
-const AUDIO_CACHE_PREFIX = 'audio';
-const AUDIO_USAGE_PREFIX = 'audio:usage';
+const AUDIO_CACHE_PREFIX = 'tts:audio';
+const AUDIO_USAGE_PREFIX = 'tts:usage';
+
+/**
+ * Normalize voice settings for deterministic hashing.
+ * Ensures consistent key ordering and handles undefined values.
+ */
+function normalizeVoiceSettings(settings?: CacheVoiceSettings): Record<string, number | null> {
+    return {
+        similarity_boost: settings?.similarityBoost ?? null,
+        speed: settings?.speed ?? null,
+        stability: settings?.stability ?? null,
+        style: settings?.style ?? null,
+    };
+}
+
+/**
+ * Generate deterministic cache key from all TTS parameters.
+ * Uses sorted keys to ensure consistent hashing regardless of parameter order.
+ */
+function generateDeterministicHash(params: AudioCacheKeyParams): string {
+    const normalized = {
+        model_id: params.modelId,
+        output_format: params.outputFormat,
+        text: params.text,
+        voice_id: params.voiceId,
+        voice_settings: normalizeVoiceSettings(params.voiceSettings),
+    };
+
+    // JSON.stringify with sorted keys for deterministic output
+    const sortedJson = JSON.stringify(normalized);
+    return String(Bun.hash(sortedJson));
+}
 
 /**
  * Audio Cache Service
  *
  * Caches audio metadata with 30-day TTL.
- * Uses content-based hashing for cache keys.
+ * Uses deterministic hashing of all TTS parameters for cache keys.
  */
 @injectable()
 export class AudioCacheService implements IAudioCacheService {
@@ -36,18 +68,25 @@ export class AudioCacheService implements IAudioCacheService {
     ) {}
 
     /**
-     * Generate cache key from prompt and voice
+     * Generate deterministic cache key from all TTS parameters
      */
-    private generateKey(params: AudioCacheKeyParams): string {
-        const hash = Bun.hash(`${params.prompt}:${params.voiceId}`);
+    generateCacheKey(params: AudioCacheKeyParams): string {
+        const hash = generateDeterministicHash(params);
         return `${AUDIO_CACHE_PREFIX}:${hash}`;
     }
 
     /**
-     * Generate usage key from prompt and voice
+     * Generate cache key from all TTS parameters
+     */
+    private generateKey(params: AudioCacheKeyParams): string {
+        return this.generateCacheKey(params);
+    }
+
+    /**
+     * Generate usage key from all TTS parameters
      */
     private generateUsageKey(params: AudioCacheKeyParams): string {
-        const hash = Bun.hash(`${params.prompt}:${params.voiceId}`);
+        const hash = generateDeterministicHash(params);
         return `${AUDIO_USAGE_PREFIX}:${hash}`;
     }
 

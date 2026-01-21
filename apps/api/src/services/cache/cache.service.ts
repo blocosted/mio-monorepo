@@ -181,4 +181,29 @@ export class CacheService implements ICacheService {
             });
         }
     }
+
+    /**
+     * Set expiration time on a key
+     */
+    async expire(key: string, seconds: number): Promise<boolean> {
+        try {
+            const result = await this.redis.expire(key, seconds);
+            return result === 1;
+        } catch (error) {
+            throw new AppError(ErrorCodes.CacheSetFailed, {
+                diagnoses: [
+                    {
+                        name: 'key',
+                        message: key,
+                        severity: DiagnoseSeverity.Info,
+                    },
+                    {
+                        name: 'error',
+                        message: error instanceof Error ? error.message : 'Unknown error',
+                        severity: DiagnoseSeverity.Error,
+                    },
+                ],
+            });
+        }
+    }
 }

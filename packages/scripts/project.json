@@ -18,6 +18,13 @@
                 "cwd": "."
             }
         },
+        "tts": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "bun run packages/scripts/src/tts/cli.ts",
+                "cwd": "."
+            }
+        },
         "s3:setup": {
             "executor": "nx:run-commands",
             "options": {

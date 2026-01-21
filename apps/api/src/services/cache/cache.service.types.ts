@@ -63,4 +63,12 @@ export interface ICacheService {
      * @returns New value after increment
      */
     incr(key: string): Promise<number>;
+
+    /**
+     * Set expiration time on a key
+     * @param key - Cache key
+     * @param seconds - Time to live in seconds
+     * @returns True if timeout was set
+     */
+    expire(key: string, seconds: number): Promise<boolean>;
 }

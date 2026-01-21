@@ -45,6 +45,12 @@ export enum ErrorCodes {
   CacheGetFailed = 'CacheGetFailed',
   CacheSetFailed = 'CacheSetFailed',
   CacheDeleteFailed = 'CacheDeleteFailed',
+
+  // TTS
+  TTSGenerationFailed = 'TTSGenerationFailed',
+  TTSRateLimited = 'TTSRateLimited',
+  TTSTimeout = 'TTSTimeout',
+  TTSInvalidVoice = 'TTSInvalidVoice',
 }
 
 const errorDefinitions: {
@@ -105,6 +111,26 @@ const errorDefinitions: {
   [ErrorCodes.CacheDeleteFailed]: {
     code: 'CACHE_DELETE_FAILED',
     message: 'Failed to delete value from cache'
+  },
+
+  // TTS
+  [ErrorCodes.TTSGenerationFailed]: {
+    code: 'TTS_GENERATION_FAILED',
+    message: 'Failed to generate speech from text'
+  },
+  [ErrorCodes.TTSRateLimited]: {
+    code: 'TTS_RATE_LIMITED',
+    message: 'TTS API rate limit exceeded',
+    statusCode: HttpStatusCode.TooManyRequests
+  },
+  [ErrorCodes.TTSTimeout]: {
+    code: 'TTS_TIMEOUT',
+    message: 'TTS generation timed out'
+  },
+  [ErrorCodes.TTSInvalidVoice]: {
+    code: 'TTS_INVALID_VOICE',
+    message: 'Invalid voice ID specified',
+    statusCode: HttpStatusCode.BadRequest
   },
 } as const;
 

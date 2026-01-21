@@ -1,0 +1,235 @@
+/**
+ * Generate Speech Command
+ *
+ * Generate audio from text using the TTS service.
+ */
+
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
+import { config as loadDotenv } from 'dotenv';
+
+import { loadEnvironmentFromProcessEnv } from '@mio/shared/constants/environment.constants';
+import { Logger } from '@mio/shared/server/logger';
+import { Emotion } from '@mio/shared/models';
+
+import {
+    createRunDir,
+    writeJsonFile,
+} from '../_local-run-store/run-store';
+
+import { Language } from '@mio/shared/types';
+
+import {
+    ElevenLabsProvider,
+    VOICE_IDS_BY_LANGUAGE,
+    EMOTION_VOICE_SETTINGS,
+    type CharacterArchetype,
+} from '@mio/api/services/audio';
+
+function loadEnv(envFile?: string): void {
+    const files = envFile ? [envFile] : ['.env.local', '.env'];
+    for (const file of files) {
+        if (existsSync(file)) {
+            loadDotenv({ path: file });
+        }
+    }
+    loadEnvironmentFromProcessEnv({ override: true });
+}
+
+function selectVoiceForCharacter(
+    description: string,
+    gender: 'male' | 'female' = 'female',
+    language: 'fr' | 'en' = 'fr'
+): string {
+    const lowerDescription = description.toLowerCase();
+    const voiceIds = VOICE_IDS_BY_LANGUAGE[language];
+
+    const archetypeKeywords: Record<CharacterArchetype, string[]> = {
+        narrator: [
+            'narrator', 'narration', 'story', 'storyteller',
+            'narrateur', 'narratrice', 'conteur', 'conteuse', 'histoire',
+        ],
+        childHero: [
+            'child', 'kid', 'boy', 'girl', 'young', 'hero', 'protagonist',
+            'enfant', 'garcon', 'fille', 'jeune', 'heros', 'heroine', 'protagoniste', 'petit', 'petite',
+        ],
+        wiseCharacter: [
+            'wise', 'elder', 'sage', 'mentor', 'wizard', 'grandmother', 'grandfather', 'old',
+            'sage', 'ancien', 'ancienne', 'mentor', 'sorcier', 'magicien', 'grand-mere', 'grand-pere', 'vieux', 'vieille',
+        ],
+        villain: [
+            'villain', 'evil', 'bad', 'witch', 'monster', 'dragon', 'dark',
+            'mechant', 'mechante', 'mal', 'mauvais', 'sorciere', 'monstre', 'dragon', 'sombre', 'vilain',
+        ],
+        comedic: [
+            'funny', 'silly', 'comic', 'clown', 'joker', 'goofy',
+            'drole', 'rigolo', 'comique', 'clown', 'bouffon', 'amusant', 'farceur',
+        ],
+        parent: [
+            'parent', 'mom', 'dad', 'mother', 'father', 'mama', 'papa',
+            'parent', 'maman', 'papa', 'mere', 'pere', 'mère', 'père',
+        ],
+        friend: [
+            'friend', 'buddy', 'sidekick', 'companion', 'pal',
+            'ami', 'amie', 'copain', 'copine', 'compagnon', 'compagne', 'camarade',
+        ],
+        animal: [
+            'animal', 'pet', 'dog', 'cat', 'bird', 'rabbit', 'bear', 'fox', 'creature',
+            'animal', 'chien', 'chat', 'oiseau', 'lapin', 'ours', 'renard', 'creature', 'loup', 'souris',
+        ],
+        magical: [
+            'magical', 'fairy', 'elf', 'sprite', 'unicorn', 'magic', 'enchanted',
+            'magique', 'fee', 'elfe', 'lutin', 'licorne', 'magie', 'enchante', 'fantastique',
+        ],
+    };
+
+    for (const [archetype, keywords] of Object.entries(archetypeKeywords)) {
+        if (keywords.some(keyword => lowerDescription.includes(keyword))) {
+            const voices = voiceIds[archetype as CharacterArchetype];
+            return voices[gender];
+        }
+    }
+
+    return voiceIds.narrator[gender];
+}
+
+export async function runGenerateSpeechCommand(args: {
+    text?: string;
+    file?: string;
+    voice: string;
+    emotion: string;
+    gender: 'male' | 'female';
+    language: 'fr' | 'en';
+    output?: string;
+    storeDir?: string;
+    save: boolean;
+    envFile?: string;
+    dryRun: boolean;
+}): Promise<void> {
+    loadEnv(args.envFile);
+
+    // Load text from file or use inline text
+    let text: string;
+    if (args.file) {
+        if (!existsSync(args.file)) {
+            throw new Error(`File not found: ${args.file}`);
+        }
+        text = readFileSync(args.file, 'utf-8');
+    } else if (args.text) {
+        text = args.text;
+    } else {
+        throw new Error('Either --text or --file is required');
+    }
+
+    // Validate emotion
+    const emotion = args.emotion as Emotion;
+    if (!Object.values(Emotion).includes(emotion)) {
+        throw new Error(`Invalid emotion "${emotion}". Valid options: ${Object.values(Emotion).join(', ')}`);
+    }
+
+    // Get voice ID for the specified language
+    const voiceId = selectVoiceForCharacter(args.voice, args.gender, args.language);
+    const voiceSettings = EMOTION_VOICE_SETTINGS[emotion];
+
+    // Create run directory for artifacts
+    const run = args.save
+        ? createRunDir({
+            rootDir: args.storeDir,
+            namespace: 'tts',
+            command: 'generate',
+            labelParts: [args.voice, emotion],
+        })
+        : null;
+
+    // Save input
+    if (run) {
+        writeJsonFile(run.runDir, 'input.json', {
+            text,
+            voice: args.voice,
+            voiceId,
+            emotion,
+            gender: args.gender,
+            language: args.language,
+            voiceSettings,
+        });
+
+        writeJsonFile(run.runDir, 'meta.json', {
+            command: 'tts generate',
+            voice: args.voice,
+            voiceId,
+            emotion,
+            gender: args.gender,
+            language: args.language,
+            textLength: text.length,
+            createdAt: new Date().toISOString(),
+            dryRun: args.dryRun,
+        });
+    }
+
+    if (args.dryRun) {
+        const payload = {
+            text: text.substring(0, 100) + (text.length > 100 ? '...' : ''),
+            textLength: text.length,
+            voice: args.voice,
+            voiceId,
+            emotion,
+            gender: args.gender,
+            language: args.language,
+            voiceSettings,
+            artifactsDir: run?.runDir,
+        };
+        console.log(JSON.stringify(payload, null, 2));
+        return;
+    }
+
+    // Initialize provider
+    const logger = await Logger.create();
+    const provider = new ElevenLabsProvider(logger);
+
+    console.log('Generating speech...');
+    const startTime = Date.now();
+
+    const result = await provider.convertWithTimestamps({
+        text,
+        voiceId,
+        voiceSettings,
+    });
+
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+
+    // Save output
+    if (run) {
+        const outputFilename = args.output ?? 'output.mp3';
+        const outputPath = path.join(run.runDir, outputFilename);
+        writeFileSync(outputPath, result.audio);
+
+        writeJsonFile(run.runDir, 'output.json', {
+            durationSeconds: result.durationSeconds,
+            bufferSize: result.audio.length,
+            hasAlignment: !!result.alignment,
+            generationTimeSeconds: parseFloat(elapsed),
+            outputFile: outputFilename,
+        });
+
+        console.log(JSON.stringify({
+            success: true,
+            durationSeconds: result.durationSeconds,
+            fileSizeKB: (result.audio.length / 1024).toFixed(1),
+            generationTimeSeconds: elapsed,
+            outputFile: outputPath,
+            artifactsDir: run.runDir,
+        }, null, 2));
+    } else {
+        // If not saving, write to specified output or current dir
+        const outputPath = args.output ?? 'output.mp3';
+        writeFileSync(outputPath, result.audio);
+
+        console.log(JSON.stringify({
+            success: true,
+            durationSeconds: result.durationSeconds,
+            fileSizeKB: (result.audio.length / 1024).toFixed(1),
+            generationTimeSeconds: elapsed,
+            outputFile: outputPath,
+        }, null, 2));
+    }
+}

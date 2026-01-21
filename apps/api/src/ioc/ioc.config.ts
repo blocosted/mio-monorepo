@@ -45,6 +45,14 @@ import {
     type IStoriesStore,
 } from '../services/stories';
 import { OpenAILLMService, type ILLMService } from '../services/llm';
+import {
+    TTSService,
+    ElevenLabsProvider,
+    VoiceRegistryService,
+    type ITTSService,
+    type IElevenLabsProvider,
+    type IVoiceRegistryService,
+} from '../services/audio';
 
 // Create container instance
 const container = new Container({ defaultScope: 'Singleton' });
@@ -89,6 +97,9 @@ export async function initializeContainer(): Promise<void> {
         [IocService.STORIES_STORE]: () => container.get(StoriesStore, { autobind: true }),
         [IocService.STORIES]: () => container.get(StoriesService, { autobind: true }),
         [IocService.LLM]: () => container.get(OpenAILLMService, { autobind: true }),
+        [IocService.ELEVENLABS_PROVIDER]: () => container.get(ElevenLabsProvider, { autobind: true }),
+        [IocService.VOICE_REGISTRY]: () => container.get(VoiceRegistryService, { autobind: true }),
+        [IocService.TTS]: () => container.get(TTSService, { autobind: true }),
     } as const;
 
     // Register all factories
@@ -132,6 +143,9 @@ export type {
     IStoriesService,
     IStoriesStore,
     ILLMService,
+    ITTSService,
+    IElevenLabsProvider,
+    IVoiceRegistryService,
 };
 export type { RedisClient, DatabaseConnection, Logger };
 

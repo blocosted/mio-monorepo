@@ -390,6 +390,26 @@ interface ScriptGenerationRequest {
 
 ### 5.2 ElevenLabs
 
+**Guide de Prosodie (Best Practices):**
+
+Pour une expression émotionnelle authentique, le système utilise 3 techniques complémentaires intégrées au prompt de génération de script:
+
+1. **Contexte Narratif (Prioritaire - 70% de l'expression émotionnelle)**
+   - Verbes expressifs: murmura, chuchota, s'exclama, souffla, lança, s'étrangla
+   - Descriptions corporelles: "la voix tremblante", "les yeux écarquillés"
+
+2. **Ponctuation Expressive**
+   - Ellipses `...` pour pauses hésitantes
+   - MAJUSCULES pour emphase et volume
+   - Tirets `-` pour interruptions
+
+3. **Audio Tags (Complément)**
+   - Émotions: `[excited]`, `[nervous]`, `[sad]`, `[scared]`
+   - Réactions physiques: `[laughs]`, `[sighs]`, `[gasps]`
+   - Modulations: `[whispering]`, `[shouting]`, `[softly]`
+
+**Support Multi-langue:** Exemples de prosodie spécifiques par langue (FR/EN) dans `scriptGeneration.prompts.ts` pour une qualité professionnelle.
+
 **Stratégie de génération :**
 
 ```typescript
@@ -398,13 +418,13 @@ interface ElevenLabsStrategy {
   // + Contrôle fin sur chaque voix/émotion
   // + Parallélisation possible
   // - Plus d'appels API = plus de coûts
-  
+
   // Option B: Appels groupés par personnage
   // + Moins d'appels
   // - Moins de contrôle sur les émotions segment par segment
-  
+
   approach: 'per_segment' | 'per_character';
-  
+
   // Voice settings par personnage
   voiceSettings: {
     stability: number;        // 0-1 (plus bas = plus expressif)

@@ -1,6 +1,6 @@
 import { Elysia, ValidationError } from 'elysia';
 import { AppError, ErrorCodes, errorFromCode } from '@mio/shared';
-import { container } from '../ioc';
+import { container, getInstance } from '../ioc';
 import { IocInfrastructure } from '../ioc/ioc.types';
 import type { Logger } from '@mio/shared/server/logger';
 
@@ -36,7 +36,7 @@ export const errorHandler = (app: Elysia) =>
     // Logger resolution must never crash error handling.
     let logger: Logger | null = null;
     try {
-      logger = container.get<Logger>(IocInfrastructure.LOGGER);
+      logger = getInstance<Logger>(IocInfrastructure.LOGGER);
     } catch {
       logger = null;
     }

@@ -202,19 +202,22 @@ Permettre aux enfants (et leurs parents) de créer des histoires audio personnal
 
 ---
 
-### US-050: Service ElevenLabs TTS (Backend) [Complexité: 4/5]
+### US-050: Service ElevenLabs TTS (Backend) [Complexité: 4/5] 🚧
 
 **En tant que** système,
 **Je veux** générer les voix via ElevenLabs Text-to-Speech,
 **Afin de** produire la narration et les dialogues.
 
 **Critères d'acceptation:**
-- [ ] Client ElevenLabs configuré avec API key
-- [ ] Méthode `generateSpeech` avec: text, voiceId, emotion
-- [ ] Mapping émotions -> voice settings (stability, style)
-- [ ] Mapping personnages -> voiceIds (narrator, childHero, wiseCharacter, etc.)
-- [ ] Retour du buffer audio avec durée
-- [ ] Gestion des erreurs et rate limits
+- [x] Client ElevenLabs configuré avec API key (`ELEVENLABS_API_KEY`)
+- [x] Méthode `convertWithTimestamps` avec: text, voiceId, voiceSettings
+- [x] Mapping émotions -> voice settings (`EMOTION_VOICE_SETTINGS`: stability, style, similarity_boost)
+- [x] Mapping personnages -> voiceIds multi-langue (`VOICE_IDS_BY_LANGUAGE` FR/EN)
+- [x] Retour du buffer audio avec durée et timestamps (word alignment)
+- [x] CLI TTS fonctionnel (`tts generate`, `tts from-script`, `tts test-emotions`)
+- [x] **Prosody Guide:** Guide ElevenLabs best practices intégré au prompt LLM (contexte narratif, ponctuation expressive, audio tags)
+- [x] **Multi-langue:** Exemples de prosodie spécifiques FR/EN pour une qualité professionnelle
+- [ ] Gestion des erreurs et rate limits avec retry
 - [ ] **Tests:** Mapping émotions, sélection voix, gestion erreurs (avec mock ElevenLabs)
 
 ---

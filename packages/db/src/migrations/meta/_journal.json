@@ -8,6 +8,13 @@
       "when": 1768774404127,
       "tag": "0000_giant_tyger_tiger",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1769025880962,
+      "tag": "0001_chief_doorman",
+      "breakpoints": true
     }
   ]
 }

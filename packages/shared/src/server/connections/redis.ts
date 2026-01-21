@@ -44,6 +44,7 @@ export interface IRedisClient {
     exists(key: string): Promise<boolean>;
     keys(pattern: string): Promise<string[]>;
     incr(key: string): Promise<number>;
+    expire(key: string, seconds: number): Promise<number>;
 }
 
 export function buildRedisUrl(config: {
@@ -170,6 +171,11 @@ export class RedisClient implements IRedisClient {
     public async incr(key: string): Promise<number> {
         await this.connect();
         return await this.client.incr(key);
+    }
+
+    public async expire(key: string, seconds: number): Promise<number> {
+        await this.connect();
+        return await this.client.expire(key, seconds);
     }
 
     /**

@@ -204,3 +204,21 @@ export const generationJobsRelations = relations(generationJobs, ({ one }) => ({
         references: [stories.id],
     }),
 }));
+
+/**
+ * ElevenLabs Voices Table
+ *
+ * Cache local des voix disponibles pour eviter les appels API repetes.
+ * Synchronise via le script `sync-voices`.
+ */
+export const elevenLabsVoices = pgTable('elevenlabs_voices', {
+    id: uuid('id').primaryKey().defaultRandom(),
+    voiceId: text('voice_id').notNull().unique(),
+    name: text('name').notNull(),
+    category: text('category'),
+    labels: jsonb('labels').$type<Record<string, string>>(),
+    description: text('description'),
+    previewUrl: text('preview_url'),
+    lastSyncedAt: timestamp('last_synced_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+});

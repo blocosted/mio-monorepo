@@ -179,19 +179,21 @@
 
 ### Epic 6: Synthèse Audio (Minimal pour Phase 1)
 
-#### US-050: Service ElevenLabs TTS (Backend) [4/5]
-- [ ] Installer SDK ElevenLabs ou utiliser fetch
-- [ ] Créer `apps/api/src/services/audio/elevenLabs.ts`
-- [ ] Configurer ELEVENLABS_API_KEY
-- [ ] Créer interface `IAudioGenerator` dans `apps/api/src/services/audio/audio.service.types.ts` (pas dans `packages/shared`)
-- [ ] Implémenter `generateSpeech({ text, voiceId, emotion }): Promise<AudioResult>`
-- [ ] Créer mapping émotions -> voice settings
-- [ ] Créer mapping personnages -> voiceIds
-- [ ] Configurer voices par défaut (narrator, childHero, wiseCharacter, villain, comedic)
+#### US-050: Service ElevenLabs TTS (Backend) [4/5] 🚧
+- [x] Installer SDK ElevenLabs ou utiliser fetch
+- [x] Créer `apps/api/src/services/audio/elevenLabsProvider.ts`
+- [x] Configurer ELEVENLABS_API_KEY dans `environment.constants.ts`
+- [x] Créer interface `IAudioProvider` dans `apps/api/src/services/audio/audio.service.types.ts`
+- [x] Implémenter `convertWithTimestamps({ text, voiceId, voiceSettings }): Promise<AudioResult>`
+- [x] Créer mapping émotions -> voice settings (`EMOTION_VOICE_SETTINGS`)
+- [x] Créer mapping personnages -> voiceIds (`VOICE_IDS_BY_LANGUAGE` avec FR/EN)
+- [x] Configurer voices par défaut (narrator, childHero, wiseCharacter, villain, comedic, parent, friend, animal, magical)
+- [x] Retourner buffer audio + durée + timestamps (alignment)
+- [x] CLI TTS fonctionnel (`tts generate`, `tts from-script`, `tts test-emotions`, `tts list-voices`, `tts sync-voices`)
+- [x] **Prosody Guide:** Guide de prosodie ElevenLabs intégré au prompt de génération de script (contexte narratif, ponctuation expressive, audio tags)
+- [x] **Multi-langue:** Exemples de prosodie spécifiques par langue (FR/EN) dans `scriptGeneration.prompts.ts`
 - [ ] Gérer rate limits (429)
-- [ ] Gérer erreurs API
-- [ ] Retourner buffer audio + durée
-- [ ] Tester génération voix simple
+- [ ] Gérer erreurs API avec retry
 - [ ] **Tests:** Créer `apps/api/src/services/audio/__tests__/elevenLabs.test.ts`
 - [ ] **Tests:** Test mapping émotions -> voice settings
 - [ ] **Tests:** Test sélection voix par personnage
@@ -689,3 +691,4 @@ _Aucun blocker identifié pour le moment_
 | Janvier 2026 | Création initiale du backlog |
 | 19 Janvier 2026 | US-003 complétée - Supabase Storage + Inversify DI |
 | 20 Janvier 2026 | Refactor infra: `bun test` via preload, Redis via Bun, Storage via Bun S3 |
+| 21 Janvier 2026 | US-050 en cours - ElevenLabs TTS: provider, mapping émotions/voix, CLI TTS, guide de prosodie multi-langue |

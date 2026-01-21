@@ -22,6 +22,9 @@ export enum IocService {
     STORIES = 'StoriesService',
     STORIES_STORE = 'StoriesStore',
     LLM = 'LLMService',
+    TTS = 'TTSService',
+    ELEVENLABS_PROVIDER = 'ElevenLabsProvider',
+    VOICE_REGISTRY = 'VoiceRegistryService',
 }
 
 /**
