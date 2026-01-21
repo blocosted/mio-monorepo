@@ -53,33 +53,299 @@ const VOCABULARY_GUIDELINES: Record<VocabularyLevel, string> = {
 };
 
 /**
- * ElevenLabs v3 audio tags documentation
+ * Language-specific prosody examples for expressive emotional delivery
+ * Based on ElevenLabs best practices: https://elevenlabs.io/docs/overview/capabilities/text-to-speech/best-practices
  */
-const ELEVENLABS_AUDIO_TAGS_DOC = `
-## ElevenLabs v3 Audio Tags
+interface ProsodyExamples {
+  speechVerbs: string;
+  voiceDescriptions: string;
+  bodyDescriptions: string;
+  gestureDescriptions: string;
+  emotionTable: {
+    fear: { bad: string; good: string };
+    joy: { bad: string; good: string };
+    sadness: { bad: string; good: string };
+    anger: { bad: string; good: string };
+    surprise: { bad: string; good: string };
+  };
+  punctuation: {
+    caps: string[];
+    ellipses: string[];
+    dashes: string[];
+    combinations: string[];
+  };
+  fullExample: {
+    bad: string;
+    good: string;
+  };
+  segmentExamples: {
+    fear: string;
+    joy: string;
+    sadness: string;
+    surprise: string;
+  };
+}
 
-Embed these tags in square brackets within text for expressive delivery:
+const PROSODY_EXAMPLES: Record<Language, ProsodyExamples> = {
+  fr: {
+    speechVerbs: 'murmura, chuchota, s\'exclama, s\'ecria, souffla, balbutia, begaya, grommela, soupira, gemit, lanca, articula, bredouilla, hoqueta, sanglota',
+    voiceDescriptions: '"d\'une voix tremblante", "la voix brisee", "d\'un ton hesitant"',
+    bodyDescriptions: '"les mains tremblantes", "le souffle coupe", "les yeux ecarquilles"',
+    gestureDescriptions: '"en reculant d\'un pas", "serrant les poings", "le regard fuyant"',
+    emotionTable: {
+      fear: {
+        bad: '"J\'ai peur" dit-elle.',
+        good: '"J\'ai peur..." murmura-t-elle, la voix a peine audible, reculant d\'un pas.',
+      },
+      joy: {
+        bad: '"Super!" dit-il.',
+        good: '"SUPER!!" s\'ecria-t-il, les yeux petillants, bondissant sur place.',
+      },
+      sadness: {
+        bad: '"D\'accord" dit-elle.',
+        good: '"D\'accord..." souffla-t-elle, la gorge serree, baissant les yeux.',
+      },
+      anger: {
+        bad: '"Non!" dit-il.',
+        good: '"NON!" cria-t-il, les poings serres, le visage rouge de colere.',
+      },
+      surprise: {
+        bad: '"Quoi?" dit-elle.',
+        good: '"Quoi?!" s\'etrangla-t-elle, les yeux ecarquilles, n\'en croyant pas ses oreilles.',
+      },
+    },
+    punctuation: {
+      caps: [
+        '"Tu ne comprends PAS!"',
+        '"C\'est INCROYABLE!"',
+        '"Il faut qu\'on PARTE!"',
+        '"JAMAIS je ne ferai ca!"',
+      ],
+      ellipses: [
+        '"Je... je ne sais pas..."',
+        '"Et si... et si on essayait?"',
+        '"C\'est vraiment... magique."',
+      ],
+      dashes: [
+        '"C\'etait - comment dire - inattendu."',
+        '"On pourrait - non, attends - peut-etre que..."',
+        '"Je pensais que - enfin, je croyais..."',
+      ],
+      combinations: [
+        '"Attends... C\'est CA!"',
+        '"Non mais - ATTENDS! Tu as vu ca?!"',
+        '"Je... je n\'arrive pas a y CROIRE!"',
+      ],
+    },
+    fullExample: {
+      bad: '[scared] "J\'ai entendu quelque chose."',
+      good: `[scared] "J'ai... j'ai entendu quelque chose!" chuchota Marie, le coeur
+battant a tout rompre. Elle se figea. "La-bas - tu as VU? Quelque chose
+a BOUGE!" [whimpers]`,
+    },
+    segmentExamples: {
+      fear: `[nervous] "Tu as entendu ca?" chuchota Marie, le coeur battant a tout rompre.
+Elle retint son souffle... Le silence etait ASSOURDISSANT.
+"On - on devrait peut-etre partir..." murmura-t-elle, reculant d'un pas.`,
+      joy: `[excited] "REGARDE! Regarde la-bas!" s'ecria Lucas, bondissant sur place.
+Ses yeux brillaient comme des etoiles. "C'est... c'est MAGIQUE!" [laughs]
+Il ne pouvait s'empecher de sourire, le visage illumine de bonheur.`,
+      sadness: `[sad] "Je comprends..." murmura-t-elle, la gorge serree. [sighs]
+Elle baissa les yeux, les epaules affaissees. "C'est juste que... je pensais
+que ca serait DIFFERENT, tu sais?" souffla-t-elle d'une voix a peine audible.`,
+      surprise: `[gasps] "Quoi?! C'est... c'est IMPOSSIBLE!" s'etrangla-t-il, les yeux
+ecarquilles. Il recula d'un pas, bouche bee. "Mais alors... TOUT ce qu'on
+croyait savoir etait FAUX!" lanca-t-il, n'en revenant pas.`,
+    },
+  },
+  en: {
+    speechVerbs: 'whispered, murmured, exclaimed, cried out, breathed, stammered, stuttered, grumbled, sighed, moaned, called out, articulated, mumbled, gasped, sobbed',
+    voiceDescriptions: '"in a trembling voice", "with a broken voice", "in a hesitant tone"',
+    bodyDescriptions: '"with trembling hands", "breathless", "eyes wide open"',
+    gestureDescriptions: '"stepping back", "clenching fists", "averting gaze"',
+    emotionTable: {
+      fear: {
+        bad: '"I\'m scared" she said.',
+        good: '"I\'m scared..." she whispered, her voice barely audible, stepping back.',
+      },
+      joy: {
+        bad: '"Great!" he said.',
+        good: '"This is AMAZING!!" he exclaimed, eyes sparkling, jumping up and down.',
+      },
+      sadness: {
+        bad: '"Okay" she said.',
+        good: '"Okay..." she breathed, throat tight, lowering her eyes.',
+      },
+      anger: {
+        bad: '"No!" he said.',
+        good: '"NO!" he shouted, fists clenched, face red with anger.',
+      },
+      surprise: {
+        bad: '"What?" she said.',
+        good: '"What?!" she gasped, eyes wide, unable to believe her ears.',
+      },
+    },
+    punctuation: {
+      caps: [
+        '"You don\'t UNDERSTAND!"',
+        '"This is INCREDIBLE!"',
+        '"We have to LEAVE!"',
+        '"I will NEVER do that!"',
+      ],
+      ellipses: [
+        '"I... I don\'t know..."',
+        '"What if... what if we tried?"',
+        '"It\'s truly... magical."',
+      ],
+      dashes: [
+        '"It was - how to say - unexpected."',
+        '"We could - no, wait - maybe..."',
+        '"I thought that - well, I believed..."',
+      ],
+      combinations: [
+        '"Wait... That\'s IT!"',
+        '"No but - WAIT! Did you see that?!"',
+        '"I... I can\'t BELIEVE it!"',
+      ],
+    },
+    fullExample: {
+      bad: '[scared] "I heard something."',
+      good: `[scared] "I... I heard something!" whispered Emma, her heart
+pounding wildly. She froze. "Over there - did you SEE? Something
+MOVED!" [whimpers]`,
+    },
+    segmentExamples: {
+      fear: `[nervous] "Did you hear that?" whispered Emma, her heart pounding wildly.
+She held her breath... The silence was DEAFENING.
+"We - we should maybe leave..." she murmured, stepping back.`,
+      joy: `[excited] "LOOK! Look over there!" exclaimed Lucas, jumping up and down.
+His eyes sparkled like stars. "It's... it's MAGICAL!" [laughs]
+He couldn't help but smile, his face glowing with happiness.`,
+      sadness: `[sad] "I understand..." she murmured, her throat tight. [sighs]
+She lowered her eyes, shoulders slumped. "It's just that... I thought
+it would be DIFFERENT, you know?" she breathed, barely audible.`,
+      surprise: `[gasps] "What?! It's... it's IMPOSSIBLE!" he gasped, eyes wide
+with disbelief. He stepped back, mouth agape. "But then... EVERYTHING we
+thought we knew was WRONG!" he exclaimed, stunned.`,
+    },
+  },
+};
 
-### Emotional States
-[excited], [nervous], [frustrated], [sorrowful], [calm], [happy], [sad], [scared], [angry], [curious]
+/**
+ * Build the ElevenLabs prosody guide with language-specific examples
+ */
+function buildProsodyGuide(language: Language): string {
+  const examples = PROSODY_EXAMPLES[language];
+  const { emotionTable, punctuation, fullExample, segmentExamples } = examples;
 
-### Physical Reactions
-[laughs], [sighs], [gulps], [gasps], [coughs], [yawns], [sniffs]
+  return `
+## ElevenLabs v3 Prosody Guide
 
-### Delivery Modifiers
-[whispering], [shouting], [slowly], [quickly], [softly], [loudly], [hesitant], [confident]
+⚠️ **MANDATORY REQUIREMENTS FOR EACH SEGMENT:**
+- Narrations: ALWAYS include an expressive speech verb + physical/emotional description
+- Dialogues: AT LEAST 50% must use ellipses OR caps OR dashes
+- NEVER write "flat" dialogue like: "Hello!" he said.
 
-### Layering Example
-"[nervous] I... I'm not sure about this. [gulps] But let's try anyway."
-"[whispering][scared] Did you hear that? [pause] Someone's coming!"
-"[laughing] That was hilarious! [sighs happily] Oh, what a day."
+### 1. Narrative Context (REQUIRED - 70% of emotional expression)
 
-### Rules
-- Tags can be layered: [whispering][nervous]
-- Tags affect the text that follows until the next tag or sentence end
-- Use sparingly for maximum impact (2-4 per paragraph)
-- Match tags to character personality and situation
+**Expressive speech verbs to use:**
+${examples.speechVerbs}
+
+**Physical/emotional descriptions to add:**
+- Voice: ${examples.voiceDescriptions}
+- Body: ${examples.bodyDescriptions}
+- Gesture: ${examples.gestureDescriptions}
+
+| Emotion | BAD (flat) | GOOD (expressive) |
+|---------|------------|-------------------|
+| Fear | ${emotionTable.fear.bad} | ${emotionTable.fear.good} |
+| Joy | ${emotionTable.joy.bad} | ${emotionTable.joy.good} |
+| Sadness | ${emotionTable.sadness.bad} | ${emotionTable.sadness.good} |
+| Anger | ${emotionTable.anger.bad} | ${emotionTable.anger.good} |
+| Surprise | ${emotionTable.surprise.bad} | ${emotionTable.surprise.good} |
+
+### 2. Expressive Punctuation (REQUIRED in 50%+ of dialogues)
+
+**CAPS** = important words, strong emphasis (1-2 words per sentence max)
+${punctuation.caps.map(ex => `- ${ex}`).join('\n')}
+
+**Ellipses (...)** = hesitation, suspense, overflowing emotion
+${punctuation.ellipses.map(ex => `- ${ex}`).join('\n')}
+
+**Dashes (-)** = interruption, word searching, self-correction
+${punctuation.dashes.map(ex => `- ${ex}`).join('\n')}
+
+**Combinations** = maximum impact
+${punctuation.combinations.map(ex => `- ${ex}`).join('\n')}
+
+### 3. Audio Tags (COMPLEMENT only)
+
+Use tags IN ADDITION to narrative context, never alone:
+
+**Emotional tags**: [excited], [nervous], [sad], [scared], [angry], [happy], [curious]
+**Physical reactions**: [laughs], [sighs], [gasps], [gulps], [coughs], [whimpers]
+**Modulations**: [whispering], [shouting], [softly], [slowly]
+
+### COMPLETE Example (all 3 techniques combined):
+
+**BAD:**
+\`\`\`
+${fullExample.bad}
+\`\`\`
+
+**GOOD:**
+\`\`\`
+${fullExample.good}
+\`\`\`
+
+### Per-segment checklist
+
+Before finalizing each segment, verify:
+- [ ] Dialogue: contains ellipses, CAPS, or dashes?
+- [ ] Narration: expressive verb + physical/emotional description?
+- [ ] Audio tag: used as complement, not replacement?
+- [ ] Variation: different emotion from previous segment?
 `;
+}
+
+/**
+ * Build segment examples section with language-specific examples
+ */
+function buildSegmentExamplesSection(language: Language): string {
+  const { segmentExamples } = PROSODY_EXAMPLES[language];
+
+  return `
+## ⚠️ MANDATORY EXAMPLES - FOLLOW THIS FORMAT EXACTLY
+
+**COMPARISON: What you must AVOID vs what you must WRITE:**
+
+See the emotion table above for quick reference.
+
+**Fear/Tension (MODEL TO FOLLOW):**
+\`\`\`
+${segmentExamples.fear}
+\`\`\`
+→ Techniques: ellipses, CAPS, dash, expressive verbs, physical description
+
+**Joy/Excitement (MODEL TO FOLLOW):**
+\`\`\`
+${segmentExamples.joy}
+\`\`\`
+→ Techniques: CAPS, ellipses, expressive verb, physical descriptions
+
+**Sadness (MODEL TO FOLLOW):**
+\`\`\`
+${segmentExamples.sadness}
+\`\`\`
+→ Techniques: ellipses, CAPS, expressive verbs, physical descriptions
+
+**Surprise (MODEL TO FOLLOW):**
+\`\`\`
+${segmentExamples.surprise}
+\`\`\`
+→ Techniques: ellipses, multiple CAPS, expressive verbs, physical descriptions
+`;
+}
 
 /**
  * Build character list with voice descriptions
@@ -195,7 +461,7 @@ ${characterList}
 ## Vocabulary Guidelines
 ${vocabularyGuidance}
 
-${ELEVENLABS_AUDIO_TAGS_DOC}
+${buildProsodyGuide(language)}
 
 ## Output Language
 **ALL story content MUST be written in ${languageName}.**
@@ -221,6 +487,8 @@ ${ELEVENLABS_AUDIO_TAGS_DOC}
 \`\`\`
 
 **Rule:** No more than ${constraints.maxConsecutiveSameType} consecutive segments of the same type.
+
+${buildSegmentExamplesSection(language)}
 
 ## Sound Effects Language
 Sound effect descriptions should be in **English** for ElevenLabs compatibility.
@@ -342,11 +610,27 @@ For other segments:
 Before finalizing, verify:
 - [ ] Word count is AT LEAST ${Math.round(durationBudget.targetWordCount * 0.75)} words (aim for ${inflatedTargetWordCount}+)
 - [ ] All 3 acts are properly developed
-- [ ] Audio tags are used naturally (not forced)
 - [ ] Sound effects enhance key moments
 - [ ] Story has clear beginning, middle, and end
 - [ ] Dialogue feels natural for character ages
-- [ ] No abrupt transitions`;
+- [ ] No abrupt transitions
+
+## ⚠️ PROSODY - MANDATORY VERIFICATION
+
+**BEFORE submitting, verify EACH segment:**
+
+1. **Dialogues** - At least 50% contain:
+   - [ ] Ellipses (...) for hesitation/emotion
+   - [ ] CAPS for emphasis (1-2 words)
+   - [ ] Dashes (-) for interruptions
+
+2. **Narrations after dialogue** - ALL contain:
+   - [ ] Expressive speech verb (whispered, exclaimed, murmured, stammered...)
+   - [ ] Physical/emotional description (trembling voice, sparkling eyes...)
+
+3. **Audio tags** - Used as COMPLEMENT, never alone
+
+**IF a segment doesn't follow these rules, REWRITE IT before continuing.**`;
 }
 
 /**
