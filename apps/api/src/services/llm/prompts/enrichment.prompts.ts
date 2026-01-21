@@ -18,89 +18,101 @@ const DEFAULT_LANGUAGE: Language = 'fr';
  * Language display names
  */
 const LANGUAGE_NAMES: Record<Language, string> = {
-    fr: 'French',
-    en: 'English',
+  fr: 'French',
+  en: 'English',
 };
 
 /**
  * Vocabulary level descriptions for the LLM
  */
 const VOCABULARY_DESCRIPTIONS: Record<VocabularyLevel, string> = {
-    [VocabularyLevel.VerySimple]:
-        'Use only the most basic words a 3-4 year old would understand. Very short sentences (3-5 words max). Avoid any complex concepts. Focus on concrete, familiar objects and simple emotions (happy, sad, scared).',
-    [VocabularyLevel.Simple]:
-        'Use simple vocabulary for 5-6 year olds. Short sentences (5-8 words). Can include basic fantasy elements. Simple cause-and-effect. Emotions can be slightly more varied.',
-    [VocabularyLevel.Medium]:
-        'Appropriate vocabulary for 7-9 year olds. Can use more descriptive language. Sentences can be longer with some complexity. Can include mild suspense and more nuanced emotions.',
-    [VocabularyLevel.Advanced]:
-        'Rich vocabulary for 10-12 year olds. Can use more sophisticated storytelling techniques. Complex sentences are fine. Can include subtle themes, irony, and character development.',
+  [VocabularyLevel.VerySimple]:
+    'Use only the most basic words a 3-4 year old would understand. Very short sentences (3-5 words max). Avoid any complex concepts. Focus on concrete, familiar objects and simple emotions (happy, sad, scared).',
+  [VocabularyLevel.Simple]:
+    'Use simple vocabulary for 5-6 year olds. Short sentences (5-8 words). Can include basic fantasy elements. Simple cause-and-effect. Emotions can be slightly more varied.',
+  [VocabularyLevel.Medium]:
+    'Appropriate vocabulary for 7-9 year olds. Can use more descriptive language. Sentences can be longer with some complexity. Can include mild suspense and more nuanced emotions.',
+  [VocabularyLevel.Advanced]:
+    'Rich vocabulary for 10-12 year olds. Can use more sophisticated storytelling techniques. Complex sentences are fine. Can include subtle themes, irony, and character development.',
 };
 
 /**
  * Gender-specific articles by language
  */
-const GENDER_ARTICLES: Record<Language, Record<string, { article: string; childWord: string }>> = {
-    fr: {
-        boy: { article: 'un', childWord: 'garcon' },
-        girl: { article: 'une', childWord: 'fille' },
-        neutral: { article: 'un(e)', childWord: 'enfant' },
-    },
-    en: {
-        boy: { article: 'a', childWord: 'boy' },
-        girl: { article: 'a', childWord: 'girl' },
-        neutral: { article: 'a', childWord: 'child' },
-    },
+const GENDER_ARTICLES: Record<
+  Language,
+  Record<string, { article: string; childWord: string }>
+> = {
+  fr: {
+    boy: { article: 'un', childWord: 'garcon' },
+    girl: { article: 'une', childWord: 'fille' },
+    neutral: { article: 'un(e)', childWord: 'enfant' },
+  },
+  en: {
+    boy: { article: 'a', childWord: 'boy' },
+    girl: { article: 'a', childWord: 'girl' },
+    neutral: { article: 'a', childWord: 'child' },
+  },
 };
 
 /**
  * Build context string for the child's profile
  */
-function buildProfileContext(profile: EnrichmentProfile, language: Language): string {
-    const genderInfo = GENDER_ARTICLES[language][profile.gender];
-    const parts: string[] = [];
+function buildProfileContext(
+  profile: EnrichmentProfile,
+  language: Language,
+): string {
+  const genderInfo = GENDER_ARTICLES[language][profile.gender];
+  const parts: string[] = [];
 
+  parts.push(
+    `The story is for ${profile.firstName}, ${genderInfo?.article} ${profile.age}-year-old ${genderInfo?.childWord}.`,
+  );
+
+  if (profile.includeChildAsCharacter) {
     parts.push(
-        `The story is for ${profile.firstName}, ${genderInfo?.article} ${profile.age}-year-old ${genderInfo?.childWord}.`
+      `The main character MUST be named ${profile.firstName} and match the child's profile.`,
     );
+  }
 
-    if (profile.includeChildAsCharacter) {
-        parts.push(
-            `The main character MUST be named ${profile.firstName} and match the child's profile.`
-        );
-    }
+  if (profile.favoriteThemes && profile.favoriteThemes.length > 0) {
+    parts.push(
+      `Favorite themes to incorporate: ${profile.favoriteThemes.join(', ')}.`,
+    );
+  }
 
-    if (profile.favoriteThemes && profile.favoriteThemes.length > 0) {
-        parts.push(`Favorite themes to incorporate: ${profile.favoriteThemes.join(', ')}.`);
-    }
+  if (profile.avoidThemes && profile.avoidThemes.length > 0) {
+    parts.push(
+      `IMPORTANT - Themes to ABSOLUTELY AVOID: ${profile.avoidThemes.join(', ')}. NEVER mention these themes.`,
+    );
+  }
 
-    if (profile.avoidThemes && profile.avoidThemes.length > 0) {
-        parts.push(
-            `IMPORTANT - Themes to ABSOLUTELY AVOID: ${profile.avoidThemes.join(', ')}. NEVER mention these themes.`
-        );
-    }
+  if (profile.preferredHeroGender === 'same') {
+    const heroGender =
+      profile.gender === 'boy'
+        ? 'a boy'
+        : profile.gender === 'girl'
+          ? 'a girl'
+          : 'gender-neutral';
+    parts.push(`The main hero should be ${heroGender}.`);
+  }
 
-    if (profile.preferredHeroGender === 'same') {
-        const heroGender =
-            profile.gender === 'boy' ? 'a boy' : profile.gender === 'girl' ? 'a girl' : 'gender-neutral';
-        parts.push(`The main hero should be ${heroGender}.`);
-    }
-
-    return parts.join('\n');
+  return parts.join('\n');
 }
 
 /**
  * Build the system prompt for story enrichment
  */
 export function buildEnrichmentSystemPrompt(
-    profile: EnrichmentProfile,
-    vocabularyLevel: VocabularyLevel
+  profile: EnrichmentProfile,
+  vocabularyLevel: VocabularyLevel,
 ): string {
-    const language = profile.language ?? DEFAULT_LANGUAGE;
-    const languageName = LANGUAGE_NAMES[language];
-    const profileContext = buildProfileContext(profile, language);
-    const vocabularyGuidance = VOCABULARY_DESCRIPTIONS[vocabularyLevel];
+  const language = profile.language ?? DEFAULT_LANGUAGE;
+  const languageName = LANGUAGE_NAMES[language];
+  const profileContext = buildProfileContext(profile, language);
+  const vocabularyGuidance = VOCABULARY_DESCRIPTIONS[vocabularyLevel];
 
-    return `You are a professional children's storyteller. You must transform a simple idea into a rich, structured story concept.
+  return `You are a professional children's storyteller. You must transform a simple idea into a rich, structured story concept.
 
 ## Child Context
 ${profileContext}
@@ -159,5 +171,5 @@ CRITICAL REQUIREMENTS:
  * Build the user prompt for story enrichment
  */
 export function buildEnrichmentUserPrompt(initialPrompt: string): string {
-    return `Transform this idea into a complete story concept:\n\n"${initialPrompt}"`;
+  return `Transform this idea into a complete story concept:\n\n"${initialPrompt}"`;
 }

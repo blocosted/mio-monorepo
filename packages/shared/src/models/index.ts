@@ -4,6 +4,8 @@
  * Re-exports types from @mio/shared/types and defines story-related models.
  */
 
+import type { StoryScript } from './script.models';
+
 // Re-export profile primitive types (shared)
 export {
     Gender,
@@ -17,6 +19,25 @@ export {
 export {
     SortDirection,
 } from '../types/common.types';
+
+// Re-export script models (timeline-based)
+export type {
+    AudioTrackType,
+    ElevenLabsVoiceSettings,
+    CharacterVoiceMap,
+    VoiceSegmentContent,
+    SfxSegmentContent,
+    MusicSegmentContent,
+    AmbianceSegmentContent,
+    SegmentContent,
+    TimelineSegment,
+    AudioTrack,
+    ScriptMetadata,
+    StoryScript,
+    DurationBudget,
+    NarrativeStructure,
+    ScriptGenerationConstraints,
+} from './script.models';
 
 /**
  * Story Status
@@ -178,18 +199,6 @@ export interface StorySegment {
         pauseBefore?: number;
         pauseAfter?: number;
     };
-}
-
-/**
- * Story Script - Complete script with segments
- */
-export interface StoryScript {
-    metadata: {
-        title: string;
-        estimatedDuration: number;
-        vocabularyLevel: VocabularyLevel;
-    };
-    segments: StorySegment[];
 }
 
 /**

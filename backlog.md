@@ -9,11 +9,11 @@
 
 | Phase | US | Tâches | Complétées |
 |-------|-----|--------|------------|
-| Phase 1 - MVP Minimal | 13 | 65 | 47 |
+| Phase 1 - MVP Minimal | 13 | 65 | 63 |
 | Phase 2 - MVP Complet | 18 | 68 | 0 |
 | Phase 3 - Production Ready | 16 | 58 | 0 |
 | Phase 4 - Polish & Sécurité | 9 | 27 | 0 |
-| **Total** | **56** | **218** | **47** |
+| **Total** | **56** | **218** | **63** |
 
 ---
 
@@ -157,23 +157,23 @@
 
 ### Epic 5: Génération Script (Backend only pour Phase 1)
 
-#### US-040: Service de génération de script (Backend) [5/5]
-- [ ] Implémenter `generateScript(enrichedConcept, answers, profile): Promise<StoryScript>`
-- [ ] Créer system prompt avec structure narrative complète
-- [ ] Définir structure segments (narration, dialogue, pause, sound_effect, music_change)
-- [ ] Implémenter règles de vocabulaire par niveau
-- [ ] Générer timing pour chaque segment (pauseBefore, pauseAfter)
-- [ ] Spécifier émotions pour les dialogues
-- [ ] Décrire effets sonores en langage naturel
-- [ ] Calculer durée estimée
-- [ ] Valider output JSON contre schema StoryScript
-- [ ] Définir/compléter les interfaces `StoryScript` et `StorySegment` dans `packages/shared/src/models/` (modèles de domaine)
-- [ ] Tester génération avec concept enrichi
-- [ ] **Tests:** Créer `apps/api/src/services/llm/__tests__/scriptGeneration.test.ts`
-- [ ] **Tests:** Test structure segments valide (avec mock)
-- [ ] **Tests:** Test tous types de segments présents
-- [ ] **Tests:** Test calcul durée estimée
-- [ ] **Tests:** Test validation JSON output
+#### US-040: Service de génération de script (Backend) [5/5] ✅
+- [x] Implémenter `generateScript(enrichedConcept, answers, profile): Promise<StoryScript>`
+- [x] Créer system prompt avec structure narrative complète
+- [x] Définir structure segments (narration, dialogue, pause, sound_effect, music_change)
+- [x] Implémenter règles de vocabulaire par niveau
+- [x] Générer timing pour chaque segment (pauseBefore, pauseAfter)
+- [x] Spécifier émotions pour les dialogues
+- [x] Décrire effets sonores en langage naturel
+- [x] Calculer durée estimée
+- [x] Valider output JSON contre schema StoryScript
+- [x] Définir/compléter les interfaces `StoryScript` et `StorySegment` dans `packages/shared/src/models/` (modèles de domaine)
+- [x] Tester génération avec concept enrichi
+- [x] **Tests:** Créer `apps/api/src/services/llm/__tests__/scriptGeneration.test.ts`
+- [x] **Tests:** Test structure segments valide (avec mock)
+- [x] **Tests:** Test tous types de segments présents
+- [x] **Tests:** Test calcul durée estimée
+- [x] **Tests:** Test validation JSON output
 
 ---
 
