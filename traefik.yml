@@ -1,0 +1,15 @@
+http:
+  middlewares:
+    redirect-to-https:
+      redirectScheme:
+        scheme: https
+        permanent: true
+
+tls:
+  certificates:
+    - certFile: /certs/mio-cert.pem
+      keyFile: /certs/mio-key.pem
+  options:
+    default:
+      minVersion: VersionTLS12
+      sniStrict: true

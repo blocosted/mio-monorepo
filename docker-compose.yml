@@ -1,0 +1,247 @@
+services:
+  traefik:
+    container_name: traefik.mio.local
+    image: traefik:v3.6
+    command:
+      - "--api.insecure=true"
+      - "--log.level=info"
+      - "--entrypoints.web.address=:${HTTP_PORT:-80}"
+      - "--entrypoints.websecure.address=:${HTTPS_PORT:-443}"
+      - "--entrypoints.websecure.http.tls=true"
+      - "--providers.file.filename=${MIO_WORKSPACE_FOLDER}/traefik.yml"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+    ports:
+      - "${HTTP_PORT:-80}:${HTTP_PORT:-80}"
+      - "${HTTPS_PORT:-443}:${HTTPS_PORT:-443}"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - '${MIO_WORKSPACE_FOLDER}:${MIO_WORKSPACE_FOLDER}'
+      - '${MIO_WORKSPACE_FOLDER}/packages/docker/certs:/certs'
+    networks:
+      - mio-network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: mio-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-mio}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      mio-network:
+        aliases:
+          - postgres.mio.local
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mio-postgres.rule=Host(`postgres.mio.local`)"
+      - "traefik.http.routers.mio-postgres.entrypoints=web"
+      - "traefik.http.routers.mio-postgres.service=mio-postgres"
+      - "traefik.http.services.mio-postgres.loadbalancer.server.port=5432"
+      - "traefik.http.services.mio-postgres.loadbalancer.server.scheme=tcp"
+      - "traefik.http.routers.mio-postgres.priority=200"
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: mio-pgadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@mio.local
+      - PGADMIN_DEFAULT_PASSWORD=mio
+    networks:
+      mio-network:
+        aliases:
+          - pgadmin.mio.local
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mio-pgadmin.rule=Host(`pgadmin.mio.local`)"
+      - "traefik.http.routers.mio-pgadmin.entrypoints=web"
+      - "traefik.http.routers.mio-pgadmin.service=mio-pgadmin"
+      - "traefik.http.services.mio-pgadmin.loadbalancer.server.port=80"
+      - "traefik.http.services.mio-pgadmin.loadbalancer.server.scheme=http"
+      - "traefik.http.routers.mio-pgadmin.priority=200"
+
+  redis:
+    image: redis:7-alpine
+    container_name: mio-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      mio-network:
+        aliases:
+          - redis.mio.local
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mio-redis.rule=Host(`redis.mio.local`)"
+      - "traefik.http.routers.mio-redis.entrypoints=web"
+      - "traefik.http.routers.mio-redis.service=mio-redis"
+      - "traefik.http.services.mio-redis.loadbalancer.server.port=6379"
+      - "traefik.http.services.mio-redis.loadbalancer.server.scheme=tcp"
+      - "traefik.http.routers.mio-redis.priority=200"
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: mio-redis-commander
+    ports:
+      - "8081:8081"
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    depends_on:
+      - redis
+    networks:
+      mio-network:
+        aliases:
+          - redis-commander.mio.local
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mio-redis-commander.rule=Host(`redis-commander.mio.local`)"
+      - "traefik.http.routers.mio-redis-commander.entrypoints=web"
+      - "traefik.http.routers.mio-redis-commander.service=mio-redis-commander"
+      - "traefik.http.services.mio-redis-commander.loadbalancer.server.port=8081"
+      - "traefik.http.services.mio-redis-commander.loadbalancer.server.scheme=http"
+      - "traefik.http.routers.mio-redis-commander.priority=200"
+
+  qstash:
+    image: public.ecr.aws/upstash/qstash:latest
+    container_name: mio-qstash
+    restart: unless-stopped
+    command: qstash dev
+    ports:
+      - "8082:8080"
+    environment:
+      - QSTASH_URL=${QSTASH_URL:-http://localhost:8082}
+      - QSTASH_TOKEN=${QSTASH_TOKEN:-dev_token}
+      - QSTASH_CURRENT_SIGNING_KEY=${QSTASH_CURRENT_SIGNING_KEY:-}
+      - QSTASH_NEXT_SIGNING_KEY=${QSTASH_NEXT_SIGNING_KEY:-}
+    networks:
+      mio-network:
+        aliases:
+          - qstash.mio.local
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mio-qstash.rule=Host(`qstash.mio.local`)"
+      - "traefik.http.routers.mio-qstash.entrypoints=web"
+      - "traefik.http.routers.mio-qstash.service=mio-qstash"
+      - "traefik.http.services.mio-qstash.loadbalancer.server.port=8080"
+      - "traefik.http.services.mio-qstash.loadbalancer.server.scheme=http"
+      - "traefik.http.routers.mio-qstash.priority=200"
+
+  # API container (development mode with hot reload)
+  mio-api:
+    build:
+      context: .
+      dockerfile: packages/docker/images/bun-ffmpeg/Dockerfile
+    container_name: mio-api
+    restart: always
+    tty: true
+    stdin_open: true
+    volumes:
+      - '${MIO_WORKSPACE_FOLDER}:${MIO_WORKSPACE_FOLDER}'
+      - "/etc/localtime:/etc/localtime:ro"
+    working_dir: ${MIO_WORKSPACE_FOLDER}
+    expose:
+      - 3001
+    ports:
+      - 3001:3001
+    command: ["bun", "--hot", "apps/api/src/index.ts"]
+    environment:
+      - MIO_WORKSPACE_FOLDER=${MIO_WORKSPACE_FOLDER}
+      - NODE_OPTIONS=--enable-source-maps
+      - TZ=${TZ:-Europe/Paris}
+    env_file:
+      - .env.local
+    depends_on:
+      - postgres
+      - redis
+      - qstash
+    networks:
+      - mio-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mio-api.rule=Host(`api.mio.local`)"
+      - "traefik.http.routers.mio-api.priority=200"
+      - "traefik.http.routers.mio-api.entrypoints=web"
+      - "traefik.http.routers.mio-api.middlewares=redirect-to-https"
+      - "traefik.http.routers.mio-api-secure.rule=Host(`api.mio.local`)"
+      - "traefik.http.routers.mio-api-secure.entrypoints=websecure"
+      - "traefik.http.routers.mio-api-secure.tls=true"
+      - "traefik.http.services.mio-api.loadbalancer.server.port=3001"
+      - "traefik.http.services.mio-api.loadbalancer.server.scheme=http"
+      - "traefik.http.routers.mio-api-secure.service=mio-api"
+
+  # Web container (Next.js development mode)
+  mio-web:
+    image: node:22-alpine
+    container_name: mio-web
+    restart: always
+    tty: true
+    stdin_open: true
+    volumes:
+      - '${MIO_WORKSPACE_FOLDER}:${MIO_WORKSPACE_FOLDER}'
+      - mio_web_modules:/home/ted/dev/mio/node_modules
+      - mio_web_cache:/home/ted/dev/mio/apps/web/.next
+    working_dir: ${MIO_WORKSPACE_FOLDER}
+    expose:
+      - 3000
+    ports:
+      - 3000:3000
+    command: ["sh", "-c", "cd apps/web && npm install && npm run dev"]
+    environment:
+      - NODE_ENV=development
+      - NEXT_TELEMETRY_DISABLED=1
+      - WATCHPACK_POLLING=false
+      - CHOKIDAR_USEPOLLING=false
+    env_file:
+      - .env.local
+    networks:
+      - mio-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mio-web.rule=Host(`app.mio.local`)"
+      - "traefik.http.routers.mio-web.priority=100"
+      - "traefik.http.routers.mio-web.entrypoints=web"
+      - "traefik.http.routers.mio-web.middlewares=redirect-to-https"
+      - "traefik.http.routers.mio-web-secure.rule=Host(`app.mio.local`)"
+      - "traefik.http.services.mio-web.loadbalancer.server.port=3000"
+      - "traefik.http.services.mio-web.loadbalancer.server.scheme=http"
+      - "traefik.http.routers.mio-web-secure.entrypoints=websecure"
+      - "traefik.http.routers.mio-web-secure.tls=true"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+
+networks:
+  mio-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  pgadmin_data:
+  redis_data:
+  mio_web_modules:
+  mio_web_cache:

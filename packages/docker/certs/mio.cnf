@@ -1,0 +1,30 @@
+[req]
+default_bits = 2048
+prompt = no
+default_md = sha256
+x509_extensions = v3_req
+distinguished_name = dn
+
+[dn]
+C = FR
+ST = France
+L = Paris
+O = Mio Development
+OU = Development
+emailAddress = dev@mio.local
+CN = mio.local
+
+[v3_req]
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1 = mio.local
+DNS.2 = *.mio.local
+DNS.3 = app.mio.local
+DNS.4 = api.mio.local
+DNS.5 = pgadmin.mio.local
+DNS.6 = redis-commander.mio.local
+DNS.7 = qstash.mio.local
+DNS.8 = traefik.mio.local
+DNS.9 = postgres.mio.local
+DNS.10 = redis.mio.local
