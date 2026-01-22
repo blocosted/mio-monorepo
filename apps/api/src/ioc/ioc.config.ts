@@ -56,16 +56,16 @@ import {
     type ILLMRepository,
 } from '../repositories/llm';
 import {
-    VoicesRepository,
-    SoundEffectsRepository,
-    type IVoicesRepository,
+    AudioRepository,
+    type IAudioRepository,
     type ISoundEffectsRepository,
 } from '../repositories/audio';
 
 // LLM Services
 import {
+    EnrichmentService,
     ScriptGenerationService,
-    type ILLMService,
+    type IEnrichmentService,
     type IScriptGenerationService,
 } from '../services/llm';
 
@@ -151,8 +151,8 @@ export async function initializeContainer(): Promise<void> {
         // Repositories (shared external API clients)
         [IocRepository.OPENAI]: () => container.get(OpenAIRepository, { autobind: true }),
         [IocRepository.ANTHROPIC]: () => container.get(AnthropicRepository, { autobind: true }),
-        [IocRepository.VOICES]: () => container.get(VoicesRepository, { autobind: true }),
-        [IocRepository.SOUND_EFFECTS]: () => container.get(SoundEffectsRepository, { autobind: true }),
+        [IocRepository.AUDIO]: () => container.get(AudioRepository, { autobind: true }),
+        [IocRepository.LLM_REPOSITORY]: () => container.get(AnthropicRepository, { autobind: true }),
 
         // Services
         [IocService.STORAGE]: () => container.get(StorageService, { autobind: true }),
@@ -161,6 +161,7 @@ export async function initializeContainer(): Promise<void> {
         [IocService.JOB_PROGRESS]: () => container.get(JobProgressService, { autobind: true }),
         [IocService.PROFILES]: () => container.get(ProfilesService, { autobind: true }),
         [IocService.STORIES]: () => container.get(StoriesService, { autobind: true }),
+        [IocService.ENRICHMENT]: () => container.get(EnrichmentService, { autobind: true }),
         [IocService.SCRIPT_GENERATION]: () => container.get(ScriptGenerationService, { autobind: true }),
         [IocService.VOICE_REGISTRY]: () => container.get(VoiceRegistryService, { autobind: true }),
         [IocService.TTS]: () => container.get(TTSService, { autobind: true }),
@@ -207,7 +208,7 @@ export async function resetContainer(): Promise<void> {
 export type {
     // Repositories
     ILLMRepository,
-    IVoicesRepository,
+    IAudioRepository as IVoicesRepository,
     ISoundEffectsRepository,
     // Services
     IStorageService,
@@ -219,7 +220,7 @@ export type {
     IProfilesStore,
     IStoriesService,
     IStoriesStore,
-    ILLMService,
+    IEnrichmentService,
     IScriptGenerationService,
     ITTSService,
     IVoiceRegistryService,

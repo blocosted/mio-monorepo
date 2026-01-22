@@ -192,20 +192,10 @@ export async function runEnrichStoryCommand(args: {
       provider: providerType,
     });
 
-    // Use provider's generateEnrichedConcept method
-    const response = await repository.generateEnrichedConcept(
-      {
-        childName: profile.firstName,
-        childAge: profile.age,
-        childGender: profile.gender,
-        favoriteThemes: profile.favoriteThemes ?? [],
-        avoidThemes: profile.avoidThemes ?? [],
-        includeChildAsCharacter: profile.includeChildAsCharacter ?? false,
-        preferredHeroGender: profile.preferredHeroGender ?? 'any',
-        language: profile.language ?? 'fr',
-        vocabularyLevel,
-        initialPrompt: prompt,
-      },
+    // Call repository with prompts
+    const response = await repository.completeWithRetry(
+      systemPrompt,
+      userPrompt,
       options,
     );
 

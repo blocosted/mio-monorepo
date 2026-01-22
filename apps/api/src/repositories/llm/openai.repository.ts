@@ -1,8 +1,8 @@
 /**
  * OpenAI LLM Repository
  *
- * Implements ILLMRepository using the OpenAI API.
- * Handles prompt construction and API communication for OpenAI models.
+ * Low-level OpenAI API client with retry logic.
+ * Business logic (prompt building, parsing) is in service layer.
  */
 
 import 'reflect-metadata';
@@ -19,26 +19,14 @@ import type {
   LLMRepositoryType,
   LLMCompletionOptions,
   LLMRawResponse,
-  EnrichmentContext,
-  ScriptGenerationContext,
 } from './llm-repository.types';
-import {
-  buildEnrichmentSystemPrompt,
-  buildEnrichmentUserPrompt,
-} from '../../services/llm/prompts/enrichment.prompts';
-import {
-  buildScriptGenerationSystemPrompt,
-  buildScriptGenerationUserPrompt,
-} from '../../services/llm/prompts/scriptGeneration.prompts';
 import type { ChatModel } from 'openai/resources/index.mjs';
 
 /** Default configuration */
 const DEFAULT_MODEL: ChatModel = 'gpt-4o';
 const DEFAULT_MAX_TOKENS = 2000;
-const DEFAULT_SCRIPT_MAX_TOKENS = 12000;
 const DEFAULT_TEMPERATURE = 0.7;
 const DEFAULT_TIMEOUT = 60000;
-const DEFAULT_SCRIPT_TIMEOUT = 180000;
 
 /** Rate limit retry configuration */
 const MAX_RETRIES = 3;
@@ -68,71 +56,7 @@ export class OpenAIRepository implements ILLMRepository {
     return !!environment.OPENAI_API_KEY;
   }
 
-  async generateEnrichedConcept(
-    context: EnrichmentContext,
-    options?: LLMCompletionOptions,
-  ): Promise<LLMRawResponse> {
-    const systemPrompt = buildEnrichmentSystemPrompt(
-      {
-        firstName: context.childName,
-        age: context.childAge,
-        gender: context.childGender as 'boy' | 'girl' | 'neutral',
-        favoriteThemes: context.favoriteThemes,
-        avoidThemes: context.avoidThemes,
-        includeChildAsCharacter: context.includeChildAsCharacter,
-        preferredHeroGender: context.preferredHeroGender,
-        language: context.language,
-      },
-      context.vocabularyLevel,
-    );
-    const userPrompt = buildEnrichmentUserPrompt(context.initialPrompt);
-
-    this.logger.info('OpenAI: Generating enriched concept', {
-      childName: context.childName,
-      vocabularyLevel: context.vocabularyLevel,
-    });
-
-    return this.completeWithRetry(systemPrompt, userPrompt, options);
-  }
-
-  async generateScript(
-    context: ScriptGenerationContext,
-    options?: LLMCompletionOptions,
-  ): Promise<LLMRawResponse> {
-    const systemPrompt = buildScriptGenerationSystemPrompt(
-      {
-        firstName: context.childName,
-        age: context.childAge,
-        gender: 'neutral',
-        language: context.language,
-      },
-      context.enrichedConcept,
-      context.vocabularyLevel,
-      context.constraints,
-    );
-
-    const userPrompt = buildScriptGenerationUserPrompt(
-      context.enrichedConcept,
-      context.answers,
-      context.previousAttemptFeedback,
-    );
-
-    this.logger.info('OpenAI: Generating script', {
-      title: context.enrichedConcept.title,
-      targetWordCount: context.constraints.durationBudget.targetWordCount,
-      targetDuration: context.constraints.durationBudget.totalSeconds,
-    });
-
-    const scriptOptions: LLMCompletionOptions = {
-      ...options,
-      maxTokens: options?.maxTokens ?? DEFAULT_SCRIPT_MAX_TOKENS,
-      timeout: options?.timeout ?? DEFAULT_SCRIPT_TIMEOUT,
-    };
-
-    return this.completeWithRetry(systemPrompt, userPrompt, scriptOptions);
-  }
-
-  private async completeWithRetry(
+  async completeWithRetry(
     systemPrompt: string,
     userPrompt: string,
     options?: LLMCompletionOptions,

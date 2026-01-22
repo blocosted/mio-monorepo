@@ -1,16 +1,10 @@
 /**
  * LLM Repository Types
  *
- * Defines the interface for LLM repositories, separating the raw LLM interaction
- * from the business logic of script generation.
+ * Defines the low-level interface for LLM repositories.
+ * Repositories handle API communication and retry logic only.
+ * Business logic (prompt building, parsing) is in service layer.
  */
-
-import type {
-  EnrichedConcept,
-  ScriptGenerationConstraints,
-  VocabularyLevel,
-} from '@mio/shared';
-import type { Language } from '@mio/shared/types';
 
 /**
  * Supported LLM repository types
@@ -48,87 +42,30 @@ export interface LLMRawResponse {
 }
 
 /**
- * Context for story enrichment
- */
-export interface EnrichmentContext {
-  /** Initial story prompt */
-  initialPrompt: string;
-  /** Child's first name */
-  childName: string;
-  /** Child's age */
-  childAge: number;
-  /** Child's gender */
-  childGender: string;
-  /** Favorite themes to include */
-  favoriteThemes: string[];
-  /** Themes to avoid */
-  avoidThemes: string[];
-  /** Whether to include child as character */
-  includeChildAsCharacter: boolean;
-  /** Preferred hero gender */
-  preferredHeroGender: 'same' | 'any';
-  /** Target language */
-  language: Language;
-  /** Determined vocabulary level */
-  vocabularyLevel: VocabularyLevel;
-}
-
-/**
- * Context for script generation
- */
-export interface ScriptGenerationContext {
-  /** Enriched story concept */
-  enrichedConcept: EnrichedConcept;
-  /** Child profile info */
-  childName: string;
-  childAge: number;
-  /** Target language */
-  language: Language;
-  /** Vocabulary level */
-  vocabularyLevel: VocabularyLevel;
-  /** Generation constraints (word budget, structure) */
-  constraints: ScriptGenerationConstraints;
-  /** Guided answers from user */
-  answers: Array<{ questionId: string; value: string }>;
-  /** Feedback from previous failed attempt (for retry) */
-  previousAttemptFeedback?: string;
-}
-
-/**
  * LLM Repository Interface
  *
- * Abstracts the LLM interaction layer. Repositories are responsible for:
- * - Building appropriate prompts for their specific model
- * - Making API calls and handling retries
- * - Returning raw JSON responses
+ * Low-level abstraction for LLM API communication.
+ * Repositories are responsible for:
+ * - Making API calls with retry logic
+ * - Returning raw text responses
  *
- * Parsing and validation is handled by the service layer.
+ * Prompt building, parsing, and validation is handled by the service layer.
  */
 export interface ILLMRepository {
   /** Repository type identifier */
   readonly repositoryType: LLMRepositoryType;
 
   /**
-   * Generate enriched concept from story prompt
+   * Complete a prompt with retry logic
    *
-   * @param context - Enrichment context with profile and prompt
-   * @param options - Completion options
-   * @returns Raw LLM response containing JSON
+   * @param systemPrompt - System instructions for the LLM
+   * @param userPrompt - User input/task for the LLM
+   * @param options - Completion options (model, temperature, etc.)
+   * @returns Raw LLM response containing text content
    */
-  generateEnrichedConcept(
-    context: EnrichmentContext,
-    options?: LLMCompletionOptions,
-  ): Promise<LLMRawResponse>;
-
-  /**
-   * Generate story script from enriched concept
-   *
-   * @param context - Script generation context with constraints
-   * @param options - Completion options
-   * @returns Raw LLM response containing JSON
-   */
-  generateScript(
-    context: ScriptGenerationContext,
+  completeWithRetry(
+    systemPrompt: string,
+    userPrompt: string,
     options?: LLMCompletionOptions,
   ): Promise<LLMRawResponse>;
 

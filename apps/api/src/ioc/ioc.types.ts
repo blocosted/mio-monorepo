@@ -44,8 +44,8 @@ export enum IocStore {
 export enum IocRepository {
     OPENAI = 'OpenAIRepository',
     ANTHROPIC = 'AnthropicRepository',
-    VOICES = 'VoicesRepository',
-    SOUND_EFFECTS = 'SoundEffectsRepository',
+    AUDIO = 'AudioRepository',
+    LLM_REPOSITORY = 'LLMRepository',
 }
 
 /**
@@ -64,6 +64,7 @@ export enum IocService {
     JOB_PROGRESS = 'JobProgressService',
     PROFILES = 'ProfilesService',
     STORIES = 'StoriesService',
+    ENRICHMENT = 'EnrichmentService',
     SCRIPT_GENERATION = 'ScriptGenerationService',
     TTS = 'TTSService',
     VOICE_REGISTRY = 'VoiceRegistryService',

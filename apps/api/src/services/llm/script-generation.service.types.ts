@@ -11,9 +11,25 @@ import type {
     ScriptGenerationConstraints,
     EnrichedConcept,
     StoryAnswer,
+    VocabularyLevel,
 } from '@mio/shared';
+import type { Language } from '@mio/shared/types';
 import type { EnrichmentProfile } from './llm.service.types';
 import type { ILLMRepository } from '../../repositories/llm/llm-repository.types';
+
+/**
+ * Context for script generation (internal use by service)
+ */
+export interface ScriptGenerationContext {
+    enrichedConcept: EnrichedConcept;
+    childName: string;
+    childAge: number;
+    language: Language;
+    vocabularyLevel: VocabularyLevel;
+    constraints: ScriptGenerationConstraints;
+    answers: StoryAnswer[];
+    previousAttemptFeedback?: string;
+}
 
 /**
  * Validation result for a generated script

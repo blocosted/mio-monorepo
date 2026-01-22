@@ -23,14 +23,19 @@ import {
 } from '@mio/shared';
 
 import { AbstractService } from '../service.abstract';
-import type { ILLMRepository, ScriptGenerationContext } from '../../repositories/llm/llm-repository.types';
+import type { ILLMRepository } from '../../repositories/llm/llm-repository.types';
 import { getVocabularyLevel } from './llm.service.types';
 import type {
   IScriptGenerationService,
   ScriptValidationResult,
   ScriptGenerationInput,
   ScriptGenerationResult,
+  ScriptGenerationContext,
 } from './script-generation.service.types';
+import {
+  buildScriptGenerationSystemPrompt,
+  buildScriptGenerationUserPrompt,
+} from './prompts/scriptGeneration.prompts';
 
 /**
  * Constants for duration calculation
@@ -434,7 +439,27 @@ export class ScriptGenerationService extends AbstractService implements IScriptG
       };
 
       try {
-        const response = await provider.generateScript(context);
+        // Build prompts for LLM
+        const systemPrompt = buildScriptGenerationSystemPrompt(
+          {
+            firstName: context.childName,
+            age: context.childAge,
+            gender: 'neutral',
+            language: context.language,
+          },
+          context.enrichedConcept,
+          context.vocabularyLevel,
+          context.constraints,
+        );
+
+        const userPrompt = buildScriptGenerationUserPrompt(
+          context.enrichedConcept,
+          context.answers,
+          context.previousAttemptFeedback,
+        );
+
+        // Call repository
+        const response = await provider.completeWithRetry(systemPrompt, userPrompt);
         const script = this.parseScriptResponse(response.content);
         const validation = this.validateScript(script, constraints);
 

@@ -4,14 +4,9 @@
  * Centralized exports for the LLM service module.
  */
 
-// Service types
+// Legacy service types (kept for backward compatibility)
 export type {
   ILLMService,
-  EnrichStoryInput,
-  EnrichStoryResult,
-  EnrichmentProfile,
-  EnrichmentStory,
-  LLMCompletionOptions,
   LLMProvider,
 } from './llm.service.types';
 
@@ -22,15 +17,15 @@ export {
   AVAILABLE_AMBIANCES,
 } from './llm.service.types';
 
-// Repository types (re-exported for convenience)
+// Enrichment service types
 export type {
-  LLMRepositoryType,
-  LLMRawResponse,
-  EnrichmentContext,
-  ScriptGenerationContext,
-  ILLMRepository,
-  ILLMRepositoryRegistry,
-} from '../../repositories/llm';
+  IEnrichmentService,
+  EnrichStoryInput,
+  EnrichStoryResult,
+  EnrichmentProfile,
+  EnrichmentStory,
+  LLMCompletionOptions,
+} from './enrichment.service.types';
 
 // Script generation service types (timeline-based)
 export type {
@@ -38,10 +33,19 @@ export type {
   ScriptValidationResult,
   ScriptGenerationInput,
   ScriptGenerationResult,
+  ScriptGenerationContext,
 } from './script-generation.service.types';
 
+// Repository types (re-exported for convenience)
+export type {
+  LLMRepositoryType,
+  LLMRawResponse,
+  ILLMRepository,
+  ILLMRepositoryRegistry,
+} from '../../repositories/llm';
+
 // Implementations
-export { OpenAILLMService } from './openai';
+export { EnrichmentService } from './enrichment.service';
 export { ScriptGenerationService } from './script-generation.service';
 
 // Parsers
