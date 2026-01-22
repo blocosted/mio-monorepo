@@ -22,7 +22,7 @@ describe('JobProgressService', () => {
         redis = client.redis;
         closeRedis = client.close;
         cacheService = new CacheService(redis);
-        jobProgressService = new JobProgressService(cacheService);
+        jobProgressService = new JobProgressService(cacheService, redis);
     });
 
     afterAll(async () => {
@@ -462,6 +462,35 @@ describe('JobProgressService', () => {
             await jobProgressService.delete(jobId);
             const deleted = await jobProgressService.get(jobId);
             expect(deleted).toBeNull();
+        });
+    });
+
+    describe('publishProgressEvent()', () => {
+        it('publishes progress event to Redis channel', async () => {
+            const jobId = generateTestId('job');
+            const progress: JobProgress = {
+                jobId,
+                status: 'processing',
+                progress: 50,
+                currentStep: 'Generating audio',
+                updatedAt: Date.now(),
+            };
+
+            // Should not throw
+            await jobProgressService.publishProgressEvent(jobId, progress);
+        });
+
+        it('publishes event with error information', async () => {
+            const jobId = generateTestId('job');
+            const progress: JobProgress = {
+                jobId,
+                status: 'failed',
+                progress: 30,
+                error: 'Audio generation failed',
+                updatedAt: Date.now(),
+            };
+
+            await jobProgressService.publishProgressEvent(jobId, progress);
         });
     });
 });
