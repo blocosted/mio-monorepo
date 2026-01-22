@@ -24,7 +24,7 @@ import {
 
 import { getInstance, IocConnection, IocRepository } from '../../ioc';
 import type { DatabaseConnection } from '@mio/shared/server/connections/db';
-import type { IVoicesRepository } from '../../repositories/audio/audio-repository.types';
+import type { IAudioRepository } from '../../repositories/audio/audio-repository.types';
 import type {
     IVoiceRegistryService,
     StoredVoice,
@@ -193,11 +193,11 @@ export class VoiceRegistryService implements IVoiceRegistryService {
     /**
      * Lazily get the Voices repository to avoid circular dependencies
      */
-    private _repository: IVoicesRepository | null = null;
-    private getRepository(): IVoicesRepository {
+    private _repository: IAudioRepository | null = null;
+    private getRepository(): IAudioRepository {
         if (!this._repository) {
             // Import dynamically to avoid circular dependency
-            this._repository = getInstance<IVoicesRepository>(IocRepository.VOICES);
+            this._repository = getInstance<IAudioRepository>(IocRepository.AUDIO);
         }
         return this._repository;
     }

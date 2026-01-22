@@ -17,7 +17,7 @@ import type { ElevenLabsVoiceSettings } from '@mio/shared/models';
 
 import { getInstance, IocStore, IocRepository, IocService } from '../../ioc';
 import type { ICacheService } from '../cache/cache.service.types';
-import type { IVoicesRepository } from '../../repositories/audio/audio-repository.types';
+import type { IAudioRepository } from '../../repositories/audio/audio-repository.types';
 import { AbstractService } from '../service.abstract';
 import type { TTSStore } from './tts.service.store';
 import type {
@@ -66,11 +66,11 @@ export class TTSService extends AbstractService implements ITTSService {
     /**
      * Lazily create Voices repository to avoid initialization issues
      */
-    private _repository: IVoicesRepository | null = null;
-    private get repository(): IVoicesRepository {
+    private _repository: IAudioRepository | null = null;
+    private get repository(): IAudioRepository {
         if (!this._repository) {
             // Create repository lazily to ensure Logger is available
-            this._repository = getInstance<IVoicesRepository>(IocRepository.VOICES);
+            this._repository = getInstance<IAudioRepository>(IocRepository.AUDIO);
         }
         return this._repository;
     }
@@ -140,7 +140,7 @@ export class TTSService extends AbstractService implements ITTSService {
         await this.waitForRateLimitSlot();
 
         // Generate speech (with audio tag if emotion specified)
-        const result = await this.repository.convertWithTimestamps({
+        const result = await this.repository.convertTextToSpeech({
             text: textWithEmotion,
             voiceId,
             modelId: DEFAULT_TTS_MODEL,

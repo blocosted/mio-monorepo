@@ -97,12 +97,15 @@ export interface VoicesConvertResult {
 /**
  * Voices Repository Interface (ElevenLabs TTS)
  */
-export interface IVoicesRepository {
+export interface IAudioRepository {
     /**
      * Convert text to speech with timestamps for duration accuracy
      */
-    convertWithTimestamps(input: VoicesConvertInput): Promise<VoicesConvertResult>;
-
+    convertTextToSpeech(input: VoicesConvertInput): Promise<VoicesConvertResult>;
+    /**
+     * Create a sound effect audio
+     */
+    createSoundEffect(input: SoundEffectsConvertInput): Promise<SoundEffectsConvertResult>;
     /**
      * List available voices
      */
@@ -147,5 +150,5 @@ export interface ISoundEffectsRepository {
     /**
      * Convert text description to sound effect audio
      */
-    convert(input: SoundEffectsConvertInput): Promise<SoundEffectsConvertResult>;
+    createSoundEffect(input: SoundEffectsConvertInput): Promise<SoundEffectsConvertResult>;
 }

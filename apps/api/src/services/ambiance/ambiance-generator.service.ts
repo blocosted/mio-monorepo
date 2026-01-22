@@ -140,7 +140,7 @@ export class AmbianceGeneratorService implements IAmbianceGeneratorService {
 
     constructor(
         @inject(IocConnection.LOGGER) private readonly logger: Logger,
-        @inject(IocRepository.SOUND_EFFECTS) private readonly sfxRepository: ISoundEffectsRepository,
+        @inject(IocRepository.AUDIO) private readonly sfxRepository: ISoundEffectsRepository,
     ) { }
 
     /**
@@ -266,7 +266,7 @@ export class AmbianceGeneratorService implements IAmbianceGeneratorService {
             const sourceClipDuration = Math.min(targetDurationSeconds, MAX_SFX_CLIP_DURATION);
 
             // Generate base ambient clip via ElevenLabs
-            const sfxResult = await this.sfxRepository.convert({
+            const sfxResult = await this.sfxRepository.createSoundEffect({
                 text: this.buildAmbiancePrompt(description),
                 durationSeconds: sourceClipDuration,
                 promptInfluence,

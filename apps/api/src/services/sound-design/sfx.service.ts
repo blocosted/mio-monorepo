@@ -161,7 +161,7 @@ export class SfxService extends AbstractService implements ISfxService {
     private _repository: ISoundEffectsRepository | null = null;
     private get repository(): ISoundEffectsRepository {
         if (!this._repository) {
-            this._repository = getInstance<ISoundEffectsRepository>(IocRepository.SOUND_EFFECTS);
+            this._repository = getInstance<ISoundEffectsRepository>(IocRepository.AUDIO);
         }
         return this._repository;
     }
@@ -274,7 +274,7 @@ export class SfxService extends AbstractService implements ISfxService {
         // =====================================================================
         await this.waitForRateLimitSlot();
 
-        const result = await this.repository.convert({
+        const result = await this.repository.createSoundEffect({
             text,
             outputFormat: DEFAULT_SFX_OUTPUT_FORMAT,
             durationSeconds,

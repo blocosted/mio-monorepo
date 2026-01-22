@@ -1,13 +1,17 @@
 /**
- * Voices Repository Implementation (ElevenLabs TTS)
+ * Audio Repository Implementation
  *
- * Wrapper around the ElevenLabs SDK for TTS operations.
- * Uses eleven_v3 model for optimal emotional expression and audio tags support.
+ * Unified wrapper around the ElevenLabs SDK for:
+ * - Text-to-Speech (TTS) with eleven_v3 model
+ * - Sound Effects generation
+ *
+ * Provides low-level access to ElevenLabs APIs with comprehensive error handling.
  */
 
 import 'reflect-metadata';
 import { injectable, inject } from 'inversify';
 import { ElevenLabsClient } from 'elevenlabs';
+import { Readable } from 'stream';
 
 import { AppError, ErrorCodes, DiagnoseSeverity } from '@mio/shared';
 import { environment } from '@mio/shared/constants/environment.constants';
@@ -15,16 +19,33 @@ import { Logger } from '@mio/shared/server/logger';
 
 import { IocConnection } from '../../ioc';
 import type {
-    IVoicesRepository,
+    IAudioRepository,
+    ISoundEffectsRepository,
     VoicesConvertInput,
     VoicesConvertResult,
+    SoundEffectsConvertInput,
+    SoundEffectsConvertResult,
 } from './audio-repository.types';
 
 /** Default ElevenLabs model (v3 for better expressivity and audio tags) */
-const DEFAULT_MODEL = 'eleven_v3';
+const DEFAULT_TTS_MODEL = 'eleven_v3';
 
 /** Default output format (FFmpeg compatible: 44.1kHz stereo) */
 const DEFAULT_OUTPUT_FORMAT = 'mp3_44100_128' as const;
+
+/** Default prompt influence for sound effects (how closely to follow the prompt, 0-1) */
+const DEFAULT_PROMPT_INFLUENCE = 0.3;
+
+/**
+ * Convert a readable stream to a Buffer
+ */
+async function streamToBuffer(stream: Readable): Promise<Buffer> {
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream) {
+        chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    }
+    return Buffer.concat(chunks);
+}
 
 /**
  * ElevenLabs "convertWithTimestamps" currently enforces discrete stability values.
@@ -46,15 +67,15 @@ function normalizeTtdStability(value: number | undefined): 0 | 0.5 | 1 | undefin
 }
 
 /**
- * Voices Repository (ElevenLabs TTS)
+ * Audio Repository
  *
- * Provides low-level access to ElevenLabs TTS API with:
- * - eleven_v3 model for emotional expression
- * - Audio tags support ([laughs], [whispering], etc.)
- * - Accurate duration via alignment data
+ * Unified repository for ElevenLabs audio generation:
+ * - Text-to-Speech with timestamps and alignment data
+ * - Sound Effects from text descriptions
+ * - Voice management
  */
 @injectable()
-export class VoicesRepository implements IVoicesRepository {
+export class AudioRepository implements IAudioRepository, ISoundEffectsRepository {
     private readonly client: ElevenLabsClient;
 
     constructor(
@@ -70,14 +91,16 @@ export class VoicesRepository implements IVoicesRepository {
         });
     }
 
+    // ===== Text-to-Speech (TTS) Methods =====
+
     /**
      * Convert text to speech with timestamps for accurate duration
      */
-    async convertWithTimestamps(input: VoicesConvertInput): Promise<VoicesConvertResult> {
+    async convertTextToSpeech(input: VoicesConvertInput): Promise<VoicesConvertResult> {
         const {
             text,
             voiceId,
-            modelId = DEFAULT_MODEL,
+            modelId = DEFAULT_TTS_MODEL,
             outputFormat = DEFAULT_OUTPUT_FORMAT,
             voiceSettings,
         } = input;
@@ -245,6 +268,121 @@ export class VoicesRepository implements IVoicesRepository {
             return true;
         }
     }
+
+    // ===== Sound Effects Methods =====
+
+    /**
+     * Convert text description to sound effect audio
+     */
+    async createSoundEffect(input: SoundEffectsConvertInput): Promise<SoundEffectsConvertResult> {
+        const {
+            text,
+            outputFormat = DEFAULT_OUTPUT_FORMAT,
+            durationSeconds,
+            promptInfluence = DEFAULT_PROMPT_INFLUENCE,
+        } = input;
+
+        // Validate duration if provided (ElevenLabs supports 0.5-22 seconds)
+        if (durationSeconds !== undefined) {
+            if (durationSeconds < 0.5 || durationSeconds > 22) {
+                throw new AppError(ErrorCodes.SFXInvalidInput, {
+                    name: 'InvalidDuration',
+                    diagnoses: [{
+                        name: 'durationSeconds',
+                        message: `Duration must be between 0.5 and 22 seconds, got ${durationSeconds}`,
+                        severity: DiagnoseSeverity.Error,
+                    }],
+                });
+            }
+        }
+
+        // Validate prompt influence (0-1)
+        if (promptInfluence < 0 || promptInfluence > 1) {
+            throw new AppError(ErrorCodes.SFXInvalidInput, {
+                name: 'InvalidPromptInfluence',
+                diagnoses: [{
+                    name: 'promptInfluence',
+                    message: `Prompt influence must be between 0 and 1, got ${promptInfluence}`,
+                    severity: DiagnoseSeverity.Error,
+                }],
+            });
+        }
+
+        this.logger.info('[SFX API CALL] Generating sound effect', {
+            textLength: text.length,
+            textPreview: text.substring(0, 100),
+            outputFormat,
+            durationSeconds,
+            promptInfluence,
+        });
+
+        try {
+            const response = await this.client.textToSoundEffects.convert({
+                text,
+                output_format: outputFormat,
+                duration_seconds: durationSeconds,
+                prompt_influence: promptInfluence,
+            });
+
+            // Convert stream to buffer
+            const audioBuffer = await streamToBuffer(response);
+
+            // Estimate duration from buffer size if not provided
+            // MP3 128kbps = 16KB/s
+            const estimatedDuration = durationSeconds ?? audioBuffer.length / (128 * 1000 / 8);
+
+            this.logger.debug('Sound effect generation complete', {
+                textPreview: text.substring(0, 50),
+                bufferSize: audioBuffer.length,
+                estimatedDuration,
+            });
+
+            return {
+                audio: audioBuffer,
+                durationSeconds: estimatedDuration,
+            };
+        } catch (error) {
+            this.logger.error('Sound effect generation failed', {
+                text: text.substring(0, 100),
+                error: error instanceof Error ? error.message : String(error),
+            });
+
+            // Check for specific error types
+            if (this.isRateLimitError(error)) {
+                throw new AppError(ErrorCodes.SFXRateLimited, {
+                    name: 'ElevenLabsSFXRateLimited',
+                    diagnoses: [{
+                        name: 'text',
+                        message: text.substring(0, 100),
+                        severity: DiagnoseSeverity.Info,
+                    }],
+                });
+            }
+
+            if (this.isTimeoutError(error)) {
+                throw new AppError(ErrorCodes.SFXTimeout, {
+                    name: 'ElevenLabsSFXTimeout',
+                    diagnoses: [{
+                        name: 'text',
+                        message: text.substring(0, 100),
+                        severity: DiagnoseSeverity.Info,
+                    }],
+                });
+            }
+
+            throw new AppError(ErrorCodes.SFXGenerationFailed, {
+                name: 'ElevenLabsSFXError',
+                error: error instanceof Error ? error : new Error(String(error)),
+                diagnoses: [{
+                    name: 'text',
+                    message: text.substring(0, 100),
+                    severity: DiagnoseSeverity.Info,
+                }],
+            });
+        }
+    }
+
+    // ===== Private Helper Methods =====
 
     /**
      * Check if error is a rate limit error (429)
