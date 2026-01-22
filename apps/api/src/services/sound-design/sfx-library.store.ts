@@ -1,0 +1,311 @@
+/**
+ * SFX Library Store
+ *
+ * Data access layer for audioLibrarySfx table.
+ * Handles CRUD operations and caching for sound effects library.
+ */
+
+import 'reflect-metadata';
+import { injectable, inject } from 'inversify';
+import { eq, desc, sql, and, or, type SQL } from 'drizzle-orm';
+
+import { audioLibrarySfx } from '@mio/db/schema';
+import type { DatabaseConnection } from '@mio/shared/server/connections/db';
+import { IocConnection, IocService } from '../../ioc';
+import type { ICacheService } from '../cache/cache.service.types';
+import type {
+    SfxLibraryCategory,
+    SfxEnvironment,
+    AudioIntensity,
+} from '@mio/shared/types';
+
+/** Redis cache TTL for SFX lookups (1 hour) */
+const CACHE_TTL_SECONDS = 3600;
+
+/** Cache key prefix */
+const CACHE_PREFIX = 'audio-library:sfx';
+
+/**
+ * Stored SFX from database
+ */
+export interface StoredSfx {
+    id: string;
+    canonicalKey: string;
+    category: SfxLibraryCategory;
+    subcategory: string | null;
+    environment: SfxEnvironment | null;
+    intensity: AudioIntensity | null;
+    prompt: string;
+    promptInfluence: number | null;
+    s3Url: string;
+    durationSeconds: number;
+    format: string;
+    tags: string[];
+    storyUniverses: string[];
+    usageCount: number;
+    lastUsedAt: Date | null;
+    createdAt: Date;
+}
+
+/**
+ * Parameters for finding SFX
+ */
+export interface FindSfxParams {
+    text: string;
+    category?: SfxLibraryCategory;
+    subcategory?: string;
+    environment?: SfxEnvironment;
+    intensity?: AudioIntensity;
+}
+
+/**
+ * Parameters for querying SFX
+ */
+export interface SfxQueryParams {
+    category?: SfxLibraryCategory;
+    subcategory?: string;
+    environment?: SfxEnvironment;
+    intensity?: AudioIntensity;
+    limit?: number;
+}
+
+/**
+ * Parameters for storing SFX
+ */
+export interface StoreSfxParams {
+    canonicalKey: string;
+    category: SfxLibraryCategory;
+    subcategory?: string;
+    environment?: SfxEnvironment;
+    intensity?: AudioIntensity;
+    prompt: string;
+    promptInfluence?: number;
+    s3Url: string;
+    durationSeconds: number;
+    format: string;
+    tags?: string[];
+    storyUniverses?: string[];
+}
+
+/**
+ * SFX lookup result
+ */
+export interface SfxLookupResult {
+    sfx: StoredSfx | null;
+    fromCache: boolean;
+}
+
+/**
+ * SFX Library Stats
+ */
+export interface SfxLibraryStats {
+    total: number;
+    byCategory: Record<string, number>;
+    byEnvironment: Record<string, number>;
+    topUsed: StoredSfx[];
+}
+
+/**
+ * SFX Library Store
+ *
+ * Provides data access methods for sound effects library.
+ */
+@injectable()
+export class SfxLibraryStore {
+    constructor(
+        @inject(IocConnection.DATABASE)
+        private readonly db: DatabaseConnection,
+        @inject(IocService.CACHE)
+        private readonly cache: ICacheService,
+    ) {}
+
+    /**
+     * Find SFX with cache check
+     */
+    async findWithCache(params: FindSfxParams): Promise<SfxLookupResult> {
+        const cacheKey = this.buildCacheKey(params);
+        const cached = await this.cache.get<StoredSfx>(cacheKey);
+
+        if (cached) {
+            return { sfx: cached, fromCache: true };
+        }
+
+        return { sfx: null, fromCache: false };
+    }
+
+    /**
+     * Query SFX from database
+     */
+    async query(params: SfxQueryParams): Promise<StoredSfx[]> {
+        const conditions: SQL[] = [];
+
+        if (params.category) {
+            conditions.push(eq(audioLibrarySfx.category, params.category));
+        }
+
+        if (params.subcategory) {
+            conditions.push(eq(audioLibrarySfx.subcategory, params.subcategory));
+        }
+
+        if (params.environment) {
+            conditions.push(eq(audioLibrarySfx.environment, params.environment));
+        }
+
+        if (params.intensity) {
+            conditions.push(eq(audioLibrarySfx.intensity, params.intensity));
+        }
+
+        let query = this.db.select().from(audioLibrarySfx);
+
+        if (conditions.length > 0) {
+            query = query.where(and(...conditions));
+        }
+
+        if (params.limit) {
+            query = query.limit(params.limit);
+        }
+
+        query = query.orderBy(desc(audioLibrarySfx.usageCount));
+
+        const rows = await query;
+        return rows.map(this.mapRow);
+    }
+
+    /**
+     * Cache an SFX entry
+     */
+    async cache(params: FindSfxParams, sfx: StoredSfx): Promise<void> {
+        const cacheKey = this.buildCacheKey(params);
+        await this.cache.set(cacheKey, sfx, { ex: CACHE_TTL_SECONDS });
+    }
+
+    /**
+     * Insert new SFX into library
+     */
+    async insert(params: StoreSfxParams): Promise<StoredSfx> {
+        const [row] = await this.db
+            .insert(audioLibrarySfx)
+            .values({
+                canonicalKey: params.canonicalKey,
+                category: params.category,
+                subcategory: params.subcategory,
+                environment: params.environment,
+                intensity: params.intensity,
+                prompt: params.prompt,
+                promptInfluence: params.promptInfluence,
+                s3Url: params.s3Url,
+                durationSeconds: params.durationSeconds,
+                format: params.format,
+                tags: params.tags ?? [],
+                storyUniverses: params.storyUniverses ?? [],
+            })
+            .returning();
+
+        return this.mapRow(row);
+    }
+
+    /**
+     * Increment usage count for SFX
+     */
+    async incrementUsage(id: string): Promise<void> {
+        await this.db
+            .update(audioLibrarySfx)
+            .set({
+                usageCount: sql`${audioLibrarySfx.usageCount} + 1`,
+                lastUsedAt: new Date(),
+            })
+            .where(eq(audioLibrarySfx.id, id));
+    }
+
+    /**
+     * Get SFX library statistics
+     */
+    async getStats(): Promise<SfxLibraryStats> {
+        // Total count
+        const [totalResult] = await this.db
+            .select({ count: sql<number>`count(*)::int` })
+            .from(audioLibrarySfx);
+
+        // By category
+        const categoryResults = await this.db
+            .select({
+                category: audioLibrarySfx.category,
+                count: sql<number>`count(*)::int`,
+            })
+            .from(audioLibrarySfx)
+            .groupBy(audioLibrarySfx.category);
+
+        const byCategory = Object.fromEntries(
+            categoryResults.map((r) => [r.category, r.count])
+        );
+
+        // By environment
+        const environmentResults = await this.db
+            .select({
+                environment: audioLibrarySfx.environment,
+                count: sql<number>`count(*)::int`,
+            })
+            .from(audioLibrarySfx)
+            .where(sql`${audioLibrarySfx.environment} IS NOT NULL`)
+            .groupBy(audioLibrarySfx.environment);
+
+        const byEnvironment = Object.fromEntries(
+            environmentResults.map((r) => [r.environment!, r.count])
+        );
+
+        // Top used
+        const topUsedRows = await this.db
+            .select()
+            .from(audioLibrarySfx)
+            .orderBy(desc(audioLibrarySfx.usageCount))
+            .limit(10);
+
+        const topUsed = topUsedRows.map(this.mapRow);
+
+        return {
+            total: totalResult?.count ?? 0,
+            byCategory,
+            byEnvironment,
+            topUsed,
+        };
+    }
+
+    /**
+     * Map database row to StoredSfx
+     */
+    private mapRow(row: typeof audioLibrarySfx.$inferSelect): StoredSfx {
+        return {
+            id: row.id,
+            canonicalKey: row.canonicalKey,
+            category: row.category as SfxLibraryCategory,
+            subcategory: row.subcategory,
+            environment: row.environment as SfxEnvironment | null,
+            intensity: row.intensity as AudioIntensity | null,
+            prompt: row.prompt,
+            promptInfluence: row.promptInfluence,
+            s3Url: row.s3Url,
+            durationSeconds: row.durationSeconds,
+            format: row.format,
+            tags: row.tags,
+            storyUniverses: row.storyUniverses,
+            usageCount: row.usageCount,
+            lastUsedAt: row.lastUsedAt,
+            createdAt: row.createdAt,
+        };
+    }
+
+    /**
+     * Build cache key for SFX lookup
+     */
+    private buildCacheKey(params: FindSfxParams): string {
+        const parts = [
+            CACHE_PREFIX,
+            params.category ?? 'any',
+            params.subcategory ?? 'any',
+            params.environment ?? 'any',
+            params.intensity ?? 'any',
+            Bun.hash(params.text).toString(36),
+        ];
+        return parts.join(':');
+    }
+}

@@ -33,6 +33,9 @@ export enum IocStore {
     SOUND_EFFECTS_STORE = 'SoundEffectsStore',
     AUDIO_LIBRARY_STORE = 'AudioLibraryStore',
     VOICE_REGISTRY_STORE = 'VoiceRegistryStore',
+    SFX_LIBRARY_STORE = 'SfxLibraryStore',
+    AMBIANCE_LIBRARY_STORE = 'AmbianceLibraryStore',
+    MUSIC_LIBRARY_STORE = 'MusicLibraryStore',
 }
 
 /**

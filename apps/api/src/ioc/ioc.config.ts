@@ -89,6 +89,9 @@ import {
     AudioLibraryStore,
     type IAudioLibraryService,
 } from '../services/audio-library';
+import { SfxLibraryStore } from '../services/sound-design';
+import { AmbianceLibraryStore } from '../services/ambiance';
+import { MusicLibraryStore } from '../services/music';
 
 // Create container instance
 const container = new Container({ defaultScope: 'Singleton' });
@@ -132,6 +135,9 @@ export async function initializeContainer(): Promise<void> {
         [IocStore.SOUND_EFFECTS_STORE]: () => container.get(SoundEffectsStore, { autobind: true }),
         [IocStore.AUDIO_LIBRARY_STORE]: () => container.get(AudioLibraryStore, { autobind: true }),
         [IocStore.VOICE_REGISTRY_STORE]: () => container.get(VoiceRegistryStore, { autobind: true }),
+        [IocStore.SFX_LIBRARY_STORE]: () => container.get(SfxLibraryStore, { autobind: true }),
+        [IocStore.AMBIANCE_LIBRARY_STORE]: () => container.get(AmbianceLibraryStore, { autobind: true }),
+        [IocStore.MUSIC_LIBRARY_STORE]: () => container.get(MusicLibraryStore, { autobind: true }),
 
         // Repositories (shared external API clients)
         // Note: IocProvider enum values map to the same strings for backwards compatibility
