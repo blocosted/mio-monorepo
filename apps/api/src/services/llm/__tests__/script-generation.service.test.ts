@@ -36,7 +36,7 @@ describe('ScriptGenerationService', () => {
       expect(budget.sfxSeconds).toBe(36);    // 12% of 300
       expect(budget.musicSeconds).toBe(18);  // 6% of 300
       expect(budget.pauseSeconds).toBe(30);  // 10% of 300
-      expect(budget.targetWordCount).toBe(540); // 216 * 2.5
+      expect(budget.targetWordCount).toBe(432); // 216 * 2.0 (120 WPM = 2 WPS)
     });
 
     it('calculates correct budget for 10 minute story', () => {
@@ -44,7 +44,7 @@ describe('ScriptGenerationService', () => {
 
       expect(budget.totalSeconds).toBe(600);
       expect(budget.voiceSeconds).toBe(432);
-      expect(budget.targetWordCount).toBe(1080); // 432 * 2.5
+      expect(budget.targetWordCount).toBe(864); // 432 * 2.0 (120 WPM = 2 WPS)
     });
 
     it('calculates correct budget for 3 minute story', () => {
@@ -52,9 +52,9 @@ describe('ScriptGenerationService', () => {
 
       expect(budget.totalSeconds).toBe(180);
       // 180 * 0.72 = 129.6 → 130 voice seconds
-      // 130 * 2.5 = 325 words
+      // 130 * 2.0 = 260 words
       expect(budget.voiceSeconds).toBe(130);
-      expect(budget.targetWordCount).toBe(325);
+      expect(budget.targetWordCount).toBe(260);
     });
   });
 
@@ -150,10 +150,10 @@ describe('ScriptGenerationService', () => {
 
   describe('calculateEstimatedDuration', () => {
     it('calculates duration from word count', () => {
-      // 150 words = 60 seconds of voice
+      // 150 words at 2.0 WPS = 75 seconds of voice
       const duration = service.calculateEstimatedDuration(150, 0);
-      // 150/2.5 = 60s voice + 10% pause = 66s
-      expect(duration).toBe(66);
+      // 150/2.0 = 75s voice + 10% pause (7.5) = 82.5 → 83s
+      expect(duration).toBe(83);
     });
 
     it('adds SFX time', () => {
@@ -163,9 +163,9 @@ describe('ScriptGenerationService', () => {
     });
 
     it('combines voice, SFX, and pauses', () => {
-      // 300 words = 120s voice + 10% pause (12s) + 3 SFX (9s)
+      // 300 words at 2.0 WPS = 150s voice + 10% pause (15s) + 3 SFX (9s)
       const duration = service.calculateEstimatedDuration(300, 3);
-      expect(duration).toBe(141); // 120 + 9 + 12
+      expect(duration).toBe(174); // 150 + 9 + 15
     });
   });
 
@@ -187,7 +187,7 @@ describe('ScriptGenerationService', () => {
         actualDuration: 300,
         vocabularyLevel: VocabularyLevel.Medium,
         language: 'fr',
-        wordCount: 540,
+        wordCount: 432,
         voiceSegmentCount: 9,
         sfxSegmentCount: 3,
       },
@@ -200,7 +200,7 @@ describe('ScriptGenerationService', () => {
           type: 'voice',
           name: 'Voice Track',
           segments: [
-            // 5 narration segments with 60 words each = 300 words
+            // 5 narration segments with 48 words each = 240 words
             ...Array.from({ length: 5 }, (_, i) => ({
               id: `narr-${i}`,
               trackId: 'voice-main',
@@ -208,12 +208,12 @@ describe('ScriptGenerationService', () => {
               duration: 24,
               content: {
                 type: 'narration' as const,
-                text: generateText(60),
+                text: generateText(48),
                 emotion: Emotion.Neutral,
               },
             })),
-            // 4 dialogue segments with 60 words each = 240 words
-            // Total: 540 words (matches target for 5 min)
+            // 4 dialogue segments with 48 words each = 192 words
+            // Total: 432 words (matches target for 5 min at 2.0 WPS)
             ...Array.from({ length: 4 }, (_, i) => ({
               id: `dial-${i}`,
               trackId: 'voice-main',
@@ -221,7 +221,7 @@ describe('ScriptGenerationService', () => {
               duration: 24,
               content: {
                 type: 'dialogue' as const,
-                text: generateText(60),
+                text: generateText(48),
                 characterName: 'Hero',
                 emotion: Emotion.Happy,
               },

@@ -47,6 +47,8 @@ export interface GenerateSfxResult {
     format: SfxAudioFormat;
     /** Whether result came from cache */
     fromCache?: boolean;
+    /** Whether result came from persistent library */
+    fromLibrary?: boolean;
     /** Cache key used (for debugging) */
     cacheKey?: string;
 }

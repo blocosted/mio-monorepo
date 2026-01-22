@@ -3,6 +3,11 @@
  *
  * Service for generating background music using ElevenLabs SFX API.
  * Maps moods to descriptive prompts and supports looping for longer durations.
+ *
+ * Uses library-first approach:
+ * 1. Check persistent library for matching source clip by mood/intensity/tempo
+ * 2. Apply looping/fade to source clip on the fly
+ * 3. If not found, generate via API and store source clip in library
  */
 
 import 'reflect-metadata';
@@ -15,9 +20,16 @@ import { tmpdir } from 'node:os';
 
 import { AppError, ErrorCodes, DiagnoseSeverity } from '@mio/shared';
 import { Logger } from '@mio/shared/server/logger';
+import type {
+    MusicMood as LibraryMusicMood,
+    MusicIntensity,
+    MusicTempo,
+} from '@mio/shared/types';
 
-import { IocInfrastructure } from '../../ioc';
+import { getInstance, IocInfrastructure, IocService } from '../../ioc';
 import type { ISoundEffectsProvider } from './soundEffects.provider.types';
+import type { IAudioLibraryService } from '../audio-library';
+import type { IStorageService } from '../storage';
 import type { MusicMood } from './music-strategy.service.types';
 import type {
     IMusicGeneratorService,
@@ -120,21 +132,78 @@ const MOOD_PROMPTS: Record<MusicMood, MoodPromptMapping> = {
 };
 
 /**
+ * Map MusicMood to LibraryMusicMood (same values, different types)
+ */
+function mapToLibraryMood(mood: MusicMood): LibraryMusicMood {
+    return mood as LibraryMusicMood;
+}
+
+/**
+ * Infer intensity from prompt
+ */
+function inferIntensity(prompt: string): MusicIntensity {
+    const lowerPrompt = prompt.toLowerCase();
+
+    if (/soft|gentle|quiet|subtle|peaceful|calm/i.test(lowerPrompt)) return 'soft';
+    if (/epic|grand|powerful|intense|dramatic|heroic/i.test(lowerPrompt)) return 'epic';
+
+    return 'medium';
+}
+
+/**
+ * Infer tempo from prompt
+ */
+function inferTempo(prompt: string): MusicTempo {
+    const lowerPrompt = prompt.toLowerCase();
+
+    if (/slow|peaceful|tranquil|gentle|flowing/i.test(lowerPrompt)) return 'slow';
+    if (/fast|energetic|lively|upbeat|exciting/i.test(lowerPrompt)) return 'fast';
+
+    return 'medium';
+}
+
+/**
  * Music Generator Service
  *
  * Generates background music by:
- * 1. Mapping moods to descriptive prompts for ElevenLabs SFX API
- * 2. Generating base clips (max 22s)
- * 3. Looping/extending clips to target duration via FFmpeg
- * 4. Applying fade-in/out effects
- * 5. Adjusting volume levels
+ * 1. Checking persistent library for source clips by mood
+ * 2. Mapping moods to descriptive prompts for ElevenLabs SFX API if not found
+ * 3. Generating base clips (max 22s)
+ * 4. Looping/extending clips to target duration via FFmpeg
+ * 5. Applying fade-in/out effects
+ * 6. Adjusting volume levels
  */
 @injectable()
 export class MusicGeneratorService implements IMusicGeneratorService {
+    private libraryHits = 0;
+    private libraryMisses = 0;
+
     constructor(
         @inject(IocInfrastructure.LOGGER) private readonly logger: Logger,
         @inject('ISoundEffectsProvider') private readonly sfxProvider: ISoundEffectsProvider,
-    ) {}
+    ) { }
+
+    /**
+     * Lazily get AudioLibrary service
+     */
+    private _audioLibrary: IAudioLibraryService | null = null;
+    private get audioLibrary(): IAudioLibraryService {
+        if (!this._audioLibrary) {
+            this._audioLibrary = getInstance<IAudioLibraryService>(IocService.AUDIO_LIBRARY);
+        }
+        return this._audioLibrary;
+    }
+
+    /**
+     * Lazily get Storage service
+     */
+    private _storage: IStorageService | null = null;
+    private get storage(): IStorageService {
+        if (!this._storage) {
+            this._storage = getInstance<IStorageService>(IocService.STORAGE);
+        }
+        return this._storage;
+    }
 
     /**
      * Generate music audio for a mood
@@ -164,6 +233,9 @@ export class MusicGeneratorService implements IMusicGeneratorService {
 
         // Get prompt for mood
         const promptUsed = customPrompt ?? this.getPromptForMood(mood);
+        const libraryMood = mapToLibraryMood(mood);
+        const intensity = inferIntensity(promptUsed);
+        const tempo = inferTempo(promptUsed);
 
         this.logger.info('Generating music', {
             mood,
@@ -171,43 +243,134 @@ export class MusicGeneratorService implements IMusicGeneratorService {
             fadeInDuration,
             fadeOutDuration,
             volume,
+            intensity,
+            tempo,
             promptPreview: promptUsed.substring(0, 50),
         });
 
-        // Calculate source clip duration (max 22s for ElevenLabs, use recommended if shorter)
-        const moodConfig = MOOD_PROMPTS[mood];
-        const recommendedDuration = moodConfig?.recommendedDuration ?? MAX_SFX_CLIP_DURATION;
-        const sourceClipDuration = Math.min(
-            targetDurationSeconds,
-            recommendedDuration,
-            MAX_SFX_CLIP_DURATION
-        );
+        // =====================================================================
+        // Step 1: Check library for existing source clip
+        // =====================================================================
+        let sourceAudio: Buffer | null = null;
+        let sourceDuration = 0;
+        let fromLibrary = false;
 
-        // Generate base music clip via ElevenLabs
-        const sfxResult = await this.sfxProvider.convert({
-            text: promptUsed,
-            durationSeconds: sourceClipDuration,
-            promptInfluence,
+        const libraryResult = await this.audioLibrary.findMusic({
+            mood: libraryMood,
+            intensity,
+            tempo,
         });
 
-        // Check if we need to loop
-        const needsLoop = targetDurationSeconds > sfxResult.durationSeconds;
+        if (libraryResult.music) {
+            this.logger.info('[LIBRARY HIT] Found music source in persistent library', {
+                musicId: libraryResult.music.id,
+                canonicalKey: libraryResult.music.canonicalKey,
+                fromCache: libraryResult.fromCache,
+            });
+            this.libraryHits++;
+
+            try {
+                // Download source clip from storage
+                sourceAudio = await this.storage.download(libraryResult.music.s3Url);
+                sourceDuration = libraryResult.music.sourceDurationSeconds;
+                fromLibrary = true;
+
+                // Increment usage counter (fire and forget)
+                this.audioLibrary.incrementMusicUsage(libraryResult.music.id).catch((err) => {
+                    this.logger.warn('Failed to increment music usage', { error: err.message });
+                });
+            } catch (error) {
+                this.logger.warn('[LIBRARY INVALID] Library entry exists but file not found', {
+                    musicId: libraryResult.music.id,
+                    error: error instanceof Error ? error.message : 'Unknown',
+                });
+                sourceAudio = null;
+            }
+        } else {
+            this.logger.info('[LIBRARY MISS] No music found in persistent library', { mood });
+            this.libraryMisses++;
+        }
+
+        // =====================================================================
+        // Step 2: Generate source clip via API if not found in library
+        // =====================================================================
+        if (!sourceAudio) {
+            // Calculate source clip duration (max 22s for ElevenLabs, use recommended if shorter)
+            const moodConfig = MOOD_PROMPTS[mood];
+            const recommendedDuration = moodConfig?.recommendedDuration ?? MAX_SFX_CLIP_DURATION;
+            const sourceClipDuration = Math.min(
+                targetDurationSeconds,
+                recommendedDuration,
+                MAX_SFX_CLIP_DURATION
+            );
+
+            // Generate base music clip via ElevenLabs
+            const sfxResult = await this.sfxProvider.convert({
+                text: promptUsed,
+                durationSeconds: sourceClipDuration,
+                promptInfluence,
+            });
+
+            sourceAudio = sfxResult.audio;
+            sourceDuration = sfxResult.durationSeconds;
+
+            // Store source clip in library for future reuse
+            try {
+                const storagePath = `music/${mood}/${Date.now()}-${Bun.hash(promptUsed).toString(36)}.mp3`;
+                await this.storage.upload(sourceAudio, storagePath, {
+                    contentType: 'audio/mpeg',
+                });
+
+                // Get next variation index
+                const variationIndex = Math.floor(Math.random() * 5);
+
+                await this.audioLibrary.storeMusic({
+                    mood: libraryMood,
+                    intensity,
+                    tempo,
+                    variationIndex,
+                    prompt: promptUsed,
+                    promptInfluence,
+                    s3Url: storagePath,
+                    sourceDurationSeconds: sourceDuration,
+                    isLoopable: true,
+                    tags: this.extractTags(promptUsed),
+                });
+
+                this.logger.info('Music source stored in library', {
+                    mood,
+                    intensity,
+                    tempo,
+                    storagePath,
+                });
+            } catch (error) {
+                this.logger.warn('Failed to store music in library', {
+                    error: error instanceof Error ? error.message : 'Unknown',
+                });
+            }
+        }
+
+        // =====================================================================
+        // Step 3: Apply looping/fade effects if needed
+        // =====================================================================
+        const needsLoop = targetDurationSeconds > sourceDuration;
 
         if (!needsLoop && Math.abs(volume - 1.0) < 0.01 && fadeInDuration === 0 && fadeOutDuration === 0) {
             // No processing needed, return as-is
             return {
-                audio: sfxResult.audio,
-                durationSeconds: sfxResult.durationSeconds,
+                audio: sourceAudio,
+                durationSeconds: sourceDuration,
                 mood,
                 looped: false,
-                sourceClipDurationSeconds: sfxResult.durationSeconds,
+                sourceClipDurationSeconds: sourceDuration,
                 promptUsed,
+                fromLibrary,
             };
         }
 
         // Process with FFmpeg for looping, fades, and volume
         const processedAudio = await this.processMusicWithFFmpeg(
-            sfxResult.audio,
+            sourceAudio,
             targetDurationSeconds,
             fadeInDuration,
             fadeOutDuration,
@@ -219,9 +382,10 @@ export class MusicGeneratorService implements IMusicGeneratorService {
 
         this.logger.info('Music generation complete', {
             mood,
-            sourceClipDuration: sfxResult.durationSeconds,
+            sourceClipDuration: sourceDuration,
             finalDuration,
             looped: needsLoop,
+            fromLibrary,
         });
 
         return {
@@ -229,8 +393,9 @@ export class MusicGeneratorService implements IMusicGeneratorService {
             durationSeconds: finalDuration,
             mood,
             looped: needsLoop,
-            sourceClipDurationSeconds: sfxResult.durationSeconds,
+            sourceClipDurationSeconds: sourceDuration,
             promptUsed,
+            fromLibrary,
         };
     }
 
@@ -291,6 +456,24 @@ export class MusicGeneratorService implements IMusicGeneratorService {
         }
 
         return mapping.prompt;
+    }
+
+    /**
+     * Extract tags from prompt for library search
+     */
+    private extractTags(prompt: string): string[] {
+        const stopWords = new Set([
+            'a', 'an', 'the', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+            'to', 'of', 'in', 'for', 'on', 'with', 'at', 'by', 'from', 'as', 'into',
+            'and', 'but', 'or', 'music', 'sound', 'audio', 'background',
+        ]);
+
+        return prompt
+            .toLowerCase()
+            .replace(/[^a-z0-9\s]/g, ' ')
+            .split(/\s+/)
+            .filter(word => word.length > 2 && !stopWords.has(word))
+            .slice(0, 10);
     }
 
     /**

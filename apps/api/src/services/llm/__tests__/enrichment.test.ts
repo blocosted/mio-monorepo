@@ -244,7 +244,7 @@ describe('LLM Service - Enrichment', () => {
           VocabularyLevel.Medium,
         );
 
-        expect(prompt).toContain('a 7-year-old fille');
+        expect(prompt).toContain('une 7-year-old fille');
       });
 
       it('includes gender-appropriate word for boy (default French)', () => {
@@ -253,7 +253,7 @@ describe('LLM Service - Enrichment', () => {
           VocabularyLevel.Medium,
         );
 
-        expect(prompt).toContain('a 7-year-old garcon');
+        expect(prompt).toContain('un 7-year-old garcon');
       });
     });
 

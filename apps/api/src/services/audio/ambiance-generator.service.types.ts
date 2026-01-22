@@ -37,6 +37,8 @@ export interface AmbianceGenerateResult {
     looped: boolean;
     /** Source clip duration before looping */
     sourceClipDurationSeconds: number;
+    /** Whether result came from persistent library */
+    fromLibrary?: boolean;
 }
 
 /**

@@ -29,6 +29,7 @@ export enum IocService {
     SOUND_EFFECTS_PROVIDER = 'SoundEffectsProvider',
     SOUND_EFFECTS = 'SoundEffectsService',
     SFX_CACHE = 'SfxCacheService',
+    AUDIO_LIBRARY = 'AudioLibraryService',
 }
 
 /**

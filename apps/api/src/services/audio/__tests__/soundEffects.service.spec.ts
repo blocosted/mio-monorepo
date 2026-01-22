@@ -56,6 +56,13 @@ const createMockProvider = () => ({
     })),
 });
 
+// Mock Audio Library Service
+const createMockAudioLibrary = () => ({
+    findSfx: mock(() => Promise.resolve({ sfx: null, fromCache: false })),
+    storeSfx: mock(() => Promise.resolve()),
+    incrementSfxUsage: mock(() => Promise.resolve()),
+});
+
 describe('SoundEffectsService', () => {
     let service: SoundEffectsService;
     let mockLogger: ReturnType<typeof createMockLogger>;
@@ -63,6 +70,7 @@ describe('SoundEffectsService', () => {
     let mockSfxCache: ReturnType<typeof createMockSfxCache>;
     let mockStorage: ReturnType<typeof createMockStorage>;
     let mockProvider: ReturnType<typeof createMockProvider>;
+    let mockAudioLibrary: ReturnType<typeof createMockAudioLibrary>;
 
     beforeEach(() => {
         mockLogger = createMockLogger();
@@ -70,11 +78,14 @@ describe('SoundEffectsService', () => {
         mockSfxCache = createMockSfxCache();
         mockStorage = createMockStorage();
         mockProvider = createMockProvider();
+        mockAudioLibrary = createMockAudioLibrary();
 
         // @ts-expect-error - bypassing private constructor for testing
         service = new SoundEffectsService(mockLogger, mockCache, mockSfxCache, mockStorage);
         // @ts-expect-error - setting private provider
         service._provider = mockProvider;
+        // @ts-expect-error - setting private audio library
+        service._audioLibrary = mockAudioLibrary;
     });
 
     describe('generateSfx', () => {

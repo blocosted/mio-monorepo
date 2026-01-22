@@ -18,8 +18,10 @@ describe('AudioCacheService', () => {
     let audioCacheService: AudioCacheService;
 
     const testParams: AudioCacheKeyParams = {
-        prompt: 'Once upon a time in a magical forest',
+        text: 'Once upon a time in a magical forest',
         voiceId: 'voice-123',
+        modelId: 'eleven_v3',
+        outputFormat: 'mp3_44100_128',
     };
 
     const testAudio: Omit<CachedAudio, 'cachedAt'> = {
@@ -41,8 +43,8 @@ describe('AudioCacheService', () => {
     });
 
     beforeEach(async () => {
-        // Clean up test keys before each test
-        await cleanupRedisKeys(redis, 'audio:*');
+        // Clean up test keys before each test (tts:audio and tts:usage prefixes)
+        await cleanupRedisKeys(redis, 'tts:*');
     });
 
     describe('get()', () => {
@@ -59,8 +61,10 @@ describe('AudioCacheService', () => {
 
         it('returns null if audio not cached', async () => {
             const params: AudioCacheKeyParams = {
-                prompt: 'Non-existent prompt',
+                text: 'Non-existent prompt',
                 voiceId: 'voice-999',
+                modelId: 'eleven_v3',
+                outputFormat: 'mp3_44100_128',
             };
 
             const result = await audioCacheService.get(params);
@@ -77,8 +81,8 @@ describe('AudioCacheService', () => {
         });
 
         it('generates different keys for different prompts', async () => {
-            const params1 = { ...testParams, prompt: 'Prompt 1' };
-            const params2 = { ...testParams, prompt: 'Prompt 2' };
+            const params1 = { ...testParams, text: 'Prompt 1' };
+            const params2 = { ...testParams, text: 'Prompt 2' };
 
             const audio1 = { ...testAudio, url: 'https://storage.example.com/audio/1.mp3' };
             const audio2 = { ...testAudio, url: 'https://storage.example.com/audio/2.mp3' };
@@ -173,8 +177,10 @@ describe('AudioCacheService', () => {
 
         it('returns false when audio is not cached', async () => {
             const params: AudioCacheKeyParams = {
-                prompt: 'Non-existent',
+                text: 'Non-existent',
                 voiceId: 'voice-999',
+                modelId: 'eleven_v3',
+                outputFormat: 'mp3_44100_128',
             };
 
             const result = await audioCacheService.exists(params);
@@ -221,8 +227,10 @@ describe('AudioCacheService', () => {
 
         it('returns 0 when usage not tracked', async () => {
             const params: AudioCacheKeyParams = {
-                prompt: 'Never used',
+                text: 'Never used',
                 voiceId: 'voice-999',
+                modelId: 'eleven_v3',
+                outputFormat: 'mp3_44100_128',
             };
 
             const result = await audioCacheService.getUsageCount(params);
@@ -243,8 +251,10 @@ describe('AudioCacheService', () => {
 
         it('handles special characters in prompts', async () => {
             const specialParams: AudioCacheKeyParams = {
-                prompt: 'Prompt with émojis 🎵 and symbols: @#$%',
+                text: 'Prompt with émojis 🎵 and symbols: @#$%',
                 voiceId: 'voice-123',
+                modelId: 'eleven_v3',
+                outputFormat: 'mp3_44100_128',
             };
 
             await audioCacheService.set(specialParams, testAudio);
@@ -255,10 +265,12 @@ describe('AudioCacheService', () => {
         });
 
         it('handles very long prompts', async () => {
-            const longPrompt = 'A'.repeat(10000);
+            const longText = 'A'.repeat(10000);
             const longParams: AudioCacheKeyParams = {
-                prompt: longPrompt,
+                text: longText,
                 voiceId: 'voice-123',
+                modelId: 'eleven_v3',
+                outputFormat: 'mp3_44100_128',
             };
 
             await audioCacheService.set(longParams, testAudio);
@@ -271,8 +283,10 @@ describe('AudioCacheService', () => {
     describe('edge cases', () => {
         it('handles empty prompts', async () => {
             const emptyParams: AudioCacheKeyParams = {
-                prompt: '',
+                text: '',
                 voiceId: 'voice-123',
+                modelId: 'eleven_v3',
+                outputFormat: 'mp3_44100_128',
             };
 
             await audioCacheService.set(emptyParams, testAudio);
@@ -329,12 +343,16 @@ describe('AudioCacheService', () => {
 
         it('handles multiple audio caches independently', async () => {
             const params1: AudioCacheKeyParams = {
-                prompt: 'Story 1',
+                text: 'Story 1',
                 voiceId: 'voice-1',
+                modelId: 'eleven_v3',
+                outputFormat: 'mp3_44100_128',
             };
             const params2: AudioCacheKeyParams = {
-                prompt: 'Story 2',
+                text: 'Story 2',
                 voiceId: 'voice-2',
+                modelId: 'eleven_v3',
+                outputFormat: 'mp3_44100_128',
             };
 
             const audio1 = { ...testAudio, url: 'https://storage.example.com/audio/1.mp3', voiceId: 'voice-1' };

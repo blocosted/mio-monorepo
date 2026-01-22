@@ -1756,13 +1756,15 @@ const createSeamlessLoop = async (audioUrl: string, targetDuration: number): Pro
 
 ### 8.5 Estimation des Coûts Audio IA
 
-| Type | Service | Coût unitaire | Par histoire 5min |
-|------|---------|---------------|-------------------|
-| Voix (narration + dialogues) | ElevenLabs TTS | ~$0.30/min | ~$0.40 |
-| Effets sonores (8-12 effets) | ElevenLabs SFX | ~$0.01/effet | ~$0.10 |
-| Musique de fond | Suno | ~$0.05/génération | ~$0.10 |
-| Ambiance | ElevenLabs SFX | ~$0.02/ambiance | ~$0.04 |
-| **TOTAL** | | | **~$0.64** |
+| Type | Service | Coût unitaire | Par histoire 5min | Avec Library (80% hit) |
+|------|---------|---------------|-------------------|------------------------|
+| Voix (narration + dialogues) | ElevenLabs TTS | ~$0.30/min | ~$0.40 | ~$0.40 (pas de cache) |
+| Effets sonores (8-12 effets) | ElevenLabs SFX | ~$0.01/effet | ~$0.10 | ~$0.02 |
+| Musique de fond | Suno/ElevenLabs | ~$0.05/génération | ~$0.10 | ~$0.02 |
+| Ambiance | ElevenLabs SFX | ~$0.02/ambiance | ~$0.04 | ~$0.008 |
+| **TOTAL** | | | **~$0.64** | **~$0.45 (-30%)** |
+
+*Note: Voir section 8.7 pour détails sur l'architecture library-first qui permet ces économies.*
 
 ### 8.6 Optimisations & Cache (Redis)
 
@@ -1843,6 +1845,155 @@ const getSoundEffect = async (description: string): Promise<string> => {
   return audio.url;
 };
 ```
+
+### 8.7 Bibliothèques Audio Persistantes
+
+#### Architecture Library-First
+
+Le système utilise une approche "library-first" pour tous les assets audio (SFX, Ambiances, Musiques):
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                     FLOW DE GÉNÉRATION AUDIO                        │
+└─────────────────────────────────────────────────────────────────────┘
+
+Besoin SFX/Ambiance/Musique
+        │
+        ▼
+┌───────────────────┐
+│  Redis Cache      │  ← Lookup rapide (TTL 1h)
+│  (métadonnées)    │
+└───────────────────┘
+        │ Miss
+        ▼
+┌───────────────────┐
+│  PostgreSQL       │  ← Recherche sémantique (tags, catégorie, mood)
+│  Audio Library    │
+└───────────────────┘
+        │ Miss
+        ▼
+┌───────────────────┐
+│  ElevenLabs API   │  ← Génération on-demand
+│  (fallback)       │
+└───────────────────┘
+        │
+        ▼
+┌───────────────────┐
+│  Store in Library │  ← Sauvegarde pour réutilisation future
+│  S3 + PostgreSQL  │
+└───────────────────┘
+```
+
+#### Tables de Bibliothèque
+
+```typescript
+// audio_library_sfx - Effets sonores
+interface AudioLibrarySfx {
+  id: string;
+  canonicalKey: string;                    // Unique key pour lookup
+  category: 'ambient' | 'effects' | 'transitions' | 'foley' | 'creatures';
+  subcategory: string;
+  environment?: 'indoor' | 'outdoor' | 'fantasy' | 'urban' | 'nature';
+  intensity: 'subtle' | 'medium' | 'intense';
+  prompt: string;
+  s3Url: string;
+  durationSeconds: number;
+  tags: string[];
+  usageCount: number;
+}
+
+// audio_library_ambiance - Ambiances de fond
+interface AudioLibraryAmbiance {
+  id: string;
+  canonicalKey: string;
+  environment: 'forest' | 'ocean' | 'city' | 'village' | 'castle' | 'cave' | 'mountain' | 'meadow' | 'space' | 'underwater';
+  subEnvironment?: string;
+  timeOfDay: 'day' | 'night' | 'dawn' | 'dusk' | 'any';
+  weather: 'clear' | 'rainy' | 'stormy' | 'snowy' | 'foggy' | 'any';
+  mood?: 'peaceful' | 'mysterious' | 'tense' | 'magical' | 'adventurous';
+  prompt: string;
+  s3Url: string;
+  sourceDurationSeconds: number;
+  isLoopable: boolean;
+  tags: string[];
+  usageCount: number;
+}
+
+// audio_library_music - Musiques de fond
+interface AudioLibraryMusic {
+  id: string;
+  canonicalKey: string;
+  mood: 'calm' | 'mysterious' | 'adventurous' | 'tense' | 'joyful' | 'sad' | 'magical' | 'serene';
+  intensity: 'soft' | 'medium' | 'epic';
+  tempo: 'slow' | 'medium' | 'fast';
+  variationIndex: number;                  // 0-4 variations par combinaison
+  prompt: string;
+  s3Url: string;
+  sourceDurationSeconds: number;
+  isLoopable: boolean;
+  tags: string[];
+  usageCount: number;
+}
+```
+
+#### Taxonomie des Assets
+
+**SFX (~80 variations cibles):**
+
+| Catégorie | Sous-catégorie | Environnement | Intensité |
+|-----------|----------------|---------------|-----------|
+| ambient | weather, water, wind | outdoor, nature | subtle/medium/intense |
+| effects | footsteps, doors, impacts | indoor, outdoor, fantasy | subtle/medium/intense |
+| transitions | whoosh, magical | any | subtle/medium/intense |
+| foley | fabric | indoor | subtle/medium |
+| creatures | birds, fantasy | outdoor, nature, fantasy | subtle/medium/intense |
+
+**Ambiances (~60 variations cibles):**
+
+| Environnement | Sous-env | Moment | Météo | Mood |
+|---------------|----------|--------|-------|------|
+| forest | deep, edge, clearing | day, night, dawn | clear, rainy | peaceful, mysterious |
+| ocean | beach, underwater, dock | day, night | clear, stormy | peaceful, adventurous |
+| castle | hall, dungeon, tower | any | any | mysterious, tense |
+| village | market, home, street | day, night | clear, rainy | peaceful, joyful |
+| cave | entrance, deep | any | any | mysterious, tense |
+| mountain | peak, path, valley | day, night | clear, snowy | adventurous, serene |
+
+**Musiques (~60 variations cibles):**
+
+| Mood | Intensité | Tempo | Variations |
+|------|-----------|-------|------------|
+| calm | soft, medium | slow, medium | 3-5 |
+| mysterious | soft, medium | slow, medium | 5-7 |
+| adventurous | medium, epic | medium, fast | 5-8 |
+| tense | medium, epic | medium, fast | 5-9 |
+| joyful | soft, medium | medium, fast | 5-7 |
+| sad | soft | slow | 3-5 |
+| magical | soft, medium | slow, medium | 5-8 |
+| serene | soft | slow | 3-5 |
+
+#### CLI de Gestion
+
+```bash
+# Seed les bibliothèques
+nx run scripts:library -- seed-sfx [--category ambient] [--dry-run]
+nx run scripts:library -- seed-ambiance [--environment forest] [--dry-run]
+nx run scripts:library -- seed-music [--mood calm] [--dry-run]
+
+# Statistiques
+nx run scripts:library -- stats [--json]
+```
+
+#### Estimation des Économies
+
+| Métrique | Sans Library | Avec Library (80% hit rate) |
+|----------|--------------|------------------------------|
+| SFX par histoire (~10 effets) | ~$0.10 | ~$0.02 |
+| Ambiance par histoire | ~$0.04 | ~$0.008 |
+| Musique par histoire | ~$0.10 | ~$0.02 |
+| **Total par histoire** | **~$0.64** | **~$0.35 (-45%)** |
+
+Avec un taux de hit de 80% sur les bibliothèques, on estime une **réduction de 45% des coûts API ElevenLabs** sur le long terme.
 
 ---
 
@@ -2389,4 +2540,4 @@ ffmpeg -i input.wav -filter_complex "
 
 ---
 
-*Document vivant — Dernière mise à jour : Janvier 2026*
+*Document vivant — Dernière mise à jour : 22 Janvier 2026*

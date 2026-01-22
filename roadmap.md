@@ -24,8 +24,9 @@ Permettre aux enfants (et leurs parents) de créer des histoires audio personnal
 | **Phase 1** | MVP Minimal - Chemin critique | 13 US | 39 pts |
 | **Phase 2** | MVP Complet - Interface utilisateur | 18 US | 42 pts |
 | **Phase 3** | Production Ready - Features complètes | 16 US | 38 pts |
+| **Phase 3.5** | Optimisation Audio - Bibliothèques persistantes | 7 US | 26 pts |
 | **Phase 4** | Polish & Sécurité | 9 US | 18 pts |
-| **Total** | | **56 US** | **137 pts** |
+| **Total** | | **63 US** | **163 pts** |
 
 ---
 
@@ -790,6 +791,155 @@ Permettre aux enfants (et leurs parents) de créer des histoires audio personnal
 
 ---
 
+## Phase 3.5 — Optimisation Audio (Bibliothèques Persistantes)
+
+> **Objectif:** Réduire les coûts ElevenLabs via bibliothèques audio persistantes et approche library-first
+
+### US-100: Migration schéma voix avec colonnes typées [Complexité: 3/5] ✅
+
+**En tant que** développeur,
+**Je veux** remplacer la colonne `labels` JSONB par des colonnes typées,
+**Afin de** permettre des requêtes efficaces et une validation stricte.
+
+**Critères d'acceptation:**
+- [x] Migration Drizzle pour les nouvelles colonnes (gender, age, accent, language, useCase)
+- [x] Migration des données existantes de `labels` vers les nouvelles colonnes
+- [x] Suppression de la colonne `labels`
+- [x] Index sur `gender`, `age`, `language`, `useCase`
+- [x] Types TypeScript mis à jour
+- [x] Tests de migration passants
+
+---
+
+### US-101: Sync voix paginé avec filtre use_cases [Complexité: 4/5] ✅
+
+**En tant que** développeur,
+**Je veux** synchroniser toutes les voix ElevenLabs avec pagination et filtrage,
+**Afin de** n'avoir que les voix pertinentes pour les histoires narratives.
+
+**Critères d'acceptation:**
+- [x] API `voices.getShared()` avec pagination
+- [x] Filtre `category: "Narrative & Story"`
+- [x] Support `--page-size` et `--max-pages` dans le CLI
+- [x] Flag `--use-case` pour filtrer
+- [x] Stats loggées: pages traitées, voix filtrées, voix ajoutées
+- [x] Tests d'intégration passants
+
+---
+
+### US-110: Schéma DB pour bibliothèques audio [Complexité: 4/5] ✅
+
+**En tant que** développeur,
+**Je veux** des tables pour stocker les bibliothèques SFX, Ambiance et Musique,
+**Afin de** permettre la réutilisation des assets générés.
+
+**Critères d'acceptation:**
+- [x] Table `audio_library_sfx` avec taxonomie (category, subcategory, environment, intensity)
+- [x] Table `audio_library_ambiance` avec taxonomie (environment, timeOfDay, weather, mood)
+- [x] Table `audio_library_music` avec taxonomie (mood, intensity, tempo, variationIndex)
+- [x] Index B-tree sur colonnes de catégorie
+- [x] Index GIN sur colonnes `tags` et `storyUniverses`
+- [x] Types exportés dans `@mio/shared/types`
+
+---
+
+### US-111: Service AudioLibrary avec lookup sémantique [Complexité: 5/5] ✅
+
+**En tant que** système,
+**Je veux** un service de lookup dans les bibliothèques audio,
+**Afin de** trouver des assets existants avant de générer.
+
+**Critères d'acceptation:**
+- [x] `AudioLibraryService` avec `IAudioLibraryService`
+- [x] Méthodes `findSfx/findAmbiance/findMusic` avec matching sémantique
+- [x] Random parmi top 5 résultats pour variété
+- [x] Cache Redis des lookups (TTL 1h)
+- [x] Méthodes `storeSfx/storeAmbiance/storeMusic`
+- [x] Incrémentation automatique de `usageCount`
+- [x] Tests unitaires et d'intégration
+
+---
+
+### US-112: Intégration hybride SFX (library-first) [Complexité: 4/5] ✅
+
+**En tant que** système,
+**Je veux** que la génération SFX cherche d'abord dans la bibliothèque,
+**Afin de** réduire les appels API ElevenLabs.
+
+**Critères d'acceptation:**
+- [x] `SoundEffectsService.generateSfx()` modifié pour library-first
+- [x] Inférence de `category`, `subcategory`, `environment`, `intensity`
+- [x] Sur miss: génération via API puis stockage dans library
+- [x] `fromLibrary: boolean` dans le résultat
+- [x] Logs `[LIBRARY HIT]` vs `[LIBRARY MISS]`
+- [x] Tests mis à jour
+
+---
+
+### US-113: Intégration hybride Ambiance (library-first) [Complexité: 4/5] ✅
+
+**En tant que** système,
+**Je veux** que la génération d'ambiance cherche d'abord dans la bibliothèque,
+**Afin d'** éviter de régénérer des ambiances identiques.
+
+**Critères d'acceptation:**
+- [x] `AmbianceGeneratorService.generate()` modifié pour library-first
+- [x] Inférence de `environment`, `timeOfDay`, `weather`, `mood`
+- [x] Stockage du clip source (avant looping) dans la library
+- [x] Looping/fade appliqué à la volée depuis le clip source
+- [x] Logs `[LIBRARY HIT]` vs `[LIBRARY MISS]`
+- [x] Tests mis à jour
+
+---
+
+### US-114: Intégration hybride Musique (library-first) [Complexité: 4/5] ✅
+
+**En tant que** système,
+**Je veux** que la génération de musique cherche d'abord dans la bibliothèque,
+**Afin de** réutiliser les musiques par mood.
+
+**Critères d'acceptation:**
+- [x] `MusicGeneratorService.generate()` modifié pour library-first
+- [x] Lookup par `mood`, `intensity`, `tempo`
+- [x] Support de plusieurs variations (0-4) par combinaison
+- [x] Stockage du clip source (avant looping)
+- [x] Logs `[LIBRARY HIT]` vs `[LIBRARY MISS]`
+- [x] Tests mis à jour
+
+---
+
+### US-115: CLI seed pour peupler les bibliothèques [Complexité: 4/5] ✅
+
+**En tant que** développeur,
+**Je veux** des commandes CLI pour pré-générer des assets dans les bibliothèques,
+**Afin de** construire un catalogue de base.
+
+**Critères d'acceptation:**
+- [x] `nx run scripts:library -- seed-sfx [--category] [--dry-run]`
+- [x] `nx run scripts:library -- seed-ambiance [--environment] [--dry-run]`
+- [x] `nx run scripts:library -- seed-music [--mood] [--dry-run]`
+- [x] Génération selon la matrice de taxonomie définie (~80 SFX, ~60 Ambiance, ~60 Music)
+- [x] Rate limiting respecté (5s delay entre items)
+- [x] Résumé final: générés, skippés, échecs, coût estimé
+
+---
+
+### US-116: CLI stats pour bibliothèques audio [Complexité: 2/5] ✅
+
+**En tant que** développeur,
+**Je veux** voir les statistiques des bibliothèques audio,
+**Afin de** suivre la couverture et l'utilisation.
+
+**Critères d'acceptation:**
+- [x] `nx run scripts:library -- stats`
+- [x] Count par type (SFX, Ambiance, Music)
+- [x] Count par catégorie/environment/mood
+- [x] Top 5 assets les plus utilisés
+- [x] Couverture vs targets (80 SFX, 60 Ambiance, 60 Music)
+- [x] Estimation des économies de coûts
+
+---
+
 ## Phase 4 — Polish & Sécurité
 
 > **Objectif:** Finitions, UX avancée et sécurité
@@ -980,6 +1130,22 @@ Phase 3 (Production)
     │       ▼
     └── US-080-084 Progress Tracking
 
+Phase 3.5 (Optimisation Audio)
+    │
+    ├── US-100-101 Voix (schéma typé + sync paginé)
+    │       │
+    │       ▼
+    ├── US-110 Schéma DB bibliothèques
+    │       │
+    │       ▼
+    ├── US-111 Service AudioLibrary
+    │       │
+    │       ▼
+    ├── US-112-114 Intégration library-first (SFX/Ambiance/Music)
+    │       │
+    │       ▼
+    └── US-115-116 CLI seed & stats
+
 Phase 4 (Polish)
     │
     ├── US-006 Docker
@@ -994,8 +1160,8 @@ Phase 4 (Polish)
 | Complexité | Nombre US | Points |
 |------------|-----------|--------|
 | 1/5 | 3 | 3 |
-| 2/5 | 22 | 44 |
-| 3/5 | 17 | 51 |
-| 4/5 | 4 | 16 |
-| 5/5 | 3 | 15 |
-| **Total** | **53** | **131** |
+| 2/5 | 23 | 46 |
+| 3/5 | 18 | 54 |
+| 4/5 | 10 | 40 |
+| 5/5 | 4 | 20 |
+| **Total** | **63** | **163** |

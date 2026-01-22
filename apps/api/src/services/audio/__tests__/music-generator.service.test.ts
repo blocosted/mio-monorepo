@@ -5,10 +5,11 @@
  * These tests focus on the pure logic parts without FFmpeg operations.
  */
 
-import { describe, it, expect, beforeEach, mock } from 'bun:test';
+import { describe, it, expect, beforeEach, mock, spyOn } from 'bun:test';
 import { MusicGeneratorService } from '../music-generator.service';
 import type { ISoundEffectsProvider, SoundEffectsConvertResult } from '../soundEffects.provider.types';
 import type { Logger } from '@mio/shared/server/logger';
+import * as ioc from '../../../ioc';
 
 describe('MusicGeneratorService', () => {
     let mockSfxProvider: ISoundEffectsProvider;
@@ -30,6 +31,13 @@ describe('MusicGeneratorService', () => {
             warn: mock(() => {}),
             error: mock(() => {}),
         } as unknown as Logger;
+
+        // Mock getInstance to return mock audio library service
+        spyOn(ioc, 'getInstance').mockImplementation(() => ({
+            findMusic: mock(async () => ({ music: null, fromCache: false })),
+            storeMusic: mock(async () => {}),
+            incrementMusicUsage: mock(async () => {}),
+        }));
     });
 
     describe('getPromptForMood', () => {
@@ -42,7 +50,8 @@ describe('MusicGeneratorService', () => {
         it('should return prompt for adventurous mood', () => {
             const service = new MusicGeneratorService(mockLogger, mockSfxProvider);
             const prompt = service.getPromptForMood('adventurous');
-            expect(prompt.toLowerCase()).toContain('epic');
+            // All adventurous prompts (including variations) contain 'adventure'
+            expect(prompt.toLowerCase()).toContain('adventure');
         });
 
         it('should return prompt for mysterious mood', () => {
@@ -60,7 +69,8 @@ describe('MusicGeneratorService', () => {
         it('should return prompt for tense mood', () => {
             const service = new MusicGeneratorService(mockLogger, mockSfxProvider);
             const prompt = service.getPromptForMood('tense');
-            expect(prompt.toLowerCase()).toContain('tension');
+            // All tense prompts contain either 'suspens' or 'tense' or 'tension'
+            expect(prompt.toLowerCase()).toMatch(/tense|suspens|tension/);
         });
 
         it('should return prompt for joyful mood', () => {
@@ -136,7 +146,8 @@ describe('MusicGeneratorService', () => {
 
             expect(mockSfxProvider.convert).toHaveBeenCalled();
             const convertCall = (mockSfxProvider.convert as any).mock.calls[0];
-            expect(convertCall[0].text.toLowerCase()).toContain('epic');
+            // All adventurous prompts (including variations) contain 'adventure'
+            expect(convertCall[0].text.toLowerCase()).toContain('adventure');
         });
 
         it('should use custom prompt when provided', async () => {

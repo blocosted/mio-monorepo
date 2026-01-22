@@ -43,6 +43,8 @@ export interface MusicGenerateResult {
     sourceClipDurationSeconds: number;
     /** Prompt used for generation */
     promptUsed: string;
+    /** Whether result came from persistent library */
+    fromLibrary?: boolean;
 }
 
 /**

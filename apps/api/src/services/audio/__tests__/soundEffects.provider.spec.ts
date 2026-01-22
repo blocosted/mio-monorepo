@@ -8,8 +8,14 @@
 import { describe, it, expect, beforeEach, mock, spyOn } from 'bun:test';
 import { Readable } from 'stream';
 
-import { SoundEffectsProvider } from '../soundEffects.provider';
 import { ErrorCodes } from '@mio/shared';
+
+// Mock the environment module BEFORE importing the provider
+mock.module('@mio/shared/constants', () => ({
+    environment: {
+        ELEVENLABS_API_KEY: 'test-api-key-for-testing',
+    },
+}));
 
 // Mock Logger
 const createMockLogger = () => ({
@@ -31,6 +37,9 @@ mock.module('elevenlabs', () => ({
         };
     },
 }));
+
+// Import provider AFTER mocking
+import { SoundEffectsProvider } from '../soundEffects.provider';
 
 describe('SoundEffectsProvider', () => {
     let provider: SoundEffectsProvider;

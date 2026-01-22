@@ -1,6 +1,6 @@
 # Backlog — Mio
 
-**Dernière mise à jour:** 22 Janvier 2026
+**Dernière mise à jour:** 22 Janvier 2026 (Phase 3.5 complète)
 **Légende:** `[ ]` Todo | `[~]` In Progress | `[x]` Done | `[!]` Blocked
 
 ---
@@ -12,8 +12,9 @@
 | Phase 1 - MVP Minimal | 13 | 87 | 85 |
 | Phase 2 - MVP Complet | 18 | 68 | 0 |
 | Phase 3 - Production Ready | 16 | 58 | 35 |
+| Phase 3.5 - Optimisation Audio | 7 | 42 | 42 |
 | Phase 4 - Polish & Sécurité | 9 | 27 | 0 |
-| **Total** | **56** | **240** | **120** |
+| **Total** | **63** | **282** | **162** |
 
 ---
 
@@ -590,6 +591,93 @@
 
 ---
 
+## Phase 3.5 — Optimisation Audio (Bibliothèques Persistantes)
+
+### Epic: Optimisation Voix ElevenLabs
+
+#### US-100: Migration schéma voix avec colonnes typées [3/5] ✅
+- [x] Créer migration Drizzle pour ajouter les nouvelles colonnes typées (gender, age, accent, language, useCase)
+- [x] Migrer les données existantes de `labels` JSONB vers les nouvelles colonnes
+- [x] Supprimer la colonne `labels`
+- [x] Ajouter index sur `gender`, `age`, `language`, `useCase`
+- [x] Mettre à jour les types TypeScript
+- [x] Tests de migration
+
+#### US-101: Sync voix paginé avec filtre use_cases [4/5] ✅
+- [x] Utiliser l'API `voices.getShared()` avec pagination
+- [x] Filtrer par `category: "Narrative & Story"` (mapping vers `narrative_story`)
+- [x] Supporter `--page-size` et `--max-pages` dans le CLI
+- [x] Ajouter flag `--use-case` pour filtrer
+- [x] Logger stats: pages traitées, voix filtrées, voix ajoutées
+- [x] Tests d'intégration
+
+---
+
+### Epic: Bibliothèque Audio Persistante
+
+#### US-110: Schéma DB pour bibliothèques audio [4/5] ✅
+- [x] Créer table `audio_library_sfx` avec taxonomie complète
+- [x] Créer table `audio_library_ambiance` avec taxonomie complète
+- [x] Créer table `audio_library_music` avec taxonomie complète
+- [x] Ajouter index B-tree sur colonnes de catégorie
+- [x] Ajouter index GIN sur colonnes `tags` et `storyUniverses`
+- [x] Exporter les types correspondants (`@mio/shared/types`)
+- [x] Documenter la taxonomie dans le PRD
+
+#### US-111: Service AudioLibrary avec lookup sémantique [5/5] ✅
+- [x] Créer `AudioLibraryService` avec `IAudioLibraryService`
+- [x] Implémenter `findSfx(params)` avec matching sémantique
+- [x] Implémenter `findAmbiance(params)` avec matching sémantique
+- [x] Implémenter `findMusic(params)` avec matching sémantique
+- [x] Retourner random parmi top 5 pour variété
+- [x] Cache Redis des lookups (TTL 1h)
+- [x] Implémenter `storeSfx/storeAmbiance/storeMusic`
+- [x] Incrémenter `usageCount` automatiquement
+- [x] Tests unitaires et d'intégration
+
+#### US-112: Intégration hybride SFX (library-first) [4/5] ✅
+- [x] Modifier `SoundEffectsService.generateSfx()` pour library-first
+- [x] Inférer `category`, `subcategory`, `environment`, `intensity` depuis le texte
+- [x] Sur miss: générer via API puis stocker dans library
+- [x] Ajouter `fromLibrary: boolean` au résultat
+- [x] Logger `[LIBRARY HIT]` vs `[LIBRARY MISS]`
+- [x] Mettre à jour les tests
+
+#### US-113: Intégration hybride Ambiance (library-first) [4/5] ✅
+- [x] Modifier `AmbianceGeneratorService.generate()` pour library-first
+- [x] Inférer `environment`, `timeOfDay`, `weather`, `mood` depuis la description
+- [x] Stocker le clip source (avant looping) dans la library
+- [x] Appliquer le looping/fade à la volée depuis le clip source
+- [x] Logger `[LIBRARY HIT]` vs `[LIBRARY MISS]`
+- [x] Mettre à jour les tests
+
+#### US-114: Intégration hybride Musique (library-first) [4/5] ✅
+- [x] Modifier `MusicGeneratorService.generate()` pour library-first
+- [x] Lookup par `mood`, `intensity`, `tempo`
+- [x] Supporter plusieurs variations (0-4) par combinaison
+- [x] Stocker le clip source (avant looping)
+- [x] Logger `[LIBRARY HIT]` vs `[LIBRARY MISS]`
+- [x] Mettre à jour les tests
+
+#### US-115: CLI seed pour peupler les bibliothèques [4/5] ✅
+- [x] Créer `nx run scripts:library -- seed-sfx [--category] [--dry-run]`
+- [x] Créer `nx run scripts:library -- seed-ambiance [--environment] [--dry-run]`
+- [x] Créer `nx run scripts:library -- seed-music [--mood] [--dry-run]`
+- [x] Générer selon la matrice de taxonomie définie
+- [x] Rate limiting respecté (5s delay entre items)
+- [x] Progress avec compteur [x/total]
+- [x] Résumé final: générés, skippés, échecs, coût estimé
+
+#### US-116: CLI stats pour bibliothèques audio [2/5] ✅
+- [x] Créer `nx run scripts:library -- stats`
+- [x] Afficher count par type (SFX, Ambiance, Music)
+- [x] Afficher count par catégorie/environment/mood
+- [x] Afficher top 5 assets les plus utilisés
+- [x] Calculer couverture vs targets (80 SFX, 60 Ambiance, 60 Music)
+- [x] Estimer économies de coûts
+
+---
+
 ## Phase 4 — Polish & Sécurité
 
 ### Epic 1: Infrastructure (Déploiement)
@@ -699,3 +787,4 @@ _Aucun blocker identifié pour le moment_
 | 20 Janvier 2026 | Refactor infra: `bun test` via preload, Redis via Bun, Storage via Bun S3 |
 | 21 Janvier 2026 | US-050 en cours - ElevenLabs TTS: provider, mapping émotions/voix, CLI TTS, guide de prosodie multi-langue |
 | 22 Janvier 2026 | Services audio complets: US-050 TTS ✅, US-060 FFmpeg Mixer ✅, US-051 SFX ✅, US-052 Music 🚧, US-056 Ambiance ✅, US-061 Timeline ✅. Nouveaux CLI: sfx, music, ambiance, mix, pipeline |
+| 22 Janvier 2026 | Phase 3.5 Optimisation Audio complète: US-100 à US-116 ✅. Schéma voix typé, bibliothèques audio persistantes (SFX, Ambiance, Music), approche library-first, CLI seed et stats |

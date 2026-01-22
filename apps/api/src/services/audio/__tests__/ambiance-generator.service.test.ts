@@ -5,10 +5,11 @@
  * These tests focus on the pure logic parts without FFmpeg operations.
  */
 
-import { describe, it, expect, beforeEach, mock } from 'bun:test';
+import { describe, it, expect, beforeEach, mock, spyOn } from 'bun:test';
 import { AmbianceGeneratorService } from '../ambiance-generator.service';
 import type { ISoundEffectsProvider, SoundEffectsConvertResult } from '../soundEffects.provider.types';
 import type { Logger } from '@mio/shared/server/logger';
+import * as ioc from '../../../ioc';
 
 describe('AmbianceGeneratorService', () => {
     let mockSfxProvider: ISoundEffectsProvider;
@@ -30,6 +31,13 @@ describe('AmbianceGeneratorService', () => {
             warn: mock(() => {}),
             error: mock(() => {}),
         } as unknown as Logger;
+
+        // Mock getInstance to return mock audio library service
+        spyOn(ioc, 'getInstance').mockImplementation(() => ({
+            findAmbiance: mock(async () => ({ ambiance: null, fromCache: false })),
+            storeAmbiance: mock(async () => {}),
+            incrementAmbianceUsage: mock(async () => {}),
+        }));
     });
 
     describe('input validation', () => {

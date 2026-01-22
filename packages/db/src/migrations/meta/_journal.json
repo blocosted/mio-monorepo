@@ -15,6 +15,13 @@
       "when": 1769025880962,
       "tag": "0001_chief_doorman",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1769078465326,
+      "tag": "0002_tiresome_brother_voodoo",
+      "breakpoints": true
     }
   ]
 }

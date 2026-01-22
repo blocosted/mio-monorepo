@@ -7,5 +7,8 @@
 // Profile types and enums
 export * from './profiles.types';
 
+// Audio types and enums
+export * from './audio.types';
+
 // Common types
 export * from './common.types';

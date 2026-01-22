@@ -61,6 +61,10 @@ import {
     type ISoundEffectsProvider,
     type ISoundEffectsService,
 } from '../services/audio';
+import {
+    AudioLibraryService,
+    type IAudioLibraryService,
+} from '../services/audio-library';
 
 // Create container instance
 const container = new Container({ defaultScope: 'Singleton' });
@@ -112,6 +116,7 @@ export async function initializeContainer(): Promise<void> {
         [IocService.SOUND_EFFECTS_PROVIDER]: () => container.get(SoundEffectsProvider, { autobind: true }),
         [IocService.SFX_CACHE]: () => container.get(SfxCacheService, { autobind: true }),
         [IocService.SOUND_EFFECTS]: () => container.get(SoundEffectsService, { autobind: true }),
+        [IocService.AUDIO_LIBRARY]: () => container.get(AudioLibraryService, { autobind: true }),
     } as const;
 
     // Register all factories
@@ -162,6 +167,7 @@ export type {
     IFFmpegMixerService,
     ISoundEffectsProvider,
     ISoundEffectsService,
+    IAudioLibraryService,
 };
 export type { RedisClient, DatabaseConnection, Logger };
 

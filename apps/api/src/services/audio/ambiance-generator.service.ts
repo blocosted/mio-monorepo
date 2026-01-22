@@ -3,6 +3,11 @@
  *
  * Service for generating ambient background sounds using ElevenLabs SFX API.
  * Supports looping for longer durations and fade effects via FFmpeg.
+ *
+ * Uses library-first approach:
+ * 1. Check persistent library for matching source clip
+ * 2. Apply looping/fade to source clip on the fly
+ * 3. If not found, generate via API and store source clip in library
  */
 
 import 'reflect-metadata';
@@ -15,9 +20,17 @@ import { tmpdir } from 'node:os';
 
 import { AppError, ErrorCodes, DiagnoseSeverity } from '@mio/shared';
 import { Logger } from '@mio/shared/server/logger';
+import type {
+    AmbianceEnvironment,
+    TimeOfDay,
+    WeatherCondition,
+    AudioMood,
+} from '@mio/shared/types';
 
-import { IocInfrastructure } from '../../ioc';
+import { getInstance, IocInfrastructure, IocService } from '../../ioc';
 import type { ISoundEffectsProvider } from './soundEffects.provider.types';
+import type { IAudioLibraryService } from '../audio-library';
+import type { IStorageService } from '../storage';
 import type {
     IAmbianceGeneratorService,
     AmbianceGenerateInput,
@@ -47,20 +60,110 @@ const DEFAULTS = {
 } as const;
 
 /**
+ * Infer environment from description
+ */
+function inferEnvironment(description: string): AmbianceEnvironment | undefined {
+    const lowerDesc = description.toLowerCase();
+
+    if (/forest|tree|woods|woodland|jungle/i.test(lowerDesc)) return 'forest';
+    if (/ocean|sea|beach|wave|coast|shore/i.test(lowerDesc)) return 'ocean';
+    if (/city|urban|street|traffic|downtown/i.test(lowerDesc)) return 'city';
+    if (/village|town|market|shop/i.test(lowerDesc)) return 'village';
+    if (/castle|palace|throne|dungeon|tower/i.test(lowerDesc)) return 'castle';
+    if (/cave|cavern|underground|grotto/i.test(lowerDesc)) return 'cave';
+    if (/mountain|peak|cliff|summit|alpine/i.test(lowerDesc)) return 'mountain';
+    if (/meadow|field|grassland|prairie/i.test(lowerDesc)) return 'meadow';
+    if (/space|star|galaxy|cosmic|nebula/i.test(lowerDesc)) return 'space';
+    if (/underwater|ocean floor|deep sea|coral/i.test(lowerDesc)) return 'underwater';
+
+    return undefined;
+}
+
+/**
+ * Infer time of day from description
+ */
+function inferTimeOfDay(description: string): TimeOfDay {
+    const lowerDesc = description.toLowerCase();
+
+    if (/night|midnight|nocturnal|starry|moonlit/i.test(lowerDesc)) return 'night';
+    if (/dawn|sunrise|early morning|first light/i.test(lowerDesc)) return 'dawn';
+    if (/dusk|sunset|evening|twilight/i.test(lowerDesc)) return 'dusk';
+    if (/day|sunny|afternoon|morning|noon/i.test(lowerDesc)) return 'day';
+
+    return 'any';
+}
+
+/**
+ * Infer weather from description
+ */
+function inferWeather(description: string): WeatherCondition {
+    const lowerDesc = description.toLowerCase();
+
+    if (/rain|rainy|drizzle|shower/i.test(lowerDesc)) return 'rainy';
+    if (/storm|thunder|lightning|tempest/i.test(lowerDesc)) return 'stormy';
+    if (/snow|snowy|blizzard|frost/i.test(lowerDesc)) return 'snowy';
+    if (/fog|foggy|mist|misty|hazy/i.test(lowerDesc)) return 'foggy';
+    if (/clear|sunny|bright|cloudless/i.test(lowerDesc)) return 'clear';
+
+    return 'any';
+}
+
+/**
+ * Infer mood from description
+ */
+function inferMood(description: string): AudioMood | undefined {
+    const lowerDesc = description.toLowerCase();
+
+    if (/peaceful|calm|serene|tranquil|relaxing/i.test(lowerDesc)) return 'peaceful';
+    if (/mysterious|eerie|enigmatic|strange|curious/i.test(lowerDesc)) return 'mysterious';
+    if (/tense|suspense|danger|threat|scary|dark/i.test(lowerDesc)) return 'tense';
+    if (/magic|magical|enchant|wonder|fairy/i.test(lowerDesc)) return 'magical';
+    if (/adventure|epic|heroic|exciting|action/i.test(lowerDesc)) return 'adventurous';
+
+    return undefined;
+}
+
+/**
  * Ambiance Generator Service
  *
  * Generates ambient background sounds by:
- * 1. Creating base ambient clips via ElevenLabs SFX API (max 22s)
- * 2. Looping/extending clips to target duration via FFmpeg
- * 3. Applying fade-in/out effects
- * 4. Adjusting volume levels
+ * 1. Checking persistent library for source clips
+ * 2. Creating base ambient clips via ElevenLabs SFX API (max 22s) if not found
+ * 3. Looping/extending clips to target duration via FFmpeg
+ * 4. Applying fade-in/out effects
+ * 5. Adjusting volume levels
  */
 @injectable()
 export class AmbianceGeneratorService implements IAmbianceGeneratorService {
+    private libraryHits = 0;
+    private libraryMisses = 0;
+
     constructor(
         @inject(IocInfrastructure.LOGGER) private readonly logger: Logger,
         @inject('ISoundEffectsProvider') private readonly sfxProvider: ISoundEffectsProvider,
     ) {}
+
+    /**
+     * Lazily get AudioLibrary service
+     */
+    private _audioLibrary: IAudioLibraryService | null = null;
+    private get audioLibrary(): IAudioLibraryService {
+        if (!this._audioLibrary) {
+            this._audioLibrary = getInstance<IAudioLibraryService>(IocService.AUDIO_LIBRARY);
+        }
+        return this._audioLibrary;
+    }
+
+    /**
+     * Lazily get Storage service
+     */
+    private _storage: IStorageService | null = null;
+    private get storage(): IStorageService {
+        if (!this._storage) {
+            this._storage = getInstance<IStorageService>(IocService.STORAGE);
+        }
+        return this._storage;
+    }
 
     /**
      * Generate an ambient sound track
@@ -87,41 +190,144 @@ export class AmbianceGeneratorService implements IAmbianceGeneratorService {
             });
         }
 
+        // Infer taxonomy from description
+        const environment = inferEnvironment(description);
+        const timeOfDay = inferTimeOfDay(description);
+        const weather = inferWeather(description);
+        const mood = inferMood(description);
+
         this.logger.info('Generating ambiance', {
             description: description.substring(0, 50),
             targetDurationSeconds,
             fadeInDuration,
             fadeOutDuration,
             volume,
+            environment,
+            timeOfDay,
+            weather,
+            mood,
         });
 
-        // Calculate source clip duration (max 22s for ElevenLabs)
-        const sourceClipDuration = Math.min(targetDurationSeconds, MAX_SFX_CLIP_DURATION);
+        // =====================================================================
+        // Step 1: Check library for existing source clip
+        // =====================================================================
+        let sourceAudio: Buffer | null = null;
+        let sourceDuration: number = 0;
+        let fromLibrary = false;
 
-        // Generate base ambient clip via ElevenLabs
-        const sfxResult = await this.sfxProvider.convert({
-            text: this.buildAmbiancePrompt(description),
-            durationSeconds: sourceClipDuration,
-            promptInfluence,
-        });
+        if (environment) {
+            const libraryResult = await this.audioLibrary.findAmbiance({
+                description,
+                environment,
+                timeOfDay,
+                weather,
+                mood,
+            });
 
-        // Check if we need to loop
-        const needsLoop = targetDurationSeconds > sfxResult.durationSeconds;
+            if (libraryResult.ambiance) {
+                this.logger.info('[LIBRARY HIT] Found ambiance source in persistent library', {
+                    ambianceId: libraryResult.ambiance.id,
+                    canonicalKey: libraryResult.ambiance.canonicalKey,
+                    fromCache: libraryResult.fromCache,
+                });
+                this.libraryHits++;
+
+                try {
+                    // Download source clip from storage
+                    sourceAudio = await this.storage.download(libraryResult.ambiance.s3Url);
+                    sourceDuration = libraryResult.ambiance.sourceDurationSeconds;
+                    fromLibrary = true;
+
+                    // Increment usage counter (fire and forget)
+                    this.audioLibrary.incrementAmbianceUsage(libraryResult.ambiance.id).catch((err) => {
+                        this.logger.warn('Failed to increment ambiance usage', { error: err.message });
+                    });
+                } catch (error) {
+                    this.logger.warn('[LIBRARY INVALID] Library entry exists but file not found', {
+                        ambianceId: libraryResult.ambiance.id,
+                        error: error instanceof Error ? error.message : 'Unknown',
+                    });
+                    sourceAudio = null;
+                }
+            } else {
+                this.logger.info('[LIBRARY MISS] No ambiance found in persistent library', {
+                    description: description.substring(0, 50),
+                    environment,
+                });
+                this.libraryMisses++;
+            }
+        }
+
+        // =====================================================================
+        // Step 2: Generate source clip via API if not found in library
+        // =====================================================================
+        if (!sourceAudio) {
+            // Calculate source clip duration (max 22s for ElevenLabs)
+            const sourceClipDuration = Math.min(targetDurationSeconds, MAX_SFX_CLIP_DURATION);
+
+            // Generate base ambient clip via ElevenLabs
+            const sfxResult = await this.sfxProvider.convert({
+                text: this.buildAmbiancePrompt(description),
+                durationSeconds: sourceClipDuration,
+                promptInfluence,
+            });
+
+            sourceAudio = sfxResult.audio;
+            sourceDuration = sfxResult.durationSeconds;
+
+            // Store source clip in library for future reuse
+            if (environment) {
+                try {
+                    const storagePath = `ambiance/${environment}/${Date.now()}-${Bun.hash(description).toString(36)}.mp3`;
+                    await this.storage.upload(sourceAudio, storagePath, {
+                        contentType: 'audio/mpeg',
+                    });
+
+                    await this.audioLibrary.storeAmbiance({
+                        environment,
+                        timeOfDay,
+                        weather,
+                        mood,
+                        prompt: description,
+                        promptInfluence,
+                        s3Url: storagePath,
+                        sourceDurationSeconds: sourceDuration,
+                        isLoopable: true,
+                        tags: this.extractTags(description),
+                    });
+
+                    this.logger.info('Ambiance source stored in library', {
+                        environment,
+                        storagePath,
+                    });
+                } catch (error) {
+                    this.logger.warn('Failed to store ambiance in library', {
+                        error: error instanceof Error ? error.message : 'Unknown',
+                    });
+                }
+            }
+        }
+
+        // =====================================================================
+        // Step 3: Apply looping/fade effects if needed
+        // =====================================================================
+        const needsLoop = targetDurationSeconds > sourceDuration;
 
         if (!needsLoop && Math.abs(volume - 1.0) < 0.01 && fadeInDuration === 0 && fadeOutDuration === 0) {
             // No processing needed, return as-is
             return {
-                audio: sfxResult.audio,
-                durationSeconds: sfxResult.durationSeconds,
+                audio: sourceAudio,
+                durationSeconds: sourceDuration,
                 description,
                 looped: false,
-                sourceClipDurationSeconds: sfxResult.durationSeconds,
+                sourceClipDurationSeconds: sourceDuration,
+                fromLibrary,
             };
         }
 
         // Process with FFmpeg for looping, fades, and volume
         const processedAudio = await this.processAmbianceWithFFmpeg(
-            sfxResult.audio,
+            sourceAudio,
             targetDurationSeconds,
             fadeInDuration,
             fadeOutDuration,
@@ -133,9 +339,10 @@ export class AmbianceGeneratorService implements IAmbianceGeneratorService {
 
         this.logger.info('Ambiance generation complete', {
             description: description.substring(0, 30),
-            sourceClipDuration: sfxResult.durationSeconds,
+            sourceClipDuration: sourceDuration,
             finalDuration,
             looped: needsLoop,
+            fromLibrary,
         });
 
         return {
@@ -143,7 +350,8 @@ export class AmbianceGeneratorService implements IAmbianceGeneratorService {
             durationSeconds: finalDuration,
             description,
             looped: needsLoop,
-            sourceClipDurationSeconds: sfxResult.durationSeconds,
+            sourceClipDurationSeconds: sourceDuration,
+            fromLibrary,
         };
     }
 
@@ -200,6 +408,24 @@ export class AmbianceGeneratorService implements IAmbianceGeneratorService {
         }
 
         return `ambient background sound of ${description}, continuous and loopable`;
+    }
+
+    /**
+     * Extract tags from description for library search
+     */
+    private extractTags(description: string): string[] {
+        const stopWords = new Set([
+            'a', 'an', 'the', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+            'to', 'of', 'in', 'for', 'on', 'with', 'at', 'by', 'from', 'as', 'into',
+            'and', 'but', 'or', 'sound', 'sounds', 'ambient', 'background',
+        ]);
+
+        return description
+            .toLowerCase()
+            .replace(/[^a-z0-9\s]/g, ' ')
+            .split(/\s+/)
+            .filter(word => word.length > 2 && !stopWords.has(word))
+            .slice(0, 10);
     }
 
     /**
