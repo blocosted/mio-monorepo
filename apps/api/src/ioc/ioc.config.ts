@@ -70,20 +70,28 @@ import {
     type IScriptGenerationService,
 } from '../services/llm';
 
-// Audio Services
+// Narration Services
 import {
     TTSService,
     TTSStore,
     VoiceRegistryService,
-    FFmpegMixerService,
-    SoundEffectsService,
-    SoundEffectsStore,
+    VoiceRegistryStore,
     type ITTSService,
     type IVoiceRegistryService,
+} from '../services/narration';
+
+// Sound Design Services
+import {
+    SfxService,
+    SfxStore,
+    type ISfxService,
+} from '../services/sound-design';
+
+// Audio Mixing Services
+import {
+    FFmpegMixerService,
     type IFFmpegMixerService,
-    type ISoundEffectsService,
-} from '../services/audio';
-import { VoiceRegistryStore } from '../services/narration';
+} from '../services/audio-mixing';
 import {
     AudioLibraryService,
     AudioLibraryStore,
@@ -132,7 +140,7 @@ export async function initializeContainer(): Promise<void> {
         [IocStore.AUDIO_ASSETS_STORE]: () => container.get(AudioAssetsStore, { autobind: true }),
         [IocStore.GENERATION_JOBS_STORE]: () => container.get(GenerationJobsStore, { autobind: true }),
         [IocStore.TTS_STORE]: () => container.get(TTSStore, { autobind: true }),
-        [IocStore.SOUND_EFFECTS_STORE]: () => container.get(SoundEffectsStore, { autobind: true }),
+        [IocStore.SOUND_EFFECTS_STORE]: () => container.get(SfxStore, { autobind: true }),
         [IocStore.AUDIO_LIBRARY_STORE]: () => container.get(AudioLibraryStore, { autobind: true }),
         [IocStore.VOICE_REGISTRY_STORE]: () => container.get(VoiceRegistryStore, { autobind: true }),
         [IocStore.SFX_LIBRARY_STORE]: () => container.get(SfxLibraryStore, { autobind: true }),
@@ -158,7 +166,7 @@ export async function initializeContainer(): Promise<void> {
         [IocService.TTS]: () => container.get(TTSService, { autobind: true }),
         [IocService.FFMPEG_MIXER]: () => container.get(FFmpegMixerService, { autobind: true }),
         [IocService.SFX_CACHE]: () => container.get(SfxCacheService, { autobind: true }),
-        [IocService.SOUND_EFFECTS]: () => container.get(SoundEffectsService, { autobind: true }),
+        [IocService.SOUND_EFFECTS]: () => container.get(SfxService, { autobind: true }),
         [IocService.AUDIO_LIBRARY]: () => container.get(AudioLibraryService, { autobind: true }),
 
     } as const;
@@ -214,7 +222,7 @@ export type {
     ITTSService,
     IVoiceRegistryService,
     IFFmpegMixerService,
-    ISoundEffectsService,
+    ISfxService,
     IAudioLibraryService,
 };
 export type { RedisClient, DatabaseConnection, Logger };
