@@ -1,0 +1,1 @@
+ALTER TABLE "generation_jobs" ADD COLUMN "workflow_run_id" text;

@@ -31,6 +31,7 @@ export const GenerateStoryBodySchema = t.Object({
       value: t.String(),
     })
   ),
+  targetDurationMinutes: t.Optional(t.Number({ minimum: 2, maximum: 30 })),
 });
 
 export const StoryResponseSchema = t.Object({

@@ -12,7 +12,7 @@ import { eq, and, asc } from 'drizzle-orm';
 import { storySegments } from '@mio/db/schema';
 import type { DatabaseConnection } from '@mio/shared/server/connections/db';
 import { IocConnection } from '../../ioc';
-import { SegmentType } from '@mio/shared';
+import { SegmentType } from '@mio/shared/types';
 
 /**
  * Story segment row from database

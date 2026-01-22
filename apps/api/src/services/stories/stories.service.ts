@@ -8,6 +8,7 @@ import 'reflect-metadata';
 import { injectable, inject } from 'inversify';
 
 import { AppError, ErrorCodes } from '@mio/shared';
+import { JobStatus } from '@mio/shared/types';
 
 import { IocStore } from '../../ioc';
 import type { IProfilesStore } from '../profiles';
@@ -18,6 +19,7 @@ import type {
     Story,
 } from './stories.service.types';
 import { mapRowToStory } from './stories.service.map';
+import type { GenerationJobsStore, GenerationJobRow } from './generation-jobs.store';
 
 @injectable()
 export class StoriesService implements IStoriesService {
@@ -25,7 +27,9 @@ export class StoriesService implements IStoriesService {
         @inject(IocStore.STORIES_STORE)
         private readonly store: IStoriesStore,
         @inject(IocStore.PROFILES_STORE)
-        private readonly profilesStore: IProfilesStore
+        private readonly profilesStore: IProfilesStore,
+        @inject(IocStore.GENERATION_JOBS_STORE)
+        private readonly jobsStore: GenerationJobsStore
     ) {}
 
     /**
@@ -44,5 +48,33 @@ export class StoriesService implements IStoriesService {
         });
 
         return mapRowToStory(row);
+    }
+
+    /**
+     * Find a story by ID
+     */
+    async findById(id: string): Promise<any> {
+        const story = await this.store.findById(id);
+        if (!story) {
+            return null;
+        }
+        return story;
+    }
+
+    /**
+     * Create a generation job for a story
+     */
+    async createGenerationJob(storyId: string): Promise<GenerationJobRow> {
+        return this.jobsStore.create({
+            storyId,
+            status: JobStatus.Pending,
+        });
+    }
+
+    /**
+     * Update workflow run ID for a job
+     */
+    async updateJobWorkflowRunId(jobId: string, workflowRunId: string): Promise<void> {
+        await this.jobsStore.updateWorkflowRunId(jobId, workflowRunId);
     }
 }

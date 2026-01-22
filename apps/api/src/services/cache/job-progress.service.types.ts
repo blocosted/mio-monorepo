@@ -2,10 +2,7 @@
  * Job Progress Service Types
  */
 
-/**
- * Job status
- */
-export type JobStatus = 'pending' | 'processing' | 'completed' | 'failed';
+import type { JobStatus } from '@mio/shared/types';
 
 /**
  * Job progress data
@@ -27,6 +24,8 @@ export interface JobProgress {
     currentStepNumber?: number;
     /** Error message if failed */
     error?: string;
+    /** Additional metadata */
+    metadata?: Record<string, unknown>;
     /** Timestamp of last update */
     updatedAt: number;
 }
@@ -67,4 +66,22 @@ export interface IJobProgressService {
      * @returns True if exists
      */
     exists(jobId: string): Promise<boolean>;
+
+    /**
+     * Subscribe to job progress events via Redis Pub/Sub
+     * @param jobId - Job ID
+     * @param callback - Callback function invoked on progress updates
+     * @returns Unsubscribe function
+     */
+    subscribe(
+        jobId: string,
+        callback: (progress: JobProgress) => void
+    ): Promise<() => Promise<void>>;
+
+    /**
+     * Publish progress event to Redis Pub/Sub channel
+     * @param jobId - Job ID
+     * @param progress - Job progress data
+     */
+    publishProgressEvent(jobId: string, progress: JobProgress): Promise<void>;
 }

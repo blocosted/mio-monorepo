@@ -21,7 +21,6 @@ export { JobProgressService } from './job-progress.service';
 export type {
     IJobProgressService,
     JobProgress,
-    JobStatus,
 } from './job-progress.service.types';
 
 // SFX cache service

@@ -77,6 +77,7 @@ export enum IocService {
     MUSIC_LIBRARY = 'MusicLibraryService',
     AMBIANCE_GENERATOR = 'AmbianceGeneratorService',
     AMBIANCE_LIBRARY = 'AmbianceLibraryService',
+    WORKFLOW_ORCHESTRATOR = 'WorkflowOrchestratorService',
 }
 
 /**

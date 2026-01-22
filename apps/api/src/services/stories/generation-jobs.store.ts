@@ -12,7 +12,21 @@ import { eq, desc } from 'drizzle-orm';
 import { generationJobs } from '@mio/db/schema';
 import type { DatabaseConnection } from '@mio/shared/server/connections/db';
 import { IocConnection } from '../../ioc';
-import { JobStatus, type JobStepProgress } from '@mio/shared';
+import { JobStatus, JobStep } from '@mio/shared/types';
+import type { JobStepProgress } from './stories.service.types';
+
+/**
+ * Map JobStepProgress to DB format (Date → string)
+ */
+function mapStepProgressToDb(steps: JobStepProgress[]) {
+    return steps.map(step => ({
+        name: step.name,
+        status: step.status,
+        progress: step.progress,
+        completedAt: step.completedAt?.toISOString(),
+        error: step.error,
+    }));
+}
 
 /**
  * Generation job row from database
@@ -25,7 +39,7 @@ export type GenerationJobRow = typeof generationJobs.$inferSelect;
 export interface CreateGenerationJobInput {
     storyId: string;
     status?: JobStatus;
-    currentStep?: string;
+    currentStep?: JobStep;
     steps?: JobStepProgress[];
 }
 
@@ -35,7 +49,7 @@ export interface CreateGenerationJobInput {
 export interface UpdateGenerationJobInput {
     status?: JobStatus;
     progress?: number;
-    currentStep?: string;
+    currentStep?: JobStep;
     steps?: JobStepProgress[];
     result?: { audioUrl: string; duration: number };
     error?: string;
@@ -51,7 +65,7 @@ export class GenerationJobsStore {
     constructor(
         @inject(IocConnection.DATABASE)
         private readonly db: DatabaseConnection,
-    ) {}
+    ) { }
 
     /**
      * Create a new generation job
@@ -63,7 +77,7 @@ export class GenerationJobsStore {
                 storyId: input.storyId,
                 status: input.status ?? JobStatus.Pending,
                 currentStep: input.currentStep,
-                steps: input.steps ?? [],
+                steps: input.steps ? mapStepProgressToDb(input.steps) : [],
             })
             .returning();
 
@@ -135,7 +149,7 @@ export class GenerationJobsStore {
                 status: input.status,
                 progress: input.progress,
                 currentStep: input.currentStep,
-                steps: input.steps,
+                steps: input.steps ? mapStepProgressToDb(input.steps) : undefined,
                 result: input.result,
                 error: input.error,
                 updatedAt: new Date(),
@@ -158,11 +172,25 @@ export class GenerationJobsStore {
      */
     async updateProgress(
         id: string,
-        progress: number,
-        currentStep?: string,
-        steps?: JobStepProgress[]
+        input: { progress: number; currentStep?: JobStep; steps?: JobStepProgress[] }
     ): Promise<GenerationJobRow | null> {
-        return this.update(id, { progress, currentStep, steps });
+        return this.update(id, input);
+    }
+
+    /**
+     * Update workflow run ID
+     */
+    async updateWorkflowRunId(id: string, workflowRunId: string): Promise<GenerationJobRow | null> {
+        const [job] = await this.db
+            .update(generationJobs)
+            .set({
+                workflowRunId,
+                updatedAt: new Date(),
+            })
+            .where(eq(generationJobs.id, id))
+            .returning();
+
+        return job || null;
     }
 
     /**

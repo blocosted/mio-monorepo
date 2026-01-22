@@ -12,7 +12,7 @@ import { eq, and } from 'drizzle-orm';
 import { audioAssets } from '@mio/db/schema';
 import type { DatabaseConnection } from '@mio/shared/server/connections/db';
 import { IocConnection } from '../../ioc';
-import { AudioAssetType } from '@mio/shared';
+import { AudioAssetType } from '@mio/shared/types';
 
 /**
  * Audio asset row from database

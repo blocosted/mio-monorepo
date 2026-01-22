@@ -7,8 +7,9 @@
 import 'reflect-metadata';
 import { injectable, inject } from 'inversify';
 
-import { IocService } from '../../ioc';
+import { IocService, IocConnection } from '../../ioc';
 import type { ICacheService } from './cache.service.types';
+import type { RedisClient } from '@mio/shared/server/connections/redis';
 import type {
     IJobProgressService,
     JobProgress,
@@ -28,7 +29,8 @@ const JOB_PROGRESS_PREFIX = 'job:progress';
 @injectable()
 export class JobProgressService implements IJobProgressService {
     constructor(
-        @inject(IocService.CACHE) private readonly cache: ICacheService
+        @inject(IocService.CACHE) private readonly cache: ICacheService,
+        @inject(IocConnection.REDIS) private readonly redis: RedisClient
     ) {}
 
     /**
@@ -72,6 +74,8 @@ export class JobProgressService implements IJobProgressService {
                 ...update,
             };
             await this.set(newProgress);
+            // Publish event
+            await this.publishProgressEvent(jobId, newProgress);
             return;
         }
 
@@ -82,6 +86,8 @@ export class JobProgressService implements IJobProgressService {
             updatedAt: Date.now(),
         };
         await this.set(updated);
+        // Publish event
+        await this.publishProgressEvent(jobId, updated);
     }
 
     /**
@@ -98,5 +104,54 @@ export class JobProgressService implements IJobProgressService {
     async exists(jobId: string): Promise<boolean> {
         const key = this.generateKey(jobId);
         return this.cache.exists(key);
+    }
+
+    /**
+     * Generate Pub/Sub channel name for job progress events
+     */
+    private generateChannelName(jobId: string): string {
+        return `${JOB_PROGRESS_PREFIX}:events:${jobId}`;
+    }
+
+    /**
+     * Publish progress event to Redis Pub/Sub
+     */
+    async publishProgressEvent(jobId: string, progress: JobProgress): Promise<void> {
+        const channel = this.generateChannelName(jobId);
+        const message = JSON.stringify(progress);
+        await this.redis.publish(channel, message);
+    }
+
+    /**
+     * Subscribe to job progress events via Redis Pub/Sub
+     */
+    async subscribe(
+        jobId: string,
+        callback: (progress: JobProgress) => void
+    ): Promise<() => Promise<void>> {
+        const channel = this.generateChannelName(jobId);
+
+        // Create a duplicate connection for subscribing
+        // (Redis pub/sub requires a dedicated connection)
+        const subscriber = this.redis.duplicate();
+
+        await subscriber.subscribe(channel, (message) => {
+            try {
+                const progress = JSON.parse(message) as JobProgress;
+                callback(progress);
+            } catch (error) {
+                console.error('Failed to parse progress event', {
+                    jobId,
+                    message,
+                    error: error instanceof Error ? error.message : String(error),
+                });
+            }
+        });
+
+        // Return unsubscribe function
+        return async () => {
+            await subscriber.unsubscribe(channel);
+            await subscriber.quit();
+        };
     }
 }

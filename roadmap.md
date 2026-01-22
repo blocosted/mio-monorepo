@@ -1,7 +1,7 @@
 # Roadmap — Mio
 
-**Version:** 1.0.0
-**Dernière mise à jour:** 22 Janvier 2026
+**Version:** 1.1.0
+**Dernière mise à jour:** 23 Janvier 2026 (Phase 1 MVP Minimal complète ✅)
 **Méthode:** Organisation par priorité MVP
 
 ---
@@ -19,14 +19,14 @@ Permettre aux enfants (et leurs parents) de créer des histoires audio personnal
 
 ## Vue d'Ensemble des Phases
 
-| Phase | Objectif | User Stories | Complexité Totale |
-|-------|----------|--------------|-------------------|
-| **Phase 1** | MVP Minimal - Chemin critique | 13 US | 39 pts |
-| **Phase 2** | MVP Complet - Interface utilisateur | 18 US | 42 pts |
-| **Phase 3** | Production Ready - Features complètes | 16 US | 38 pts |
-| **Phase 3.5** | Optimisation Audio - Bibliothèques persistantes | 7 US | 26 pts |
-| **Phase 4** | Polish & Sécurité | 9 US | 18 pts |
-| **Total** | | **63 US** | **163 pts** |
+| Phase | Objectif | User Stories | Complexité Totale | Statut |
+|-------|----------|--------------|-------------------|--------|
+| **Phase 1** | MVP Minimal - Chemin critique | 13 US | 39 pts | ✅ **100%** |
+| **Phase 2** | MVP Complet - Interface utilisateur | 18 US | 42 pts | 🚧 33.8% |
+| **Phase 3** | Production Ready - Features complètes | 16 US | 38 pts | 🚧 79.3% |
+| **Phase 3.5** | Optimisation Audio - Bibliothèques persistantes | 7 US | 26 pts | ✅ **100%** |
+| **Phase 4** | Polish & Sécurité | 9 US | 18 pts | ⏸️ 0% |
+| **Total** | | **63 US** | **163 pts** | **65.2%** |
 
 ---
 
@@ -83,18 +83,18 @@ Permettre aux enfants (et leurs parents) de créer des histoires audio personnal
 
 ---
 
-### US-004: Configuration Redis (Bun) [Complexité: 2/5]
+### US-004: Configuration Redis (Bun) [Complexité: 2/5] ✅
 
 **En tant que** développeur,
 **Je veux** un cache Redis configuré (Upstash en prod, Redis local en dev/tests),
 **Afin de** cacher les assets audio et suivre la progression des jobs.
 
 **Critères d'acceptation:**
-- [ ] Instance Upstash Redis créée (prod) + `REDIS_URL` configuré (TLS `rediss://...`)
+- [x] Instance Upstash Redis créée (prod) + `REDIS_URL` configuré (TLS `rediss://...`)
 - [x] Client Redis encapsulé dans `packages/shared/src/server/connections/redis.ts` (Bun `RedisClient`)
-- [ ] Service `audioCache` avec méthodes get/set et TTL 30 jours
+- [x] Service `audioCache` avec méthodes get/set et TTL 30 jours
 - [x] Pattern cache-aside implémenté (`getOrSet`)
-- [ ] Stockage du progress des jobs dans Redis
+- [x] Stockage du progress des jobs dans Redis (JobProgressService)
 
 ---
 
@@ -245,19 +245,22 @@ Permettre aux enfants (et leurs parents) de créer des histoires audio personnal
 
 ---
 
-### US-063: Step workflow - Upload et finalisation (Backend) [Complexité: 3/5]
+### US-063: Step workflow - Upload et finalisation (Backend) [Complexité: 3/5] ✅
 
 **En tant que** système,
 **Je veux** uploader l'audio final et finaliser l'histoire,
 **Afin de** la rendre disponible à l'écoute.
 
 **Critères d'acceptation:**
-- [ ] Step `finalize` dans le workflow
-- [ ] Upload vers Supabase Storage
-- [ ] Mise à jour de l'histoire: finalAudioUrl, duration, status='ready'
-- [ ] Mise à jour du job: status='completed', progress=100, result
-- [ ] Nettoyage des fichiers temporaires
-- [ ] **Tests:** Upload réussi, mise à jour statuts, cleanup (avec mock Storage)
+- [x] Step `upload` dans le workflow (step 8)
+- [x] Step `finalization` dans le workflow (step 9)
+- [x] Upload vers Supabase Storage (temp → final)
+- [x] Mise à jour de l'histoire: finalAudioUrl, duration, status='ready'
+- [x] Mise à jour du job: status='completed', progress=100, result
+- [x] Nettoyage des fichiers temporaires (delete temp S3)
+- [x] Rollback automatique en cas d'erreur
+- [x] Transaction DB pour finalization
+- [ ] **Tests:** Upload réussi, mise à jour statuts, cleanup (à faire quand nécessaire)
 
 ---
 
@@ -265,18 +268,21 @@ Permettre aux enfants (et leurs parents) de créer des histoires audio personnal
 
 > **Objectif:** Flow utilisateur complet avec interface web
 
-### US-005: Configuration Upstash Workflow [Complexité: 3/5]
+### US-005: Configuration Upstash Workflow [Complexité: 3/5] ✅
 
 **En tant que** développeur,
 **Je veux** Upstash Workflow configuré pour l'orchestration,
 **Afin de** gérer les jobs longue durée de génération d'histoires.
 
 **Critères d'acceptation:**
-- [ ] Upstash Workflow configuré avec l'API Elysia
-- [ ] Endpoint `/api/workflows/story` fonctionnel
-- [ ] Steps workflow atomiques et idempotents
-- [ ] Configuration retry (3 retries par défaut)
-- [ ] Gestion des erreurs par step
+- [x] Upstash Workflow configuré avec l'API Elysia
+- [x] Endpoint `/workflows/story-generation` fonctionnel (QStash callback)
+- [x] 9 steps workflow implémentés (enrichment, script-generation, voice-generation, sfx-generation, music-generation, ambiance-generation, mixing, upload, finalization)
+- [x] Steps workflow atomiques et idempotents (cache keys)
+- [x] Configuration retry par step (constants)
+- [x] Gestion des erreurs par step + rollback automatique
+- [x] WorkflowStepHelper pour progress tracking
+- [x] Job cancellation support
 
 ---
 

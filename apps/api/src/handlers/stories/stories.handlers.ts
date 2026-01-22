@@ -2,6 +2,7 @@ import { Elysia } from 'elysia';
 
 import { IocService, getInstance } from '../../ioc';
 import type { IStoriesService } from '../../services/stories';
+import type { IWorkflowOrchestratorService } from '../../services/workflows/workflow-orchestrator.service.types';
 
 import {
   CreateStoryBodySchema,
@@ -94,11 +95,35 @@ export const storiesHandlers = new Elysia({ prefix: '/stories', tags: ['stories'
   // Generate a story (launch workflow)
   .post(
     '/:id/generate',
-    async () => {
-      // TODO: Implement with Upstash Workflow
-      const jobId = crypto.randomUUID();
+    async ({ params, body, set }) => {
+      const storiesService = getInstance<IStoriesService>(IocService.STORIES);
+      const orchestrator = getInstance<IWorkflowOrchestratorService>(IocService.WORKFLOW_ORCHESTRATOR);
+
+      // Verify story exists
+      const story = await storiesService.findById(params.id);
+      if (!story) {
+        set.status = 404;
+        return { error: 'Story not found' };
+      }
+
+      // Create generation job
+      const job = await storiesService.createGenerationJob(params.id);
+
+      // Trigger workflow
+      const result = await orchestrator.triggerStoryGeneration({
+        jobId: job.id,
+        storyId: params.id,
+        childProfileId: story.childProfileId,
+        targetDurationMinutes: body.targetDurationMinutes ?? 5, // Default to 5 minutes
+      });
+
+      // Update job with workflowRunId
+      await storiesService.updateJobWorkflowRunId(job.id, result.workflowRunId);
+
+      set.status = 202;
       return {
-        jobId,
+        jobId: result.jobId,
+        workflowRunId: result.workflowRunId,
         message: 'Story generation started',
       };
     },

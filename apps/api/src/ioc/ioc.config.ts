@@ -106,6 +106,10 @@ import {
     MusicLibraryService,
     type IMusicLibraryService,
 } from '../services/music';
+import {
+    WorkflowOrchestratorService,
+    type IWorkflowOrchestratorService,
+} from '../services/workflows';
 
 // Create container instance
 const container = new Container({ defaultScope: 'Singleton' });
@@ -171,6 +175,7 @@ export async function initializeContainer(): Promise<void> {
         [IocService.SFX_LIBRARY]: () => container.get(SfxLibraryService, { autobind: true }),
         [IocService.MUSIC_LIBRARY]: () => container.get(MusicLibraryService, { autobind: true }),
         [IocService.AMBIANCE_LIBRARY]: () => container.get(AmbianceLibraryService, { autobind: true }),
+        [IocService.WORKFLOW_ORCHESTRATOR]: () => container.get(WorkflowOrchestratorService, { autobind: true }),
 
     } as const;
 
@@ -229,6 +234,7 @@ export type {
     ISfxLibraryService,
     IMusicLibraryService,
     IAmbianceLibraryService,
+    IWorkflowOrchestratorService,
 };
 export type { RedisClient, DatabaseConnection, Logger };
 

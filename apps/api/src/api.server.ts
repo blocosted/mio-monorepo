@@ -16,6 +16,7 @@ import { cors } from '@elysiajs/cors';
 
 import { errorHandler } from './plugins/errorHandler';
 import { profilesHandlers, storiesHandlers, jobsHandlers } from './handlers';
+import { workflowsHandlers } from './handlers/workflows';
 import { ENV_DEFAULTS, environment } from '@mio/shared/constants/environment.constants';
 
 export function createApiApp() {
@@ -32,6 +33,7 @@ export function createApiApp() {
                         { name: 'profiles', description: 'Child profile management' },
                         { name: 'stories', description: 'Story generation and management' },
                         { name: 'jobs', description: 'Generation job tracking' },
+                        { name: 'workflows', description: 'Upstash Workflow execution (QStash callbacks)' },
                     ],
                 },
             })
@@ -46,6 +48,7 @@ export function createApiApp() {
         .use(profilesHandlers)
         .use(storiesHandlers)
         .use(jobsHandlers)
+        .use(workflowsHandlers)
         .get('/health', () => ({ status: 'ok', timestamp: new Date().toISOString() }));
 }
 
