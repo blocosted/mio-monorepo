@@ -37,6 +37,7 @@ export interface RedisSetOptions {
 export interface IRedisClient {
     connect(): Promise<void>;
     close(): void;
+    quit(): Promise<void>;
 
     get<T>(key: string): Promise<T | null>;
     set<T>(key: string, value: T, options?: RedisSetOptions): Promise<void>;
@@ -45,6 +46,12 @@ export interface IRedisClient {
     keys(pattern: string): Promise<string[]>;
     incr(key: string): Promise<number>;
     expire(key: string, seconds: number): Promise<number>;
+
+    // Pub/Sub methods
+    publish(channel: string, message: string): Promise<number>;
+    subscribe(channel: string, callback: (message: string) => void): Promise<void>;
+    unsubscribe(channel: string): Promise<void>;
+    duplicate(): IRedisClient;
 }
 
 export function buildRedisUrl(config: {
@@ -123,6 +130,13 @@ export class RedisClient implements IRedisClient {
         this.client.close();
     }
 
+    /**
+     * Quit Redis connection gracefully
+     */
+    public async quit(): Promise<void> {
+        this.client.close();
+    }
+
     public async get<T>(key: string): Promise<T | null> {
         await this.connect();
         const value = await this.client.get(key);
@@ -190,6 +204,45 @@ export class RedisClient implements IRedisClient {
             keyCount: keys.length,
             info,
         };
+    }
+
+    /**
+     * Publish a message to a Redis channel (Pub/Sub)
+     */
+    public async publish(channel: string, message: string): Promise<number> {
+        await this.connect();
+        return (await this.client.send('PUBLISH', [channel, message])) as number;
+    }
+
+    /**
+     * Subscribe to a Redis channel (Pub/Sub)
+     */
+    public async subscribe(
+        channel: string,
+        callback: (message: string) => void
+    ): Promise<void> {
+        await this.connect();
+        await this.client.subscribe(channel, callback);
+    }
+
+    /**
+     * Unsubscribe from a Redis channel
+     */
+    public async unsubscribe(channel: string): Promise<void> {
+        await this.client.unsubscribe(channel);
+    }
+
+    /**
+     * Create a duplicate Redis connection (for Pub/Sub)
+     */
+    public duplicate(): IRedisClient {
+        // Create a new client with the same URL
+        // Note: BunRedisClient doesn't expose its URL, so we reconstruct from environment
+        const { environment } = require('../../constants/environment.constants');
+        const config: RedisConfig = {
+            url: environment.REDIS_URL,
+        };
+        return new RedisClient(config);
     }
 }
 

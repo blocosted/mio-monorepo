@@ -14,7 +14,7 @@ import path from 'node:path';
 import { config as loadDotenv } from 'dotenv';
 
 import { loadEnvironmentFromProcessEnv } from '@mio/shared/constants/environment.constants';
-import type { StoryScript } from '@mio/shared/models';
+import type { StoryScript } from '@mio/shared/types';
 
 import {
     createRunDir,

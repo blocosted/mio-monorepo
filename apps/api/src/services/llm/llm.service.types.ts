@@ -5,13 +5,8 @@
  * Follows the architecture pattern: each layer owns its interfaces.
  */
 
-import {
-  type EnrichedConcept,
-  VocabularyLevel,
-  Tone,
-  Ambiance,
-} from '@mio/shared';
-import type { Gender, Language } from '@mio/shared/types';
+import { VocabularyLevel, Tone, Ambiance, type Gender, type Language } from '@mio/shared/types';
+import type { EnrichedConcept } from '../stories/stories.service.types';
 
 /**
  * Child profile data needed for story enrichment

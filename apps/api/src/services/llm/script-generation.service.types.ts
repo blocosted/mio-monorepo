@@ -9,11 +9,10 @@ import type {
     DurationBudget,
     NarrativeStructure,
     ScriptGenerationConstraints,
-    EnrichedConcept,
-    StoryAnswer,
     VocabularyLevel,
-} from '@mio/shared';
-import type { Language } from '@mio/shared/types';
+    Language,
+} from '@mio/shared/types';
+import type { EnrichedConcept, StoryAnswer } from '../stories/stories.service.types';
 import type { EnrichmentProfile } from './llm.service.types';
 import type { ILLMRepository } from '../../repositories/llm/llm-repository.types';
 

@@ -10,7 +10,7 @@ import { config as loadDotenv } from 'dotenv';
 
 import { loadEnvironmentFromProcessEnv } from '@mio/shared/constants/environment.constants';
 import { Logger } from '@mio/shared/server/logger';
-import type { EnrichedConcept, StoryAnswer } from '@mio/shared';
+import type { EnrichedConcept, StoryAnswer } from '@mio/api/services/stories/stories.service.types';
 
 import {
   createRunDir,

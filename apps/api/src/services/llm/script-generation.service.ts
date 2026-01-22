@@ -12,15 +12,14 @@
 import 'reflect-metadata';
 import { injectable } from 'inversify';
 
-import {
-  AppError,
-  ErrorCodes,
-  type StoryScript,
-  type DurationBudget,
-  type NarrativeStructure,
-  type ScriptGenerationConstraints,
-  type VoiceSegmentContent,
-} from '@mio/shared';
+import { AppError, ErrorCodes } from '@mio/shared';
+import type {
+  StoryScript,
+  DurationBudget,
+  NarrativeStructure,
+  ScriptGenerationConstraints,
+  VoiceSegmentContent,
+} from '@mio/shared/types';
 
 import { AbstractService } from '../service.abstract';
 import type { ILLMRepository } from '../../repositories/llm/llm-repository.types';

@@ -92,6 +92,26 @@ export const API_ENV = {
     S3_ENDPOINT: 'S3_ENDPOINT',
     /** Optional session token (AWS-style) */
     S3_SESSION_TOKEN: 'S3_SESSION_TOKEN',
+
+    /**
+     * QStash configuration (Upstash Workflow)
+     */
+    /** QStash token (from local dev server or Upstash cloud) */
+    QSTASH_TOKEN: 'QSTASH_TOKEN',
+    /** QStash URL (local Docker or Upstash cloud) */
+    QSTASH_URL: 'QSTASH_URL',
+    /** QStash signing key (current) for request verification */
+    QSTASH_CURRENT_SIGNING_KEY: 'QSTASH_CURRENT_SIGNING_KEY',
+    /** QStash signing key (next) for key rotation */
+    QSTASH_NEXT_SIGNING_KEY: 'QSTASH_NEXT_SIGNING_KEY',
+
+    /**
+     * Workflow configuration
+     */
+    /** Workflow base URL (API public URL for QStash callbacks) */
+    WORKFLOW_BASE_URL: 'WORKFLOW_BASE_URL',
+    /** Maximum concurrent workflows */
+    MAX_CONCURRENT_WORKFLOWS: 'MAX_CONCURRENT_WORKFLOWS',
 } as const;
 
 /**
@@ -112,6 +132,10 @@ export const ENV_DEFAULTS = {
     LOG_ENABLED: 'true',
     LOG_LEVEL: 'info',
     CORS_ORIGIN: 'http://localhost:3000',
+    QSTASH_URL: 'http://localhost:8082',
+    QSTASH_TOKEN: 'dev_token',
+    WORKFLOW_BASE_URL: 'http://localhost:3001',
+    MAX_CONCURRENT_WORKFLOWS: '5',
 } as const;
 
 export type EnvironmentKey =

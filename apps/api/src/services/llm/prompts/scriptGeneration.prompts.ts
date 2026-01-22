@@ -7,11 +7,10 @@
 
 import {
   VocabularyLevel,
-  type EnrichedConcept,
-  type StoryAnswer,
   type ScriptGenerationConstraints,
-} from '@mio/shared';
-import type { Language } from '@mio/shared/types';
+  type Language,
+} from '@mio/shared/types';
+import type { EnrichedConcept, StoryAnswer } from '../../stories/stories.service.types';
 
 /** Language display names */
 const LANGUAGE_NAMES: Record<Language, string> = {

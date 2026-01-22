@@ -10,8 +10,5 @@
 // Types (primitive/shared only)
 export * from './types';
 
-// Models (story/job models)
-export * from './models';
-
 // Constants (includes errors and HTTP types)
 export * from './constants';

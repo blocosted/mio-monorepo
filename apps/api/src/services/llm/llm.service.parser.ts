@@ -4,13 +4,9 @@
  * Parses and validates JSON responses from the LLM.
  */
 
-import {
-  AppError,
-  ErrorCodes,
-  type EnrichedConcept,
-  Tone,
-  Ambiance,
-} from '@mio/shared';
+import { AppError, ErrorCodes } from '@mio/shared';
+import { Tone, Ambiance } from '@mio/shared/types';
+import type { EnrichedConcept } from '../stories/stories.service.types';
 
 /**
  * Valid tone values

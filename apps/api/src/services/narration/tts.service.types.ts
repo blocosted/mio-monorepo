@@ -5,7 +5,7 @@
  * Designed for FFmpeg compatibility with precise duration tracking.
  */
 
-import type { Emotion, ElevenLabsVoiceSettings } from '@mio/shared/models';
+import type { Emotion, ElevenLabsVoiceSettings } from '@mio/shared/types';
 import type { Language } from '@mio/shared/types';
 
 /**

@@ -4,8 +4,8 @@
  * Defines interfaces and types for story enrichment service.
  */
 
-import type { EnrichedConcept, VocabularyLevel } from '@mio/shared';
-import type { Gender, Language } from '@mio/shared/types';
+import type { VocabularyLevel, Gender, Language } from '@mio/shared/types';
+import type { EnrichedConcept } from '../stories/stories.service.types';
 
 /**
  * Child profile data needed for story enrichment

@@ -10,7 +10,7 @@ import { config as loadDotenv } from 'dotenv';
 
 import { loadEnvironmentFromProcessEnv } from '@mio/shared/constants/environment.constants';
 import { Logger } from '@mio/shared/server/logger';
-import type { StoryScript, MusicSegmentContent } from '@mio/shared/models';
+import type { StoryScript, MusicSegmentContent } from '@mio/shared/types';
 
 import {
     createRunDir,

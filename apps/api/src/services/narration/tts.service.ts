@@ -12,8 +12,8 @@ import 'reflect-metadata';
 import { injectable, inject } from 'inversify';
 import pLimit from 'p-limit';
 
-import { AppError, ErrorCodes, Emotion } from '@mio/shared';
-import type { ElevenLabsVoiceSettings } from '@mio/shared/models';
+import { AppError, ErrorCodes } from '@mio/shared';
+import { Emotion, Language, type ElevenLabsVoiceSettings } from '@mio/shared/types';
 
 import { getInstance, IocStore, IocRepository, IocService } from '../../ioc';
 import type { ICacheService } from '../cache/cache.service.types';
@@ -40,7 +40,6 @@ import {
     DEFAULT_TTS_MODEL,
     DEFAULT_OUTPUT_FORMAT,
 } from './tts.service.constants';
-import { Language } from '@mio/shared/types';
 
 /**
  * TTS Service

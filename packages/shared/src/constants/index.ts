@@ -1,4 +1,4 @@
-import { VocabularyLevel } from '../models';
+import { VocabularyLevel } from '../types';
 
 // Re-export all constants
 export * from './environment.constants';

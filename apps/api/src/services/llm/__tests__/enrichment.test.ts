@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect } from 'bun:test';
-import { VocabularyLevel, Tone, Ambiance } from '@mio/shared';
+import { VocabularyLevel, Tone, Ambiance } from '@mio/shared/types';
 import { Gender } from '@mio/shared/types';
 
 import { parseEnrichedConcept } from '../llm.service.parser';

@@ -382,6 +382,22 @@ export class AudioRepository implements IAudioRepository, ISoundEffectsRepositor
         }
     }
 
+    // ===== Backward Compatibility Aliases =====
+
+    /**
+     * Alias for convertTextToSpeech (legacy scripts compatibility)
+     */
+    async convertWithTimestamps(input: VoicesConvertInput): Promise<VoicesConvertResult> {
+        return this.convertTextToSpeech(input);
+    }
+
+    /**
+     * Alias for createSoundEffect (legacy scripts compatibility)
+     */
+    async convert(input: SoundEffectsConvertInput): Promise<SoundEffectsConvertResult> {
+        return this.createSoundEffect(input);
+    }
+
     // ===== Private Helper Methods =====
 
     /**

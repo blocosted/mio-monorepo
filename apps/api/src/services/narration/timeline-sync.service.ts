@@ -6,7 +6,7 @@
  * non-voice segments within the story timeline.
  */
 
-import type { StoryScript, TimelineSegment } from '@mio/shared/models';
+import type { StoryScript, TimelineSegment } from '@mio/shared/types';
 import type { Logger } from '@mio/shared/server/logger';
 
 import type {

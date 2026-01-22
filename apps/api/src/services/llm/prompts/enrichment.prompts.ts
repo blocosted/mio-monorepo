@@ -7,8 +7,7 @@
  * Note: Prompts are in English but the story content language is configurable.
  */
 
-import { VocabularyLevel } from '@mio/shared';
-import type { Language } from '@mio/shared/types';
+import { VocabularyLevel, type Language } from '@mio/shared/types';
 import type { EnrichmentProfile } from '../llm.service.types';
 
 /** Default language for story content */

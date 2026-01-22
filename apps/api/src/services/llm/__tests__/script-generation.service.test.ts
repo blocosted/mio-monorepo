@@ -6,11 +6,11 @@
 
 import { describe, it, expect, beforeEach, mock } from 'bun:test';
 
-import { Emotion, VocabularyLevel } from '@mio/shared';
+import { Emotion, VocabularyLevel } from '@mio/shared/types';
 
 import { ScriptGenerationService } from '../script-generation.service';
 import type { ScriptValidationResult } from '../index';
-import type { StoryScript, ScriptGenerationConstraints } from '@mio/shared';
+import type { StoryScript, ScriptGenerationConstraints } from '@mio/shared/types';
 
 // Mock logger
 const mockLogger = {

@@ -4,7 +4,7 @@
  * Type definitions for audio API wrappers (ElevenLabs TTS and Sound Effects).
  */
 
-import type { ElevenLabsVoiceSettings } from '@mio/shared/models';
+import type { ElevenLabsVoiceSettings } from '@mio/shared/types';
 
 /**
  * ElevenLabs supported output formats

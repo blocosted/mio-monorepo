@@ -6,3 +6,7 @@
 
 export * from './audio-repository.types';
 export * from './audio.repository';
+
+// Backward-compatible aliases for legacy script imports
+export { AudioRepository as SoundEffectsRepository } from './audio.repository';
+export { AudioRepository as VoicesRepository } from './audio.repository';

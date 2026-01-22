@@ -6,7 +6,7 @@
  * from actual TTS output durations.
  */
 
-import type { StoryScript } from '@mio/shared/models';
+import type { StoryScript } from '@mio/shared/types';
 
 /**
  * TTS result with actual duration for a single segment

@@ -7,8 +7,8 @@
  * Supports multiple languages with language-specific voice mappings.
  */
 
-import { Emotion } from '@mio/shared/models';
-import type { ElevenLabsVoiceSettings } from '@mio/shared/models';
+import { Emotion } from '@mio/shared/types';
+import type { ElevenLabsVoiceSettings } from '@mio/shared/types';
 import type { Language } from '@mio/shared/types';
 import { Language as LanguageEnum } from '@mio/shared/types';
 import type { CharacterArchetype } from './tts.service.types';

@@ -37,17 +37,56 @@ import {
     MusicMoodValues,
     MusicIntensityValues,
     MusicTempoValues,
-} from '@mio/shared/types';
-import {
     StoryStatus,
     SegmentType,
     AudioAssetType,
     JobStatus,
-    type EnrichedConcept,
     type StoryScript,
-    type StoryAnswer,
-    type JobStepProgress,
-} from '@mio/shared';
+} from '@mio/shared/types';
+
+/**
+ * JSONB Column Types (inlined to avoid circular dependencies)
+ */
+
+/** Story Character for enriched concepts */
+interface StoryCharacterDb {
+    name: string;
+    description: string;
+    voiceType?: string;
+}
+
+/** Story Setting for enriched concepts */
+interface StorySettingDb {
+    location: string;
+    era: string;
+    ambiance: string;
+}
+
+/** Enriched Concept JSONB structure */
+interface EnrichedConceptDb {
+    title: string;
+    mainCharacter: StoryCharacterDb;
+    secondaryCharacters?: StoryCharacterDb[];
+    setting: StorySettingDb;
+    tone: string;
+    themes: string[];
+    synopsis?: string;
+}
+
+/** Story Answer JSONB structure */
+interface StoryAnswerDb {
+    questionId: string;
+    value: string;
+}
+
+/** Job Step Progress JSONB structure */
+interface JobStepProgressDb {
+    name: string;
+    status: string;
+    progress?: number;
+    completedAt?: string;
+    error?: string;
+}
 
 /**
  * Child Profiles Table
@@ -83,9 +122,9 @@ export const stories = pgTable('stories', {
         .notNull()
         .references(() => childProfiles.id, { onDelete: 'cascade' }),
     initialPrompt: text('initial_prompt').notNull(),
-    enrichedConcept: jsonb('enriched_concept').$type<EnrichedConcept>(),
+    enrichedConcept: jsonb('enriched_concept').$type<EnrichedConceptDb>(),
     script: jsonb('script').$type<StoryScript>(),
-    answers: jsonb('answers').$type<StoryAnswer[]>(),
+    answers: jsonb('answers').$type<StoryAnswerDb[]>(),
     finalAudioUrl: text('final_audio_url'),
     duration: integer('duration'),
     status: text('status', {
@@ -154,6 +193,7 @@ export const generationJobs = pgTable('generation_jobs', {
         .notNull()
         .references(() => stories.id, { onDelete: 'cascade' })
         .unique(),
+    workflowRunId: text('workflow_run_id'),
     status: text('status', {
         enum: [
             JobStatus.Pending,
@@ -167,7 +207,7 @@ export const generationJobs = pgTable('generation_jobs', {
         .notNull(),
     progress: integer('progress').default(0).notNull(),
     currentStep: text('current_step'),
-    steps: jsonb('steps').$type<JobStepProgress[]>().default([]),
+    steps: jsonb('steps').$type<JobStepProgressDb[]>().default([]),
     result: jsonb('result').$type<{ audioUrl: string; duration: number }>(),
     error: text('error'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
