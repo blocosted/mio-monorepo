@@ -43,6 +43,9 @@ import {
 import {
     StoriesService,
     StoriesStore,
+    StorySegmentsStore,
+    AudioAssetsStore,
+    GenerationJobsStore,
     type IStoriesService,
     type IStoriesStore,
 } from '../services/stories';
@@ -80,6 +83,7 @@ import {
     type IFFmpegMixerService,
     type ISoundEffectsService,
 } from '../services/audio';
+import { VoiceRegistryStore } from '../services/narration';
 import {
     AudioLibraryService,
     AudioLibraryStore,
@@ -121,9 +125,13 @@ export async function initializeContainer(): Promise<void> {
         // Stores (private to their services)
         [IocStore.PROFILES_STORE]: () => container.get(ProfilesStore, { autobind: true }),
         [IocStore.STORIES_STORE]: () => container.get(StoriesStore, { autobind: true }),
+        [IocStore.STORY_SEGMENTS_STORE]: () => container.get(StorySegmentsStore, { autobind: true }),
+        [IocStore.AUDIO_ASSETS_STORE]: () => container.get(AudioAssetsStore, { autobind: true }),
+        [IocStore.GENERATION_JOBS_STORE]: () => container.get(GenerationJobsStore, { autobind: true }),
         [IocStore.TTS_STORE]: () => container.get(TTSStore, { autobind: true }),
         [IocStore.SOUND_EFFECTS_STORE]: () => container.get(SoundEffectsStore, { autobind: true }),
         [IocStore.AUDIO_LIBRARY_STORE]: () => container.get(AudioLibraryStore, { autobind: true }),
+        [IocStore.VOICE_REGISTRY_STORE]: () => container.get(VoiceRegistryStore, { autobind: true }),
 
         // Repositories (shared external API clients)
         // Note: IocProvider enum values map to the same strings for backwards compatibility

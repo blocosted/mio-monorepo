@@ -25,10 +25,14 @@ export enum IocConnection {
 export enum IocStore {
     PROFILES_STORE = 'ProfilesStore',
     STORIES_STORE = 'StoriesStore',
+    STORY_SEGMENTS_STORE = 'StorySegmentsStore',
+    AUDIO_ASSETS_STORE = 'AudioAssetsStore',
+    GENERATION_JOBS_STORE = 'GenerationJobsStore',
     SCRIPT_GENERATION_STORE = 'ScriptGenerationStore',
     TTS_STORE = 'TTSStore',
     SOUND_EFFECTS_STORE = 'SoundEffectsStore',
     AUDIO_LIBRARY_STORE = 'AudioLibraryStore',
+    VOICE_REGISTRY_STORE = 'VoiceRegistryStore',
 }
 
 /**
