@@ -200,7 +200,7 @@ export function syncEnvironmentToProcessEnv(keys?: EnvironmentKey[]): void {
     for (const key of toSync) {
         const value = environment[key];
         if (value !== undefined) {
-            process.env[key] = value;
+            (process.env as any)[key] = value;
         }
     }
 }

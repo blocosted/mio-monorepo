@@ -295,7 +295,7 @@ export class MusicStrategyService implements IMusicStrategyService {
      */
     convertScriptMusicToCues(
         segments: Array<{ startTime: number; duration: number; mood: string }>,
-        totalDuration: number,
+        _totalDuration: number, // eslint-disable-line @typescript-eslint/no-unused-vars
     ): MusicCue[] {
         return segments.map((seg, index) => ({
             startTime: seg.startTime,

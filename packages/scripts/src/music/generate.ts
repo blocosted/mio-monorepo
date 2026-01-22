@@ -16,8 +16,9 @@ import {
     writeJsonFile,
 } from '../_local-run-store/run-store';
 
-import { SoundEffectsProvider } from '@mio/api/services/audio';
-import { MusicGeneratorService, type MusicMood } from '@mio/api/services/audio';
+import { SoundEffectsRepository } from '@mio/api/repositories/audio';
+import { MusicGeneratorService } from '@mio/api/services/music';
+import type { MusicMood } from '@mio/shared/types';
 
 function loadEnv(envFile?: string): void {
     const files = envFile ? [envFile] : ['.env.local', '.env'];
@@ -47,9 +48,9 @@ export async function runGenerateCommand(args: GenerateCommandArgs): Promise<voi
 
     const logger = await Logger.create();
 
-    // Create SoundEffectsProvider first (required by MusicGeneratorService)
-    const sfxProvider = new SoundEffectsProvider(logger as any);
-    const musicService = new MusicGeneratorService(logger as any, sfxProvider);
+    // Create SoundEffectsRepository first (required by MusicGeneratorService)
+    const sfxProvider = new SoundEffectsRepository(logger);
+    const musicService = new MusicGeneratorService(logger, sfxProvider);
 
     // Create run directory for artifacts
     const run = createRunDir({

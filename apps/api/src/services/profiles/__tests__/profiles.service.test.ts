@@ -9,7 +9,7 @@ import { Gender, StoryDuration, Language } from '@mio/shared/types';
 
 import { cleanTestPostgresData } from '../../../tests/test-utils';
 import { assertNotNull } from '../../../tests/test.helpers';
-import { getInstance, IocInfrastructure, IocService } from '../../../ioc';
+import { getInstance, IocConnection, IocService } from '../../../ioc';
 import type { DatabaseConnection } from '@mio/shared/server/connections/db';
 import type { IProfilesService } from '../profiles.service.types';
 
@@ -19,7 +19,7 @@ describe('ProfilesService', () => {
 
     beforeAll(() => {
         // Use IoC to resolve real instances with injected dependencies.
-        db = getInstance<DatabaseConnection>(IocInfrastructure.DATABASE_CLIENT);
+        db = getInstance<DatabaseConnection>(IocConnection.DATABASE);
         service = getInstance<IProfilesService>(IocService.PROFILES);
     });
 

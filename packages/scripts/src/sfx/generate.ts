@@ -46,20 +46,15 @@ export async function runGenerateCommand(options: GenerateCommandOptions): Promi
 
     // Dynamically import to ensure env is loaded first
     const { Logger } = await import('@mio/shared/server/logger');
-    const { SoundEffectsProvider, SfxCategory } = await import('@mio/api/services/audio');
+    const { SoundEffectsRepository } = await import('@mio/api/repositories/audio');
 
     const logger = await Logger.create();
-    const provider = new SoundEffectsProvider(logger as any);
-
-    // Map category string to SfxCategory (unused but kept for metadata)
-    const _sfxCategory = category ? (SfxCategory as Record<string, string>)[
-        category.charAt(0).toUpperCase() + category.slice(1)
-    ] as typeof SfxCategory[keyof typeof SfxCategory] : undefined;
+    const repository = new SoundEffectsRepository(logger);
 
     console.log('Generating sound effect...');
     const startTime = Date.now();
 
-    const result = await provider.convert({
+    const result = await repository.convert({
         text,
         durationSeconds: duration,
         promptInfluence,

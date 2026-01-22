@@ -8,10 +8,12 @@ export { FFmpegMixerService } from './ffmpeg-mixer.service';
 // Types
 export type {
     IFFmpegMixerService,
-    AudioTrack,
-    MixTracksInput,
-    MixTracksOutput,
-    AudioSegment,
-    MixTimelineInput,
-    MixTimelineOutput,
+    AudioFile,
+    VoiceTrackInput,
+    MusicTrackInput,
+    AmbianceTrackInput,
+    SfxTrackInput,
+    MixStoryInput,
+    MixStoryResult,
+    FFmpegVerifyResult,
 } from './ffmpeg-mixer.service.types';

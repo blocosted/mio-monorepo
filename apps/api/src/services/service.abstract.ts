@@ -44,10 +44,10 @@ export abstract class AbstractService {
      */
     protected get logger(): Logger {
         if (!this._logger) {
-            const { getInstance } = require('../ioc/ioc.config');
+            const { getInstance } = require('../ioc/ioc.config') as typeof import('../ioc/ioc.config');
             this._logger = getInstance<Logger>(IocConnection.LOGGER);
         }
-        return this._logger;
+        return this._logger!;
     }
 
     /**
@@ -55,10 +55,10 @@ export abstract class AbstractService {
      */
     protected get storageService(): IStorageService {
         if (!this._storageService) {
-            const { getInstance } = require('../ioc/ioc.config');
+            const { getInstance } = require('../ioc/ioc.config') as typeof import('../ioc/ioc.config');
             this._storageService = getInstance<IStorageService>(IocService.STORAGE);
         }
-        return this._storageService;
+        return this._storageService!;
     }
 
     /**

@@ -10,7 +10,8 @@ import { config as loadDotenv } from 'dotenv';
 import { loadEnvironmentFromProcessEnv } from '@mio/shared/constants/environment.constants';
 import { Logger } from '@mio/shared/server/logger';
 
-import { ElevenLabsProvider, DEFAULT_VOICE_IDS } from '@mio/api/services/audio';
+import { VoicesRepository } from '@mio/api/repositories/audio';
+import { DEFAULT_VOICE_IDS } from '@mio/api/services/narration';
 
 function loadEnv(envFile?: string): void {
     const files = envFile ? [envFile] : ['.env.local', '.env'];
@@ -29,11 +30,11 @@ export async function runListVoicesCommand(args: {
     loadEnv(args.envFile);
 
     const logger = await Logger.create();
-    const provider = new ElevenLabsProvider(logger);
+    const repository = new VoicesRepository(logger);
 
     console.log('Fetching available voices...\n');
 
-    const voices = await provider.listVoices();
+    const voices = await repository.listVoices();
 
     if (args.json) {
         console.log(JSON.stringify(voices, null, 2));

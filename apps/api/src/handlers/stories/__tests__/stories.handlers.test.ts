@@ -9,7 +9,7 @@ import { treaty } from '@elysiajs/eden';
 
 import { createApiApp } from '../../../api.server';
 import { cleanTestPostgresData } from '../../../tests/test-utils';
-import { getInstance, IocInfrastructure } from '../../../ioc';
+import { getInstance, IocConnection } from '../../../ioc';
 import type { DatabaseConnection } from '@mio/shared/server/connections/db';
 import { MioApiClient } from '@mio/shared/clients/mio';
 import { ErrorCodes, StoryStatus } from '@mio/shared';
@@ -20,7 +20,7 @@ describe('storiesHandlers', () => {
   let mio: MioApiClient;
 
   beforeAll(() => {
-    db = getInstance<DatabaseConnection>(IocInfrastructure.DATABASE_CLIENT);
+    db = getInstance<DatabaseConnection>(IocConnection.DATABASE);
     const app = createApiApp();
     const api = treaty(app);
     mio = new MioApiClient({ apiClient: api });

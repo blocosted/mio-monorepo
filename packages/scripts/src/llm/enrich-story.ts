@@ -16,13 +16,12 @@ import {
   writeJsonFile,
 } from '../_local-run-store/run-store';
 
+import { OpenAIRepository, AnthropicRepository } from '@mio/api/repositories/llm';
 import {
-  OpenAIProvider,
-  AnthropicProvider,
   parseEnrichedConcept,
   type EnrichmentProfile,
   type LLMCompletionOptions,
-  type ILLMProvider,
+  type ILLMRepository,
   getVocabularyLevel,
 } from '@mio/api/services/llm';
 import {
@@ -99,13 +98,13 @@ export async function runEnrichStoryCommand(args: {
 
   const logger = await Logger.create();
 
-  // Create the selected provider
+  // Create the selected repository
   const providerType = args.provider ?? 'anthropic';
-  let provider: ILLMProvider;
+  let repository: ILLMRepository;
   if (providerType === 'anthropic') {
-    provider = new AnthropicProvider(logger as any);
+    repository = new AnthropicRepository(logger);
   } else {
-    provider = new OpenAIProvider(logger as any);
+    repository = new OpenAIRepository(logger);
   }
 
   const storedInput: EnrichStoryStoredInput | null = args.inputFile
@@ -194,7 +193,7 @@ export async function runEnrichStoryCommand(args: {
     });
 
     // Use provider's generateEnrichedConcept method
-    const response = await provider.generateEnrichedConcept(
+    const response = await repository.generateEnrichedConcept(
       {
         childName: profile.firstName,
         childAge: profile.age,

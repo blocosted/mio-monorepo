@@ -68,6 +68,10 @@ export class StorySegmentsStore {
             })
             .returning();
 
+        if (!segment) {
+            throw new Error('Failed to create story segment');
+        }
+
         return segment;
     }
 

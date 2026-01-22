@@ -18,6 +18,19 @@
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 
+import type {
+    SfxLibraryCategory,
+    SfxEnvironment,
+    AudioIntensity,
+    AmbianceEnvironment,
+    TimeOfDay,
+    WeatherCondition,
+    AudioMood,
+    MusicMood,
+    MusicIntensity,
+    MusicTempo,
+} from '@mio/shared/types';
+
 import { runSeedSfxCommand } from './seed-sfx';
 import { runSeedAmbianceCommand } from './seed-ambiance';
 import { runSeedMusicCommand } from './seed-music';
@@ -71,9 +84,9 @@ yargs(hideBin(process.argv))
         async (argv) => {
             try {
                 await runSeedSfxCommand({
-                    category: argv.category as any,
-                    environment: argv.environment as any,
-                    intensity: argv.intensity as any,
+                    category: argv.category as SfxLibraryCategory | undefined,
+                    environment: argv.environment as SfxEnvironment | undefined,
+                    intensity: argv.intensity as AudioIntensity | undefined,
                     dryRun: argv.dryRun,
                     envFile: argv.envFile,
                     delayMs: argv.delayMs,
@@ -135,10 +148,10 @@ yargs(hideBin(process.argv))
         async (argv) => {
             try {
                 await runSeedAmbianceCommand({
-                    environment: argv.environment as any,
-                    timeOfDay: argv.timeOfDay as any,
-                    weather: argv.weather as any,
-                    mood: argv.mood as any,
+                    environment: argv.environment as AmbianceEnvironment | undefined,
+                    timeOfDay: argv.timeOfDay as TimeOfDay | undefined,
+                    weather: argv.weather as WeatherCondition | undefined,
+                    mood: argv.mood as AudioMood | undefined,
                     dryRun: argv.dryRun,
                     envFile: argv.envFile,
                     delayMs: argv.delayMs,
@@ -195,9 +208,9 @@ yargs(hideBin(process.argv))
         async (argv) => {
             try {
                 await runSeedMusicCommand({
-                    mood: argv.mood as any,
-                    intensity: argv.intensity as any,
-                    tempo: argv.tempo as any,
+                    mood: argv.mood as MusicMood | undefined,
+                    intensity: argv.intensity as MusicIntensity | undefined,
+                    tempo: argv.tempo as MusicTempo | undefined,
                     dryRun: argv.dryRun,
                     envFile: argv.envFile,
                     delayMs: argv.delayMs,

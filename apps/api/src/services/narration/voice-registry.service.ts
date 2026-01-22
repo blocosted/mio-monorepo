@@ -22,7 +22,7 @@ import {
     VoiceUseCaseValues,
 } from '@mio/shared/types';
 
-import { getInstance, IocInfrastructure, IocRepository } from '../../ioc';
+import { getInstance, IocConnection, IocRepository } from '../../ioc';
 import type { DatabaseConnection } from '@mio/shared/server/connections/db';
 import type { IVoicesRepository } from '../../repositories/audio/audio-repository.types';
 import type {
@@ -184,11 +184,11 @@ function mapRowToStoredVoice(row: typeof elevenLabsVoices.$inferSelect): StoredV
 @injectable()
 export class VoiceRegistryService implements IVoiceRegistryService {
     constructor(
-        @inject(IocInfrastructure.DATABASE_CLIENT)
+        @inject(IocConnection.DATABASE)
         private readonly db: DatabaseConnection,
-        @inject(IocInfrastructure.LOGGER)
+        @inject(IocConnection.LOGGER)
         private readonly logger: Logger,
-    ) {}
+    ) { }
 
     /**
      * Lazily get the Voices repository to avoid circular dependencies

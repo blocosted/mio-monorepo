@@ -18,13 +18,12 @@ import {
   writeJsonFile,
 } from '../_local-run-store/run-store';
 
+import { OpenAIRepository, AnthropicRepository } from '@mio/api/repositories/llm';
 import {
   ScriptGenerationService,
-  OpenAIProvider,
-  AnthropicProvider,
   type EnrichmentProfile,
   type LLMCompletionOptions,
-  type ILLMProvider,
+  type ILLMRepository,
   getVocabularyLevel,
 } from '@mio/api/services/llm';
 
@@ -125,15 +124,15 @@ export async function runGenerateScriptCommand(args: {
   loadEnv(args.envFile);
 
   const logger = await Logger.create();
-  const service = new ScriptGenerationService(logger);
+  const service = new ScriptGenerationService();
 
-  // Create the selected provider
+  // Create the selected repository
   const providerType = args.provider ?? 'openai';
-  let provider: ILLMProvider;
+  let repository: ILLMRepository;
   if (providerType === 'anthropic') {
-    provider = new AnthropicProvider(logger);
+    repository = new AnthropicRepository(logger);
   } else {
-    provider = new OpenAIProvider(logger);
+    repository = new OpenAIRepository(logger);
   }
 
   // Parse answers if provided as JSON string
@@ -272,7 +271,7 @@ export async function runGenerateScriptCommand(args: {
         answers,
         targetDurationMinutes: args.targetDurationMinutes,
       },
-      provider,
+      repository,
     );
 
     if (run) {

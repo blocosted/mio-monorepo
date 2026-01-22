@@ -4,7 +4,7 @@
  * Type definitions for sound effects caching.
  */
 
-import type { SfxCategory } from '../audio/soundEffects.provider.types';
+import type { SfxCategory } from '../../repositories/audio/audio-repository.types';
 
 /**
  * Cached SFX metadata

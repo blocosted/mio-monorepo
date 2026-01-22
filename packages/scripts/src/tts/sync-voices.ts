@@ -10,7 +10,7 @@ import { config as loadDotenv } from 'dotenv';
 
 import { loadEnvironmentFromProcessEnv } from '@mio/shared/constants/environment.constants';
 import { initializeContainer, getInstance, IocService } from '@mio/api/ioc';
-import type { IVoiceRegistryService } from '@mio/api/services/audio';
+import type { IVoiceRegistryService } from '@mio/api/services/narration';
 
 function loadEnv(envFile?: string): void {
     const files = envFile ? [envFile] : ['.env.local', '.env'];

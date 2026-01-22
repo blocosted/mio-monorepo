@@ -236,7 +236,7 @@ thought we knew was WRONG!" he exclaimed, stunned.`,
  */
 function buildProsodyGuide(language: Language): string {
   const examples = PROSODY_EXAMPLES[language];
-  const { emotionTable, punctuation, fullExample, segmentExamples } = examples;
+  const { emotionTable, punctuation, fullExample } = examples;
 
   return `
 ## ElevenLabs v3 Prosody Guide

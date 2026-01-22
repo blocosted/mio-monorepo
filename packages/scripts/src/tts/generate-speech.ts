@@ -17,14 +17,12 @@ import {
     writeJsonFile,
 } from '../_local-run-store/run-store';
 
-import { Language } from '@mio/shared/types';
-
+import { VoicesRepository } from '@mio/api/repositories/audio';
 import {
-    ElevenLabsProvider,
     VOICE_IDS_BY_LANGUAGE,
     EMOTION_VOICE_SETTINGS,
     type CharacterArchetype,
-} from '@mio/api/services/audio';
+} from '@mio/api/services/narration';
 
 function loadEnv(envFile?: string): void {
     const files = envFile ? [envFile] : ['.env.local', '.env'];
@@ -182,14 +180,14 @@ export async function runGenerateSpeechCommand(args: {
         return;
     }
 
-    // Initialize provider
+    // Initialize repository
     const logger = await Logger.create();
-    const provider = new ElevenLabsProvider(logger);
+    const repository = new VoicesRepository(logger);
 
     console.log('Generating speech...');
     const startTime = Date.now();
 
-    const result = await provider.convertWithTimestamps({
+    const result = await repository.convertWithTimestamps({
         text,
         voiceId,
         voiceSettings,

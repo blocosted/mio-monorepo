@@ -8,13 +8,13 @@ import { describe, it, expect, beforeEach, mock } from 'bun:test';
 
 import { SfxCacheService } from '../sfx-cache.service';
 import type { SfxCacheKeyParams, CachedSfx } from '../sfx-cache.service.types';
-import { SfxCategory } from '../../audio/soundEffects.provider.types';
+import { SfxCategory } from '@mio/api/repositories/audio';
 
 // Mock Cache Service
 const createMockCache = () => ({
-    get: mock(() => Promise.resolve(null)),
+    get: mock(() => Promise.resolve(null as any)),
     set: mock(() => Promise.resolve()),
-    incr: mock(() => Promise.resolve(1)),
+    incr: mock(() => Promise.resolve(1 as any)),
     expire: mock(() => Promise.resolve(true)),
     exists: mock(() => Promise.resolve(false)),
 });

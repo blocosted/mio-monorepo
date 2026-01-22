@@ -13,8 +13,11 @@ import { loadEnvironmentFromProcessEnv } from '@mio/shared/constants/environment
 import { Logger } from '@mio/shared/server/logger';
 
 import { createRunDir, writeJsonFile, readJsonFile } from '../_local-run-store/run-store';
-import { FFmpegMixerService, MusicStrategyService } from '@mio/api/services/audio';
-import type { MixStoryInput, VoiceTrackInput, MusicCue, MusicMood } from '@mio/api/services/audio';
+import { FFmpegMixerService } from '@mio/api/services/audio-mixing';
+import { MusicStrategyService } from '@mio/api/services/music';
+import type { MusicCue } from '@mio/api/services/music';
+import type { MusicMood } from '@mio/shared/types';
+import type { MixStoryInput } from '@mio/api/services/audio-mixing';
 
 function loadEnv(envFile?: string): void {
     const files = envFile ? [envFile] : ['.env.local', '.env'];
@@ -126,8 +129,8 @@ function createLocalStorageService(baseDir: string) {
             return readFileSync(fullPath);
         },
         upload: async () => ({ path: '', url: '' }),
-        delete: async () => {},
-        deleteMany: async () => {},
+        delete: async () => { /* mock */ },
+        deleteMany: async () => { /* mock */ },
         getPublicUrl: () => '',
         exists: async () => true,
     };
@@ -220,15 +223,19 @@ export async function runMixStoryCommand(args: MixStoryCommandArgs): Promise<voi
     console.log(`Found ${successfulResults.length} voice segments from "${ttsMeta?.storyTitle ?? 'Unknown'}"`);
 
     // Build voice track input
-    const voiceSegments = successfulResults.map(result => {
-        const segmentInfo = ttsSegments.find(s => s.id === result.id);
-        return {
-            path: path.join(args.ttsRunDir, result.outputFile!),
-            duration: result.durationSeconds ?? 0,
-            characterName: segmentInfo?.characterName,
-            emotion: segmentInfo?.emotion,
-        };
-    });
+    const voiceSegments = successfulResults
+        .filter((result): result is typeof result & { outputFile: string } =>
+            result.outputFile !== undefined
+        )
+        .map(result => {
+            const segmentInfo = ttsSegments.find(s => s.id === result.id);
+            return {
+                path: path.join(args.ttsRunDir, result.outputFile),
+                duration: result.durationSeconds ?? 0,
+                characterName: segmentInfo?.characterName,
+                emotion: segmentInfo?.emotion,
+            };
+        });
 
     // Build pauses map (pause after each segment except the last)
     const pauses = new Map<number, number>();
@@ -335,7 +342,8 @@ export async function runMixStoryCommand(args: MixStoryCommandArgs): Promise<voi
 
         console.log(`  + SFX from run dir: ${sfxResults.length} files`);
         for (const result of sfxResults) {
-            const sfxPath = path.join(args.sfxRunDir, result.outputFile!);
+            if (!result.outputFile) continue;
+            const sfxPath = path.join(args.sfxRunDir, result.outputFile);
             if (existsSync(sfxPath)) {
                 sfxFiles.push({
                     path: sfxPath,
@@ -539,7 +547,7 @@ export async function runMixStoryCommand(args: MixStoryCommandArgs): Promise<voi
     // Initialize services
     const logger = await Logger.create();
     const localStorage = createLocalStorageService('');
-    const mixerService = new FFmpegMixerService(logger as any, localStorage as any);
+    const mixerService = new FFmpegMixerService(logger, localStorage);
 
     // Verify FFmpeg
     console.log('\nVerifying FFmpeg...');

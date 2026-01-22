@@ -6,7 +6,6 @@
  */
 
 import type { Logger } from '@mio/shared/server/logger';
-import type { DatabaseConnection } from '@mio/shared/server/connections/db';
 import type {
     SfxLibraryCategory,
     SfxEnvironment,
@@ -19,7 +18,23 @@ import type {
     MusicIntensity,
     MusicTempo,
 } from '@mio/shared/types';
-import type { AudioLibraryStats } from '@mio/api/services/audio-library/audio-library.service.types';
+import type { SfxLibraryStats } from '@mio/api/services/sound-design';
+import type { AmbianceLibraryStats } from '@mio/api/services/ambiance';
+import type { MusicLibraryStats } from '@mio/api/services/music';
+
+/**
+ * Combined audio library stats
+ */
+export interface AudioLibraryStats {
+    sfx: Omit<SfxLibraryStats, 'topUsed'>;
+    ambiance: Omit<AmbianceLibraryStats, 'topUsed'>;
+    music: Omit<MusicLibraryStats, 'topUsed'>;
+    topUsed: {
+        sfx: SfxLibraryStats['topUsed'];
+        ambiance: AmbianceLibraryStats['topUsed'];
+        music: MusicLibraryStats['topUsed'];
+    };
+}
 
 /**
  * SFX generation result for CLI
@@ -115,21 +130,8 @@ export async function createCliServices(logger: Logger): Promise<CliServices> {
     const { dbConnectionFactory } = await import('@mio/shared/server/connections/db');
     const db = dbConnectionFactory();
 
-    // Import provider
-    const { SoundEffectsProvider } = await import('@mio/api/services/audio');
-
-    // Import store functions
-    const {
-        querySfx,
-        insertSfx,
-        queryAmbiance,
-        insertAmbiance,
-        queryMusic,
-        insertMusic,
-        getSfxStats,
-        getAmbianceStats,
-        getMusicStats,
-    } = await import('@mio/api/services/audio-library/audio-library.service.store');
+    // Import repository
+    const { SoundEffectsRepository } = await import('@mio/api/repositories/audio');
 
     // Create storage client directly
     const { storageConnectionFactory } = await import('@mio/shared/server/connections/storage');
@@ -145,8 +147,34 @@ export async function createCliServices(logger: Logger): Promise<CliServices> {
         },
     };
 
-    // Create provider
-    const sfxProvider = new SoundEffectsProvider(logger as any);
+    // Create a no-op cache for CLI (no persistent caching needed)
+    const mockCache = {
+        async get<T>(_key: string): Promise<T | null> {
+            return null;
+        },
+        async set(_key: string, _value: unknown, _options?: unknown): Promise<void> {
+            // No-op
+        },
+        async delete(_key: string): Promise<void> {
+            // No-op
+        },
+        async clear(): Promise<void> {
+            // No-op
+        },
+    };
+
+    // Import and instantiate stores
+    const { SfxLibraryStore } = await import('@mio/api/services/sound-design');
+    const { AmbianceLibraryStore } = await import('@mio/api/services/ambiance');
+    const { MusicLibraryStore } = await import('@mio/api/services/music');
+
+    // Create store instances (pass dependencies manually for CLI context)
+    const sfxStore = new SfxLibraryStore(db as any, mockCache as any);
+    const ambianceStore = new AmbianceLibraryStore(db as any, mockCache as any);
+    const musicStore = new MusicLibraryStore(db as any, mockCache as any);
+
+    // Create repository
+    const sfxRepository = new SoundEffectsRepository(logger);
 
     return {
         async generateSfx(input) {
@@ -162,7 +190,7 @@ export async function createCliServices(logger: Logger): Promise<CliServices> {
 
             // Check library first
             if (category) {
-                const results = await querySfx(db, {
+                const results = await sfxStore.query({
                     category,
                     subcategory,
                     environment,
@@ -171,7 +199,11 @@ export async function createCliServices(logger: Logger): Promise<CliServices> {
                 });
 
                 if (results.length > 0) {
-                    const sfx = results[Math.floor(Math.random() * results.length)]!;
+                    const index = Math.floor(Math.random() * results.length);
+                    const sfx = results[index];
+                    if (!sfx) {
+                        throw new Error('Unexpected: SFX not found at valid index');
+                    }
                     logger.info('[LIBRARY HIT] Found SFX in library', {
                         canonicalKey: sfx.canonicalKey,
                     });
@@ -191,7 +223,7 @@ export async function createCliServices(logger: Logger): Promise<CliServices> {
             logger.info('[LIBRARY MISS] Generating new SFX', { text: text.substring(0, 50) });
 
             // Generate via provider
-            const result = await sfxProvider.convert({
+            const result = await sfxRepository.convert({
                 text,
                 durationSeconds,
                 promptInfluence,
@@ -206,7 +238,19 @@ export async function createCliServices(logger: Logger): Promise<CliServices> {
             // Store in library
             if (category) {
                 try {
-                    await insertSfx(db, {
+                    // Generate canonical key
+                    const canonicalParts = [
+                        'sfx',
+                        category,
+                        subcategory ?? 'general',
+                        environment ?? 'any',
+                        intensity ?? 'any',
+                        Bun.hash(text).toString(36),
+                    ];
+                    const canonicalKey = canonicalParts.join(':');
+
+                    await sfxStore.insert({
+                        canonicalKey,
                         category,
                         subcategory,
                         environment,
@@ -215,6 +259,7 @@ export async function createCliServices(logger: Logger): Promise<CliServices> {
                         promptInfluence,
                         s3Url: storagePath,
                         durationSeconds: result.durationSeconds,
+                        format: 'mp3',
                         tags: extractTags(text),
                     });
                     logger.info('SFX stored in library', { storagePath });
@@ -247,7 +292,7 @@ export async function createCliServices(logger: Logger): Promise<CliServices> {
 
             // Check library first
             if (environment) {
-                const results = await queryAmbiance(db, {
+                const results = await ambianceStore.query({
                     environment,
                     subEnvironment,
                     timeOfDay,
@@ -257,7 +302,11 @@ export async function createCliServices(logger: Logger): Promise<CliServices> {
                 });
 
                 if (results.length > 0) {
-                    const ambiance = results[Math.floor(Math.random() * results.length)]!;
+                    const index = Math.floor(Math.random() * results.length);
+                    const ambiance = results[index];
+                    if (!ambiance) {
+                        throw new Error('Unexpected: Ambiance not found at valid index');
+                    }
                     logger.info('[LIBRARY HIT] Found ambiance in library', {
                         canonicalKey: ambiance.canonicalKey,
                     });
@@ -281,7 +330,7 @@ export async function createCliServices(logger: Logger): Promise<CliServices> {
             });
 
             // Generate via provider
-            const result = await sfxProvider.convert({
+            const result = await sfxRepository.convert({
                 text: description,
                 durationSeconds: Math.min(targetDurationSeconds, 22), // ElevenLabs max
                 promptInfluence,
@@ -296,7 +345,19 @@ export async function createCliServices(logger: Logger): Promise<CliServices> {
             // Store in library
             if (environment) {
                 try {
-                    await insertAmbiance(db, {
+                    // Generate canonical key
+                    const canonicalParts = [
+                        'ambiance',
+                        environment,
+                        timeOfDay ?? 'any',
+                        weather ?? 'any',
+                        mood ?? 'any',
+                        Bun.hash(description).toString(36),
+                    ];
+                    const canonicalKey = canonicalParts.join(':');
+
+                    await ambianceStore.insert({
+                        canonicalKey,
                         environment,
                         subEnvironment,
                         timeOfDay,
@@ -306,6 +367,7 @@ export async function createCliServices(logger: Logger): Promise<CliServices> {
                         promptInfluence,
                         s3Url: storagePath,
                         sourceDurationSeconds: result.durationSeconds,
+                        format: 'mp3',
                         isLoopable: true,
                         tags: extractTags(description),
                     });
@@ -338,7 +400,7 @@ export async function createCliServices(logger: Logger): Promise<CliServices> {
             } = input;
 
             // Check library first
-            const results = await queryMusic(db, {
+            const results = await musicStore.query({
                 mood,
                 intensity,
                 tempo,
@@ -346,7 +408,11 @@ export async function createCliServices(logger: Logger): Promise<CliServices> {
             });
 
             if (results.length > 0) {
-                const music = results[Math.floor(Math.random() * results.length)]!;
+                const index = Math.floor(Math.random() * results.length);
+                const music = results[index];
+                if (!music) {
+                    throw new Error('Unexpected: Music not found at valid index');
+                }
                 logger.info('[LIBRARY HIT] Found music in library', {
                     canonicalKey: music.canonicalKey,
                 });
@@ -370,7 +436,7 @@ export async function createCliServices(logger: Logger): Promise<CliServices> {
             logger.info('[LIBRARY MISS] Generating new music', { mood, intensity, tempo });
 
             // Generate via provider
-            const result = await sfxProvider.convert({
+            const result = await sfxRepository.convert({
                 text: prompt,
                 durationSeconds: Math.min(targetDurationSeconds, 22), // ElevenLabs max
                 promptInfluence,
@@ -384,7 +450,19 @@ export async function createCliServices(logger: Logger): Promise<CliServices> {
 
             // Store in library
             try {
-                await insertMusic(db, {
+                // Generate canonical key
+                const canonicalParts = [
+                    'music',
+                    mood,
+                    intensity ?? 'any',
+                    tempo ?? 'any',
+                    variationIndex.toString(),
+                    Bun.hash(prompt).toString(36),
+                ];
+                const canonicalKey = canonicalParts.join(':');
+
+                await musicStore.insert({
+                    canonicalKey,
                     mood,
                     intensity,
                     tempo,
@@ -393,6 +471,7 @@ export async function createCliServices(logger: Logger): Promise<CliServices> {
                     promptInfluence,
                     s3Url: storagePath,
                     sourceDurationSeconds: result.durationSeconds,
+                    format: 'mp3',
                     isLoopable: true,
                     tags: [mood, intensity, tempo],
                 });
@@ -415,9 +494,9 @@ export async function createCliServices(logger: Logger): Promise<CliServices> {
 
         async getStats() {
             const [sfxStats, ambianceStats, musicStats] = await Promise.all([
-                getSfxStats(db),
-                getAmbianceStats(db),
-                getMusicStats(db),
+                sfxStore.getStats(),
+                ambianceStore.getStats(),
+                musicStore.getStats(),
             ]);
 
             return {

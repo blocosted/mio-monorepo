@@ -10,7 +10,6 @@ export { TTSStore } from './tts.service.store';
 export type {
     VoiceRow,
     UpsertVoiceInput,
-    VoiceFilterOptions,
 } from './voice-registry.store';
 
 // Services
@@ -22,20 +21,38 @@ export { TimelineSyncService } from './timeline-sync.service';
 export type {
     ITTSService,
     GenerateSpeechInput,
-    GenerateSpeechOutput,
-    TTSRow,
-    CreateTTSInput,
-    CreateTTSRowInput,
+    GenerateSpeechResult,
+    BatchGenerateSpeechInput,
+    BatchSegment,
+    BatchSegmentResult,
+    AudioFormat,
+    CharacterArchetype,
 } from './tts.service.types';
 export type {
     IVoiceRegistryService,
-    VoiceInfo,
-    VoiceSearchFilters,
+    StoredVoice,
+    ApiVoice,
+    ParsedVoice,
+    VoiceFilterOptions,
+    SyncResult,
+    SyncOptions,
 } from './voice-registry.service.types';
 export type {
     ITimelineSyncService,
-    SyncedSegment,
-    TimelineSegment,
-    TimelineSyncInput,
-    TimelineSyncOutput,
+    TTSSegmentResult,
+    VoiceSegmentTiming,
+    SyncMetadata,
+    SyncedStoryScript,
+    TimelineSyncOptions,
 } from './timeline-sync.service.types';
+
+// Constants
+export {
+    VOICE_IDS_BY_LANGUAGE,
+    DEFAULT_VOICE_IDS,
+    EMOTION_AUDIO_TAGS,
+    EMOTION_VOICE_SETTINGS,
+    DEFAULT_VOICE_SETTINGS,
+    ARCHETYPE_PRIORITY,
+    ARCHETYPE_KEYWORDS,
+} from './tts.service.constants';

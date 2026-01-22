@@ -9,7 +9,7 @@ import 'reflect-metadata';
 import { injectable, inject } from 'inversify';
 import { AppError, ErrorCodes, DiagnoseSeverity } from '@mio/shared';
 
-import { IocInfrastructure, BUCKETS } from '../../ioc';
+import { IocConnection, BUCKETS } from '../../ioc';
 import type { IStorageClient } from '@mio/shared/server/connections/storage';
 import { environment } from '@mio/shared/constants/environment.constants';
 import type { IStorageService, UploadResult, UploadOptions } from './storage.service.types';
@@ -23,7 +23,7 @@ import type { IStorageService, UploadResult, UploadOptions } from './storage.ser
 @injectable()
 export class StorageService implements IStorageService {
     constructor(
-        @inject(IocInfrastructure.STORAGE_CLIENT) private readonly client: IStorageClient
+        @inject(IocConnection.STORAGE) private readonly client: IStorageClient
     ) { }
 
     /**

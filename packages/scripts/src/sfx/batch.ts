@@ -52,10 +52,10 @@ export async function runBatchCommand(options: BatchCommandOptions): Promise<voi
 
     // Dynamically import to ensure env is loaded first
     const { Logger } = await import('@mio/shared/server/logger');
-    const { SoundEffectsProvider } = await import('@mio/api/services/audio');
+    const { SoundEffectsRepository } = await import('@mio/api/repositories/audio');
 
     const logger = await Logger.create();
-    const provider = new SoundEffectsProvider(logger as any);
+    const repository = new SoundEffectsRepository(logger);
 
     // Create output directory
     const dateStr = new Date().toISOString().split('T')[0] ?? 'unknown';
@@ -83,7 +83,7 @@ export async function runBatchCommand(options: BatchCommandOptions): Promise<voi
         console.log(`[${i + 1}/${items.length}] Generating: ${item.text.substring(0, 50)}...`);
 
         try {
-            const result = await provider.convert({
+            const result = await repository.convert({
                 text: item.text,
                 durationSeconds: item.durationSeconds,
                 promptInfluence: item.promptInfluence ?? 0.3,

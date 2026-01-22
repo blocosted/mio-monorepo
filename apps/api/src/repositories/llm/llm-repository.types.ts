@@ -5,7 +5,6 @@
  * from the business logic of script generation.
  */
 
-import type { Model } from '@anthropic-ai/sdk/resources';
 import type {
   EnrichedConcept,
   ScriptGenerationConstraints,
@@ -23,7 +22,7 @@ export type LLMRepositoryType = 'openai' | 'anthropic' | 'mistral' | 'grok';
  */
 export interface LLMCompletionOptions {
   /** Model identifier (provider-specific) */
-  model?: Model;
+  model?: string;
   /** Maximum tokens in response */
   maxTokens?: number;
   /** Sampling temperature (0-2, lower = more deterministic) */
@@ -45,7 +44,7 @@ export interface LLMRawResponse {
   /** Tokens used in completion */
   completionTokens?: number;
   /** Model used */
-  model: Model;
+  model: string;
 }
 
 /**

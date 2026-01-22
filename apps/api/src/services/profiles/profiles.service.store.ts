@@ -10,7 +10,7 @@ import { eq } from 'drizzle-orm';
 
 import { childProfiles } from '@mio/db/schema';
 
-import { IocInfrastructure } from '../../ioc';
+import { IocConnection } from '../../ioc';
 import type { DatabaseConnection } from '@mio/shared/server/connections/db';
 import type {
     CreateChildProfileInput,
@@ -22,9 +22,9 @@ import type {
 @injectable()
 export class ProfilesStore implements IProfilesStore {
     constructor(
-        @inject(IocInfrastructure.DATABASE_CLIENT)
+        @inject(IocConnection.DATABASE)
         private readonly db: DatabaseConnection
-    ) {}
+    ) { }
 
     /**
      * Insert a new profile

@@ -20,17 +20,16 @@ import type {
 import { IocConnection, IocService } from '../../ioc';
 import type { DatabaseConnection } from '@mio/shared/server/connections/db';
 import type { RedisClient } from '@mio/shared/server/connections/redis';
-import type { ISfxCacheService } from '../cache/sfx-cache.service.types';
+import type { ISfxCacheService, SfxCacheKeyParams } from '../cache/sfx-cache.service.types';
 import type { IStorageService } from '../storage';
-import type { IAudioLibraryService } from '../audio-library';
-import type { SfxCacheKey } from '../cache/sfx-cache.service.types';
+import type { ISfxLibraryService } from './sfx-library.service.types';
 import type { SfxCategory } from '../../repositories/audio/audio-repository.types';
 
 /**
  * Cached SFX metadata with full details
  */
 export interface CachedSfxMetadata {
-    audio: Blob;
+    audio: Buffer;
     durationSeconds: number;
     url: string;
     category?: SfxCategory;
@@ -54,7 +53,7 @@ export interface LibrarySearchParams {
  * Persistence parameters for new SFX
  */
 export interface PersistSfxParams {
-    audio: Blob;
+    audio: Buffer;
     durationSeconds: number;
     text: string;
     category?: SfxCategory;
@@ -82,7 +81,7 @@ export class SfxStore {
         @inject(IocConnection.REDIS) protected readonly redis: RedisClient,
         @inject(IocService.SFX_CACHE) private readonly sfxCache: ISfxCacheService,
         @inject(IocService.STORAGE) private readonly storage: IStorageService,
-        @inject(IocService.AUDIO_LIBRARY) private readonly audioLibrary: IAudioLibraryService,
+        @inject(IocService.SFX_LIBRARY) private readonly sfxLibrary: ISfxLibraryService,
     ) {}
 
     /**
@@ -95,7 +94,7 @@ export class SfxStore {
             return null;
         }
 
-        const libraryResult = await this.audioLibrary.findSfx(params);
+        const libraryResult = await this.sfxLibrary.findSfx(params);
 
         if (!libraryResult.sfx) {
             return null;
@@ -106,7 +105,7 @@ export class SfxStore {
             const audio = await this.storage.download(libraryResult.sfx.s3Url);
 
             // Increment usage counter (fire and forget)
-            this.audioLibrary.incrementSfxUsage(libraryResult.sfx.id).catch(() => {
+            this.sfxLibrary.incrementSfxUsage(libraryResult.sfx.id).catch(() => {
                 // Ignore increment errors
             });
 
@@ -129,7 +128,7 @@ export class SfxStore {
      *
      * @returns Cached SFX with audio blob, or null if not found
      */
-    async getCachedSfx(cacheParams: SfxCacheKey): Promise<CachedSfxMetadata | null> {
+    async getCachedSfx(cacheParams: SfxCacheKeyParams): Promise<CachedSfxMetadata | null> {
         // Check cache metadata
         const cached = await this.sfxCache.get(cacheParams);
         if (!cached) {
@@ -164,7 +163,7 @@ export class SfxStore {
      * @returns Storage URL of persisted audio
      */
     async persistSfx(
-        cacheParams: SfxCacheKey,
+        cacheParams: SfxCacheKeyParams,
         persistParams: PersistSfxParams
     ): Promise<{ url: string }> {
         // Generate storage path
@@ -185,15 +184,28 @@ export class SfxStore {
         // Store in persistent library (long-term)
         if (persistParams.libraryCategory) {
             try {
-                await this.audioLibrary.storeSfx({
+                // Generate canonical key
+                const canonicalParts = [
+                    'sfx',
+                    persistParams.libraryCategory,
+                    persistParams.subcategory ?? 'general',
+                    persistParams.environment ?? 'any',
+                    persistParams.intensity ?? 'any',
+                    Bun.hash(persistParams.text).toString(36),
+                ];
+                const canonicalKey = canonicalParts.join(':');
+
+                await this.sfxLibrary.storeSfx({
+                    canonicalKey,
                     category: persistParams.libraryCategory,
-                    subcategory: persistParams.subcategory,
+                    subcategory: persistParams.subcategory ?? 'general',
                     environment: persistParams.environment,
                     intensity: persistParams.intensity,
                     prompt: persistParams.text,
-                    promptInfluence: persistParams.promptInfluence,
+                    promptInfluence: persistParams.promptInfluence ?? 0.3,
                     s3Url: storagePath,
                     durationSeconds: persistParams.durationSeconds,
+                    format: 'mp3',
                     tags: persistParams.tags ?? [],
                 });
             } catch {
@@ -208,7 +220,7 @@ export class SfxStore {
     /**
      * Generate cache key for logging/debugging
      */
-    generateCacheKey(cacheParams: SfxCacheKey): string {
+    generateCacheKey(cacheParams: SfxCacheKeyParams): string {
         return this.sfxCache.generateCacheKey(cacheParams);
     }
 }

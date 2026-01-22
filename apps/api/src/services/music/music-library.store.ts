@@ -150,7 +150,11 @@ export class MusicLibraryStore {
             conditions.push(eq(audioLibraryMusic.tempo, params.tempo));
         }
 
-        let query = this.db.select().from(audioLibraryMusic);
+        let query = this.db
+            .select()
+            .from(audioLibraryMusic)
+            .orderBy(desc(audioLibraryMusic.usageCount))
+            .$dynamic();
 
         if (conditions.length > 0) {
             query = query.where(and(...conditions));
@@ -160,8 +164,6 @@ export class MusicLibraryStore {
             query = query.limit(params.limit);
         }
 
-        query = query.orderBy(desc(audioLibraryMusic.usageCount));
-
         const rows = await query;
         return rows.map(this.mapRow);
     }
@@ -169,7 +171,7 @@ export class MusicLibraryStore {
     /**
      * Cache a Music entry
      */
-    async cache(params: FindMusicParams, music: StoredMusic): Promise<void> {
+    async cacheMusic(params: FindMusicParams, music: StoredMusic): Promise<void> {
         const cacheKey = this.buildCacheKey(params);
         await this.cache.set(cacheKey, music, { ex: CACHE_TTL_SECONDS });
     }
@@ -185,9 +187,9 @@ export class MusicLibraryStore {
                 mood: params.mood,
                 intensity: params.intensity,
                 tempo: params.tempo,
-                variationIndex: params.variationIndex,
+                variationIndex: params.variationIndex ?? 0,
                 prompt: params.prompt,
-                promptInfluence: params.promptInfluence,
+                promptInfluence: params.promptInfluence ?? 0.5,
                 s3Url: params.s3Url,
                 sourceDurationSeconds: params.sourceDurationSeconds,
                 format: params.format,
@@ -196,6 +198,10 @@ export class MusicLibraryStore {
                 storyUniverses: params.storyUniverses ?? [],
             })
             .returning();
+
+        if (!row) {
+            throw new Error('Failed to insert music into library');
+        }
 
         return this.mapRow(row);
     }
@@ -276,16 +282,16 @@ export class MusicLibraryStore {
             mood: row.mood as MusicMood,
             intensity: row.intensity as MusicIntensity | null,
             tempo: row.tempo as MusicTempo | null,
-            variationIndex: row.variationIndex,
+            variationIndex: row.variationIndex ?? 0,
             prompt: row.prompt,
             promptInfluence: row.promptInfluence,
             s3Url: row.s3Url,
             sourceDurationSeconds: row.sourceDurationSeconds,
             format: row.format,
-            isLoopable: row.isLoopable,
-            tags: row.tags,
-            storyUniverses: row.storyUniverses,
-            usageCount: row.usageCount,
+            isLoopable: row.isLoopable ?? false,
+            tags: row.tags ?? [],
+            storyUniverses: row.storyUniverses ?? [],
+            usageCount: row.usageCount ?? 0,
             lastUsedAt: row.lastUsedAt,
             createdAt: row.createdAt,
         };

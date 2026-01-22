@@ -210,7 +210,7 @@ export async function runSeedAmbianceCommand(options: SeedAmbianceCommandOptions
     const { createCliServices } = await import('./factory');
 
     const logger = await Logger.create();
-    const services = await createCliServices(logger as any);
+    const services = await createCliServices(logger);
 
     const results = {
         success: 0,
@@ -222,7 +222,8 @@ export async function runSeedAmbianceCommand(options: SeedAmbianceCommandOptions
     const startTime = Date.now();
 
     for (let i = 0; i < itemsToSeed.length; i++) {
-        const item = itemsToSeed[i]!;
+        const item = itemsToSeed[i];
+        if (!item) continue;
         const progress = `[${i + 1}/${itemsToSeed.length}]`;
 
         console.log(`${progress} Generating: ${item.environment}/${item.subEnvironment} (${item.mood})`);

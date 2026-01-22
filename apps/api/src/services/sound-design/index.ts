@@ -21,6 +21,7 @@ export type {
 
 // Services
 export { SfxService } from './sfx.service';
+export { SfxLibraryService } from './sfx-library.service';
 
 // Types
 export type {
@@ -31,3 +32,10 @@ export type {
     BatchGenerateSfxResult,
     SfxAudioFormat,
 } from './sfx.service.types';
+export type {
+    ISfxLibraryService,
+    FindSfxParams as SfxLibraryFindParams,
+    StoreSfxParams as SfxLibraryStoreParams,
+    StoredSfx as SfxLibraryStoredSfx,
+    SfxLookupResult as SfxLibraryLookupResult,
+} from './sfx-library.service.types';

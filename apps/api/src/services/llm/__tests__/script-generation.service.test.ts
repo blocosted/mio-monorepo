@@ -9,22 +9,22 @@ import { describe, it, expect, beforeEach, mock } from 'bun:test';
 import { Emotion, VocabularyLevel } from '@mio/shared';
 
 import { ScriptGenerationService } from '../script-generation.service';
-import type { ScriptValidationResult } from '../script-generation.service';
+import type { ScriptValidationResult } from '../index';
 import type { StoryScript, ScriptGenerationConstraints } from '@mio/shared';
 
 // Mock logger
 const mockLogger = {
-  info: mock(() => { }),
-  warn: mock(() => { }),
-  error: mock(() => { }),
-  debug: mock(() => { }),
+  info: mock(() => undefined),
+  warn: mock(() => undefined),
+  error: mock(() => undefined),
+  debug: mock(() => undefined),
 };
 
 describe('ScriptGenerationService', () => {
   let service: ScriptGenerationService;
 
   beforeEach(() => {
-    service = new ScriptGenerationService(mockLogger as any);
+    service = new ScriptGenerationService();
   });
 
   describe('calculateDurationBudget', () => {

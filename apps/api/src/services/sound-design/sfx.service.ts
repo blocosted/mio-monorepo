@@ -13,14 +13,13 @@ import { injectable, inject } from 'inversify';
 import pLimit from 'p-limit';
 
 import { AppError, ErrorCodes } from '@mio/shared';
-import { Logger } from '@mio/shared/server/logger';
 import type {
     SfxLibraryCategory,
     SfxEnvironment,
     AudioIntensity,
 } from '@mio/shared/types';
 
-import { getInstance, IocConnection, IocStore, IocRepository, IocService } from '../../ioc';
+import { getInstance, IocStore, IocRepository, IocService } from '../../ioc';
 import type { ICacheService } from '../cache/cache.service.types';
 import type { ISoundEffectsRepository } from '../../repositories/audio/audio-repository.types';
 import { AbstractService } from '../service.abstract';

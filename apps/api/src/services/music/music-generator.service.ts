@@ -26,9 +26,9 @@ import type {
     MusicTempo,
 } from '@mio/shared/types';
 
-import { getInstance, IocInfrastructure, IocService } from '../../ioc';
-import type { ISoundEffectsProvider } from './soundEffects.provider.types';
-import type { IAudioLibraryService } from '../audio-library';
+import { getInstance, IocConnection, IocRepository, IocService } from '../../ioc';
+import type { ISoundEffectsRepository } from '../../repositories/audio/audio-repository.types';
+import type { IMusicLibraryService } from './music-library.service.types';
 import type { IStorageService } from '../storage';
 import type { MusicMood } from './music-strategy.service.types';
 import type {
@@ -179,19 +179,19 @@ export class MusicGeneratorService implements IMusicGeneratorService {
     private libraryMisses = 0;
 
     constructor(
-        @inject(IocInfrastructure.LOGGER) private readonly logger: Logger,
-        @inject('ISoundEffectsProvider') private readonly sfxProvider: ISoundEffectsProvider,
+        @inject(IocConnection.LOGGER) private readonly logger: Logger,
+        @inject(IocRepository.SOUND_EFFECTS) private readonly sfxRepository: ISoundEffectsRepository,
     ) { }
 
     /**
-     * Lazily get AudioLibrary service
+     * Lazily get MusicLibrary service
      */
-    private _audioLibrary: IAudioLibraryService | null = null;
-    private get audioLibrary(): IAudioLibraryService {
-        if (!this._audioLibrary) {
-            this._audioLibrary = getInstance<IAudioLibraryService>(IocService.AUDIO_LIBRARY);
+    private _musicLibrary: IMusicLibraryService | null = null;
+    private get musicLibrary(): IMusicLibraryService {
+        if (!this._musicLibrary) {
+            this._musicLibrary = getInstance<IMusicLibraryService>(IocService.MUSIC_LIBRARY);
         }
-        return this._audioLibrary;
+        return this._musicLibrary;
     }
 
     /**
@@ -255,7 +255,7 @@ export class MusicGeneratorService implements IMusicGeneratorService {
         let sourceDuration = 0;
         let fromLibrary = false;
 
-        const libraryResult = await this.audioLibrary.findMusic({
+        const libraryResult = await this.musicLibrary.findMusic({
             mood: libraryMood,
             intensity,
             tempo,
@@ -276,7 +276,7 @@ export class MusicGeneratorService implements IMusicGeneratorService {
                 fromLibrary = true;
 
                 // Increment usage counter (fire and forget)
-                this.audioLibrary.incrementMusicUsage(libraryResult.music.id).catch((err) => {
+                this.musicLibrary.incrementMusicUsage(libraryResult.music.id).catch((err) => {
                     this.logger.warn('Failed to increment music usage', { error: err.message });
                 });
             } catch (error) {
@@ -305,7 +305,7 @@ export class MusicGeneratorService implements IMusicGeneratorService {
             );
 
             // Generate base music clip via ElevenLabs
-            const sfxResult = await this.sfxProvider.convert({
+            const sfxResult = await this.sfxRepository.convert({
                 text: promptUsed,
                 durationSeconds: sourceClipDuration,
                 promptInfluence,
@@ -324,7 +324,19 @@ export class MusicGeneratorService implements IMusicGeneratorService {
                 // Get next variation index
                 const variationIndex = Math.floor(Math.random() * 5);
 
-                await this.audioLibrary.storeMusic({
+                // Generate canonical key
+                const canonicalParts = [
+                    'music',
+                    libraryMood,
+                    intensity ?? 'any',
+                    tempo ?? 'any',
+                    variationIndex.toString(),
+                    Bun.hash(promptUsed).toString(36),
+                ];
+                const canonicalKey = canonicalParts.join(':');
+
+                await this.musicLibrary.storeMusic({
+                    canonicalKey,
                     mood: libraryMood,
                     intensity,
                     tempo,
@@ -333,6 +345,7 @@ export class MusicGeneratorService implements IMusicGeneratorService {
                     promptInfluence,
                     s3Url: storagePath,
                     sourceDurationSeconds: sourceDuration,
+                    format: 'mp3',
                     isLoopable: true,
                     tags: this.extractTags(promptUsed),
                 });

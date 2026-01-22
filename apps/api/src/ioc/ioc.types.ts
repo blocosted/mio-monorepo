@@ -31,7 +31,6 @@ export enum IocStore {
     SCRIPT_GENERATION_STORE = 'ScriptGenerationStore',
     TTS_STORE = 'TTSStore',
     SOUND_EFFECTS_STORE = 'SoundEffectsStore',
-    AUDIO_LIBRARY_STORE = 'AudioLibraryStore',
     VOICE_REGISTRY_STORE = 'VoiceRegistryStore',
     SFX_LIBRARY_STORE = 'SfxLibraryStore',
     AMBIANCE_LIBRARY_STORE = 'AmbianceLibraryStore',
@@ -50,22 +49,12 @@ export enum IocRepository {
 }
 
 /**
- * @deprecated Use IocRepository instead. This enum is kept for backwards compatibility during migration.
- */
-export enum IocProvider {
-    OPENAI = 'OpenAIRepository',
-    ANTHROPIC = 'AnthropicRepository',
-    ELEVENLABS = 'VoicesRepository',
-    SOUND_EFFECTS_PROVIDER = 'SoundEffectsRepository',
-}
-
-/**
  * Business logic services
  * Services can depend on:
  * - Their own store (IocStore)
  * - Other services (IocService)
- * - Providers (IocProvider)
  * - Connections (IocConnection)
+ * - Repositories (IocRepository)
  */
 export enum IocService {
     STORAGE = 'StorageService',
@@ -80,18 +69,13 @@ export enum IocService {
     VOICE_REGISTRY = 'VoiceRegistryService',
     FFMPEG_MIXER = 'FFmpegMixerService',
     SOUND_EFFECTS = 'SoundEffectsService',
-    AUDIO_LIBRARY = 'AudioLibraryService',
-}
-
-/**
- * Legacy enum for backwards compatibility
- * @deprecated Use IocConnection instead
- */
-export enum IocInfrastructure {
-    STORAGE_CLIENT = 'StorageConnection',
-    REDIS_CLIENT = 'RedisConnection',
-    DATABASE_CLIENT = 'DatabaseConnection',
-    LOGGER = 'Logger',
+    SFX = 'SfxService',
+    SFX_LIBRARY = 'SfxLibraryService',
+    MUSIC_GENERATOR = 'MusicGeneratorService',
+    MUSIC_STRATEGY = 'MusicStrategyService',
+    MUSIC_LIBRARY = 'MusicLibraryService',
+    AMBIANCE_GENERATOR = 'AmbianceGeneratorService',
+    AMBIANCE_LIBRARY = 'AmbianceLibraryService',
 }
 
 /**

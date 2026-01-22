@@ -109,6 +109,10 @@ export class VoiceRegistryStore {
             })
             .returning();
 
+        if (!voice) {
+            throw new Error('Failed to upsert voice');
+        }
+
         return voice;
     }
 

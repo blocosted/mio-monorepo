@@ -13,15 +13,14 @@ import { injectable, inject } from 'inversify';
 import { IocConnection, IocService } from '../../ioc';
 import type { DatabaseConnection } from '@mio/shared/server/connections/db';
 import type { RedisClient } from '@mio/shared/server/connections/redis';
-import type { IAudioCacheService } from '../cache/audio-cache.service.types';
+import type { IAudioCacheService, CachedAudio, AudioCacheKeyParams } from '../cache/audio-cache.service.types';
 import type { IStorageService } from '../storage';
-import type { AudioCacheKey, CachedAudio } from '../cache/audio-cache.service.types';
 
 /**
  * Cached audio metadata with full details
  */
 export interface CachedAudioMetadata extends CachedAudio {
-    audio: Blob;
+    audio: Buffer;
 }
 
 /**
@@ -43,7 +42,7 @@ export class TTSStore {
      *
      * @returns Cached audio with blob and metadata, or null if not found
      */
-    async getCachedAudio(cacheParams: AudioCacheKey): Promise<CachedAudioMetadata | null> {
+    async getCachedAudio(cacheParams: AudioCacheKeyParams): Promise<CachedAudioMetadata | null> {
         // Check cache metadata
         const cached = await this.audioCache.get(cacheParams);
         if (!cached) {
@@ -72,12 +71,12 @@ export class TTSStore {
      * Persist generated audio to storage and cache
      *
      * @param cacheParams - Cache key parameters
-     * @param audio - Audio blob to persist
+     * @param audio - Audio buffer to persist
      * @param metadata - Audio metadata (duration, voiceId, etc.)
      */
     async persistAudio(
-        cacheParams: AudioCacheKey,
-        audio: Blob,
+        cacheParams: AudioCacheKeyParams,
+        audio: Buffer,
         metadata: {
             voiceId: string;
             durationSeconds: number;
@@ -110,7 +109,7 @@ export class TTSStore {
     /**
      * Generate cache key for logging/debugging
      */
-    generateCacheKey(cacheParams: AudioCacheKey): string {
+    generateCacheKey(cacheParams: AudioCacheKeyParams): string {
         return this.audioCache.generateCacheKey(cacheParams);
     }
 }

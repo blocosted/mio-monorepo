@@ -10,6 +10,7 @@ import { mock, expect } from 'bun:test';
 import type { ICacheService } from '../services/cache';
 import type { IStorageService } from '../services/storage';
 import { DEFAULT_TEST_CONFIG } from './test-utils';
+import type { DatabaseConnection } from '@mio/shared/server/connections/db';
 import { RedisClient } from '@mio/shared/server/connections/redis';
 
 /**
@@ -200,8 +201,8 @@ export async function cleanTestData(): Promise<void> {
     const { cleanTestPostgresData } = await import('./test-utils');
 
     // Get DB and Redis from IoC container
-    const db = getInstance(IocConnection.DATABASE);
-    const redis = getInstance(IocConnection.REDIS);
+    const db = getInstance<DatabaseConnection>(IocConnection.DATABASE);
+    const redis = getInstance<RedisClient>(IocConnection.REDIS);
 
     // Clean PostgreSQL
     await cleanTestPostgresData(db);

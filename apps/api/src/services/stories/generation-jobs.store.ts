@@ -67,6 +67,10 @@ export class GenerationJobsStore {
             })
             .returning();
 
+        if (!job) {
+            throw new Error('Failed to create generation job');
+        }
+
         return job;
     }
 

@@ -12,7 +12,7 @@ import { AppError, ErrorCodes } from '@mio/shared';
 import { environment } from '@mio/shared/constants/environment.constants';
 import { Logger } from '@mio/shared/server/logger';
 
-import { IocInfrastructure } from '../../ioc';
+import { IocConnection } from '../../ioc';
 import type {
   ILLMService,
   EnrichStoryInput,
@@ -41,7 +41,7 @@ export class OpenAILLMService implements ILLMService {
   private readonly client: OpenAI;
 
   constructor(
-    @inject(IocInfrastructure.LOGGER)
+    @inject(IocConnection.LOGGER)
     private readonly logger: Logger,
   ) {
     const apiKey = environment.OPENAI_API_KEY;

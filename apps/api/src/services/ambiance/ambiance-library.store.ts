@@ -166,7 +166,11 @@ export class AmbianceLibraryStore {
             conditions.push(eq(audioLibraryAmbiance.mood, params.mood));
         }
 
-        let query = this.db.select().from(audioLibraryAmbiance);
+        let query = this.db
+            .select()
+            .from(audioLibraryAmbiance)
+            .orderBy(desc(audioLibraryAmbiance.usageCount))
+            .$dynamic();
 
         if (conditions.length > 0) {
             query = query.where(and(...conditions));
@@ -176,8 +180,6 @@ export class AmbianceLibraryStore {
             query = query.limit(params.limit);
         }
 
-        query = query.orderBy(desc(audioLibraryAmbiance.usageCount));
-
         const rows = await query;
         return rows.map(this.mapRow);
     }
@@ -185,7 +187,7 @@ export class AmbianceLibraryStore {
     /**
      * Cache an Ambiance entry
      */
-    async cache(params: FindAmbianceParams, ambiance: StoredAmbiance): Promise<void> {
+    async cacheAmbiance(params: FindAmbianceParams, ambiance: StoredAmbiance): Promise<void> {
         const cacheKey = this.buildCacheKey(params);
         await this.cache.set(cacheKey, ambiance, { ex: CACHE_TTL_SECONDS });
     }
@@ -204,7 +206,7 @@ export class AmbianceLibraryStore {
                 weather: params.weather,
                 mood: params.mood,
                 prompt: params.prompt,
-                promptInfluence: params.promptInfluence,
+                promptInfluence: params.promptInfluence ?? 0.3,
                 s3Url: params.s3Url,
                 sourceDurationSeconds: params.sourceDurationSeconds,
                 format: params.format,
@@ -213,6 +215,10 @@ export class AmbianceLibraryStore {
                 storyUniverses: params.storyUniverses ?? [],
             })
             .returning();
+
+        if (!row) {
+            throw new Error('Failed to insert ambiance into library');
+        }
 
         return this.mapRow(row);
     }
@@ -300,10 +306,10 @@ export class AmbianceLibraryStore {
             s3Url: row.s3Url,
             sourceDurationSeconds: row.sourceDurationSeconds,
             format: row.format,
-            isLoopable: row.isLoopable,
-            tags: row.tags,
-            storyUniverses: row.storyUniverses,
-            usageCount: row.usageCount,
+            isLoopable: row.isLoopable ?? false,
+            tags: row.tags ?? [],
+            storyUniverses: row.storyUniverses ?? [],
+            usageCount: row.usageCount ?? 0,
             lastUsedAt: row.lastUsedAt,
             createdAt: row.createdAt,
         };

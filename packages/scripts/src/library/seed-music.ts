@@ -218,7 +218,7 @@ export async function runSeedMusicCommand(options: SeedMusicCommandOptions): Pro
     const { createCliServices } = await import('./factory');
 
     const logger = await Logger.create();
-    const services = await createCliServices(logger as any);
+    const services = await createCliServices(logger);
 
     const results = {
         success: 0,
@@ -230,7 +230,8 @@ export async function runSeedMusicCommand(options: SeedMusicCommandOptions): Pro
     const startTime = Date.now();
 
     for (let i = 0; i < itemsToSeed.length; i++) {
-        const item = itemsToSeed[i]!;
+        const item = itemsToSeed[i];
+        if (!item) continue;
         const progress = `[${i + 1}/${itemsToSeed.length}]`;
 
         console.log(`${progress} Generating: ${item.mood} (${item.intensity}/${item.tempo}) v${item.variationIndex}`);

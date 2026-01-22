@@ -32,7 +32,7 @@ export async function runStatsCommand(options: StatsCommandOptions): Promise<voi
     const { createCliServices } = await import('./factory');
 
     const logger = await Logger.create();
-    const services = await createCliServices(logger as any);
+    const services = await createCliServices(logger);
 
     const stats = await services.getStats();
 
@@ -50,16 +50,18 @@ export async function runStatsCommand(options: StatsCommandOptions): Promise<voi
     if (Object.keys(stats.sfx.byCategory).length > 0) {
         console.log('\nBy Category:');
         for (const [category, count] of Object.entries(stats.sfx.byCategory)) {
-            const pct = stats.sfx.total > 0 ? ((count / stats.sfx.total) * 100).toFixed(1) : '0';
-            console.log(`  ${category}: ${count} (${pct}%)`);
+            const countNum = count as number;
+            const pct = stats.sfx.total > 0 ? ((countNum / stats.sfx.total) * 100).toFixed(1) : '0';
+            console.log(`  ${category}: ${countNum} (${pct}%)`);
         }
     }
 
     if (Object.keys(stats.sfx.byEnvironment).length > 0) {
         console.log('\nBy Environment:');
         for (const [env, count] of Object.entries(stats.sfx.byEnvironment)) {
-            const pct = stats.sfx.total > 0 ? ((count / stats.sfx.total) * 100).toFixed(1) : '0';
-            console.log(`  ${env}: ${count} (${pct}%)`);
+            const countNum = count as number;
+            const pct = stats.sfx.total > 0 ? ((countNum / stats.sfx.total) * 100).toFixed(1) : '0';
+            console.log(`  ${env}: ${countNum} (${pct}%)`);
         }
     }
 
@@ -70,16 +72,18 @@ export async function runStatsCommand(options: StatsCommandOptions): Promise<voi
     if (Object.keys(stats.ambiance.byEnvironment).length > 0) {
         console.log('\nBy Environment:');
         for (const [env, count] of Object.entries(stats.ambiance.byEnvironment)) {
-            const pct = stats.ambiance.total > 0 ? ((count / stats.ambiance.total) * 100).toFixed(1) : '0';
-            console.log(`  ${env}: ${count} (${pct}%)`);
+            const countNum = count as number;
+            const pct = stats.ambiance.total > 0 ? ((countNum / stats.ambiance.total) * 100).toFixed(1) : '0';
+            console.log(`  ${env}: ${countNum} (${pct}%)`);
         }
     }
 
     if (Object.keys(stats.ambiance.byMood).length > 0) {
         console.log('\nBy Mood:');
         for (const [mood, count] of Object.entries(stats.ambiance.byMood)) {
-            const pct = stats.ambiance.total > 0 ? ((count / stats.ambiance.total) * 100).toFixed(1) : '0';
-            console.log(`  ${mood}: ${count} (${pct}%)`);
+            const countNum = count as number;
+            const pct = stats.ambiance.total > 0 ? ((countNum / stats.ambiance.total) * 100).toFixed(1) : '0';
+            console.log(`  ${mood}: ${countNum} (${pct}%)`);
         }
     }
 
@@ -90,16 +94,18 @@ export async function runStatsCommand(options: StatsCommandOptions): Promise<voi
     if (Object.keys(stats.music.byMood).length > 0) {
         console.log('\nBy Mood:');
         for (const [mood, count] of Object.entries(stats.music.byMood)) {
-            const pct = stats.music.total > 0 ? ((count / stats.music.total) * 100).toFixed(1) : '0';
-            console.log(`  ${mood}: ${count} (${pct}%)`);
+            const countNum = count as number;
+            const pct = stats.music.total > 0 ? ((countNum / stats.music.total) * 100).toFixed(1) : '0';
+            console.log(`  ${mood}: ${countNum} (${pct}%)`);
         }
     }
 
     if (Object.keys(stats.music.byIntensity).length > 0) {
         console.log('\nBy Intensity:');
         for (const [intensity, count] of Object.entries(stats.music.byIntensity)) {
-            const pct = stats.music.total > 0 ? ((count / stats.music.total) * 100).toFixed(1) : '0';
-            console.log(`  ${intensity}: ${count} (${pct}%)`);
+            const countNum = count as number;
+            const pct = stats.music.total > 0 ? ((countNum / stats.music.total) * 100).toFixed(1) : '0';
+            console.log(`  ${intensity}: ${countNum} (${pct}%)`);
         }
     }
 
@@ -134,9 +140,9 @@ export async function runStatsCommand(options: StatsCommandOptions): Promise<voi
 
     // Calculate total usage
     const totalUsage =
-        stats.topUsed.sfx.reduce((sum, item) => sum + item.usageCount, 0) +
-        stats.topUsed.ambiance.reduce((sum, item) => sum + item.usageCount, 0) +
-        stats.topUsed.music.reduce((sum, item) => sum + item.usageCount, 0);
+        stats.topUsed.sfx.reduce((sum: number, item: any) => sum + item.usageCount, 0) +
+        stats.topUsed.ambiance.reduce((sum: number, item: any) => sum + item.usageCount, 0) +
+        stats.topUsed.music.reduce((sum: number, item: any) => sum + item.usageCount, 0);
 
     console.log(`Total Reuse Count: ${totalUsage}`);
 

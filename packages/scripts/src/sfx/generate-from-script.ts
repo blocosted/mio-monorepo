@@ -18,7 +18,7 @@ import {
     writeJsonFile,
 } from '../_local-run-store/run-store';
 
-import { SoundEffectsProvider } from '@mio/api/services/audio';
+import { SoundEffectsRepository } from '@mio/api/repositories/audio';
 
 function loadEnv(envFile?: string): void {
     const files = envFile ? [envFile] : ['.env.local', '.env'];
@@ -68,7 +68,7 @@ function extractSfxSegments(script: StoryScript): SfxSegmentInfo[] {
 /**
  * Generate a safe filename from description
  */
-function sanitizeFilename(text: string, maxLength: number = 30): string {
+function sanitizeFilename(text: string, maxLength = 30): string {
     return text
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
@@ -154,9 +154,9 @@ export async function runGenerateFromScriptCommand(args: GenerateFromScriptComma
         return;
     }
 
-    // Initialize provider
+    // Initialize repository
     const logger = await Logger.create();
-    const provider = new SoundEffectsProvider(logger as any);
+    const repository = new SoundEffectsRepository(logger);
 
     console.log('Generating sound effects for all segments...\n');
     const startTime = Date.now();
@@ -174,7 +174,7 @@ export async function runGenerateFromScriptCommand(args: GenerateFromScriptComma
 
     for (const segment of sfxSegments) {
         try {
-            const result = await provider.convert({
+            const result = await repository.convert({
                 text: segment.description,
                 durationSeconds: segment.duration,
                 promptInfluence: args.promptInfluence ?? segment.promptInfluence ?? 0.3,

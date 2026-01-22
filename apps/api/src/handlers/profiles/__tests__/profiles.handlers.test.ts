@@ -7,7 +7,7 @@
 import { describe, it, expect, beforeAll, beforeEach } from 'bun:test';
 
 import { cleanTestPostgresData } from '../../../tests/test-utils';
-import { getInstance, IocInfrastructure } from '../../../ioc';
+import { getInstance, IocConnection } from '../../../ioc';
 import type { DatabaseConnection } from '@mio/shared/server/connections/db';
 import { MioApiClient } from '@mio/shared/clients/mio';
 import { Gender } from '@mio/shared/types';
@@ -18,7 +18,7 @@ describe('profilesHandlers', () => {
   let mio: MioApiClient;
 
   beforeAll(() => {
-    db = getInstance<DatabaseConnection>(IocInfrastructure.DATABASE_CLIENT);
+    db = getInstance<DatabaseConnection>(IocConnection.DATABASE);
     mio = createMioApiClient();
   });
 

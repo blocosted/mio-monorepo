@@ -17,13 +17,10 @@ import {
     writeJsonFile,
 } from '../_local-run-store/run-store';
 
-import {
-    SoundEffectsProvider,
-    MusicGeneratorService,
-    MusicStrategyService,
-    type MusicMood,
-    type MusicCue,
-} from '@mio/api/services/audio';
+import { SoundEffectsRepository } from '@mio/api/repositories/audio';
+import { MusicGeneratorService, MusicStrategyService } from '@mio/api/services/music';
+import type { MusicMood } from '@mio/shared/types';
+import type { MusicCue } from '@mio/api/services/music';
 
 function loadEnv(envFile?: string): void {
     const files = envFile ? [envFile] : ['.env.local', '.env'];
@@ -186,8 +183,8 @@ export async function runGenerateFromScriptCommand(args: GenerateFromScriptComma
     }
 
     // Initialize services
-    const sfxProvider = new SoundEffectsProvider(logger as any);
-    const musicService = new MusicGeneratorService(logger as any, sfxProvider);
+    const sfxProvider = new SoundEffectsRepository(logger);
+    const musicService = new MusicGeneratorService(logger, sfxProvider);
 
     console.log('Generating music for all segments...\n');
     const startTime = Date.now();

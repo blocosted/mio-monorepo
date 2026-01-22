@@ -14,9 +14,8 @@ import pLimit from 'p-limit';
 
 import { AppError, ErrorCodes, Emotion } from '@mio/shared';
 import type { ElevenLabsVoiceSettings } from '@mio/shared/models';
-import { Logger } from '@mio/shared/server/logger';
 
-import { getInstance, IocConnection, IocStore, IocRepository, IocService } from '../../ioc';
+import { getInstance, IocStore, IocRepository, IocService } from '../../ioc';
 import type { ICacheService } from '../cache/cache.service.types';
 import type { IVoicesRepository } from '../../repositories/audio/audio-repository.types';
 import { AbstractService } from '../service.abstract';

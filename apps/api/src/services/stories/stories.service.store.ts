@@ -9,7 +9,7 @@ import { injectable, inject } from 'inversify';
 
 import { stories } from '@mio/db/schema';
 
-import { IocInfrastructure } from '../../ioc';
+import { IocConnection } from '../../ioc';
 import type { DatabaseConnection } from '@mio/shared/server/connections/db';
 import type {
     CreateStoryRowInput,
@@ -20,9 +20,9 @@ import type {
 @injectable()
 export class StoriesStore implements IStoriesStore {
     constructor(
-        @inject(IocInfrastructure.DATABASE_CLIENT)
+        @inject(IocConnection.DATABASE)
         private readonly db: DatabaseConnection
-    ) {}
+    ) { }
 
     /**
      * Insert a new story

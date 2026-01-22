@@ -168,6 +168,15 @@ export async function runFullStoryCommand(args: FullStoryCommandArgs): Promise<v
         { name: 'Final Mix', status: 'pending' },
     ];
 
+    // Helper to safely access steps array
+    const getStep = (index: number) => {
+        const step = steps[index];
+        if (!step) {
+            throw new Error(`Step at index ${index} not found`);
+        }
+        return step;
+    };
+
     const printSteps = () => {
         console.log('\nPipeline steps:');
         for (const step of steps) {
@@ -197,7 +206,10 @@ export async function runFullStoryCommand(args: FullStoryCommandArgs): Promise<v
     console.log('\n' + '-'.repeat(60));
     console.log('Step 1/5: TTS Generation');
     console.log('-'.repeat(60));
-    steps[0]!.status = 'running';
+    const ttsStep = steps[0];
+    if (ttsStep) {
+        ttsStep.status = 'running';
+    }
 
     try {
         // We need to capture the run directory from TTS
@@ -225,21 +237,21 @@ export async function runFullStoryCommand(args: FullStoryCommandArgs): Promise<v
             }
         }
 
-        steps[0]!.status = 'success';
-        steps[0]!.runDir = ttsRunDir;
+        getStep(0).status = 'success';
+        getStep(0).runDir = ttsRunDir;
     } catch (error) {
-        steps[0]!.status = 'failed';
-        steps[0]!.error = error instanceof Error ? error.message : String(error);
+        getStep(0).status = 'failed';
+        getStep(0).error = error instanceof Error ? error.message : String(error);
         printSteps();
-        throw new Error(`TTS generation failed: ${steps[0]!.error}`);
+        throw new Error(`TTS generation failed: ${getStep(0).error}`);
     }
 
     // Step 2: SFX Generation
-    if (steps[1]!.status === 'pending') {
+    if (getStep(1).status === 'pending') {
         console.log('\n' + '-'.repeat(60));
         console.log('Step 2/5: SFX Generation');
         console.log('-'.repeat(60));
-        steps[1]!.status = 'running';
+        getStep(1).status = 'running';
 
         try {
             const sfxStoreDir = path.join(pipelineRun.runDir, 'sfx');
@@ -264,22 +276,22 @@ export async function runFullStoryCommand(args: FullStoryCommandArgs): Promise<v
                 }
             }
 
-            steps[1]!.status = 'success';
-            steps[1]!.runDir = sfxRunDir;
+            getStep(1).status = 'success';
+            getStep(1).runDir = sfxRunDir;
         } catch (error) {
-            steps[1]!.status = 'failed';
-            steps[1]!.error = error instanceof Error ? error.message : String(error);
-            console.log(`[WARN] SFX generation failed: ${steps[1]!.error}`);
+            getStep(1).status = 'failed';
+            getStep(1).error = error instanceof Error ? error.message : String(error);
+            console.log(`[WARN] SFX generation failed: ${getStep(1).error}`);
             // Continue without SFX
         }
     }
 
     // Step 3: Ambiance Generation
-    if (steps[2]!.status === 'pending') {
+    if (getStep(2).status === 'pending') {
         console.log('\n' + '-'.repeat(60));
         console.log('Step 3/5: Ambiance Generation');
         console.log('-'.repeat(60));
-        steps[2]!.status = 'running';
+        getStep(2).status = 'running';
 
         try {
             const ambianceStoreDir = path.join(pipelineRun.runDir, 'ambiance');
@@ -304,22 +316,22 @@ export async function runFullStoryCommand(args: FullStoryCommandArgs): Promise<v
                 }
             }
 
-            steps[2]!.status = 'success';
-            steps[2]!.runDir = ambianceRunDir;
+            getStep(2).status = 'success';
+            getStep(2).runDir = ambianceRunDir;
         } catch (error) {
-            steps[2]!.status = 'failed';
-            steps[2]!.error = error instanceof Error ? error.message : String(error);
-            console.log(`[WARN] Ambiance generation failed: ${steps[2]!.error}`);
+            getStep(2).status = 'failed';
+            getStep(2).error = error instanceof Error ? error.message : String(error);
+            console.log(`[WARN] Ambiance generation failed: ${getStep(2).error}`);
             // Continue without ambiance
         }
     }
 
     // Step 4: Music Generation
-    if (steps[3]!.status === 'pending') {
+    if (getStep(3).status === 'pending') {
         console.log('\n' + '-'.repeat(60));
         console.log('Step 4/5: Music Generation');
         console.log('-'.repeat(60));
-        steps[3]!.status = 'running';
+        getStep(3).status = 'running';
 
         try {
             const musicStoreDir = path.join(pipelineRun.runDir, 'music');
@@ -345,12 +357,12 @@ export async function runFullStoryCommand(args: FullStoryCommandArgs): Promise<v
                 }
             }
 
-            steps[3]!.status = 'success';
-            steps[3]!.runDir = musicRunDir;
+            getStep(3).status = 'success';
+            getStep(3).runDir = musicRunDir;
         } catch (error) {
-            steps[3]!.status = 'failed';
-            steps[3]!.error = error instanceof Error ? error.message : String(error);
-            console.log(`[WARN] Music generation failed: ${steps[3]!.error}`);
+            getStep(3).status = 'failed';
+            getStep(3).error = error instanceof Error ? error.message : String(error);
+            console.log(`[WARN] Music generation failed: ${getStep(3).error}`);
             // Continue without music
         }
     }
@@ -363,7 +375,7 @@ export async function runFullStoryCommand(args: FullStoryCommandArgs): Promise<v
     console.log('\n' + '-'.repeat(60));
     console.log('Step 5/5: Final Mix');
     console.log('-'.repeat(60));
-    steps[4]!.status = 'running';
+    getStep(4).status = 'running';
 
     try {
         const mixStoreDir = path.join(pipelineRun.runDir, 'mix');
@@ -390,17 +402,17 @@ export async function runFullStoryCommand(args: FullStoryCommandArgs): Promise<v
                 const dateDir = path.join(mixNamespace, dateDirs[0]);
                 const runDirs = require('fs').readdirSync(dateDir).sort().reverse();
                 if (runDirs[0]) {
-                    steps[4]!.runDir = path.join(dateDir, runDirs[0]);
+                    getStep(4).runDir = path.join(dateDir, runDirs[0]);
                 }
             }
         }
 
-        steps[4]!.status = 'success';
+        getStep(4).status = 'success';
     } catch (error) {
-        steps[4]!.status = 'failed';
-        steps[4]!.error = error instanceof Error ? error.message : String(error);
+        getStep(4).status = 'failed';
+        getStep(4).error = error instanceof Error ? error.message : String(error);
         printSteps();
-        throw new Error(`Final mix failed: ${steps[4]!.error}`);
+        throw new Error(`Final mix failed: ${getStep(4).error}`);
     }
 
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);

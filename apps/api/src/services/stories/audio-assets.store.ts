@@ -59,6 +59,10 @@ export class AudioAssetsStore {
             })
             .returning();
 
+        if (!asset) {
+            throw new Error('Failed to create audio asset');
+        }
+
         return asset;
     }
 

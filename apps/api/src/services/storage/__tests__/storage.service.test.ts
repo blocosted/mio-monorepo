@@ -19,10 +19,10 @@ describe('StorageService', () => {
     setSupabaseUrl('https://example.supabase.co/');
 
     const client: IStorageClient = {
-      upload: async () => {},
+      upload: async () => undefined,
       download: async () => Buffer.from('x'),
-      delete: async () => {},
-      deleteMany: async () => {},
+      delete: async () => undefined,
+      deleteMany: async () => undefined,
       exists: async () => true,
     };
 
@@ -43,8 +43,8 @@ describe('StorageService', () => {
         throw new Error('nope');
       },
       download: async () => Buffer.from('x'),
-      delete: async () => {},
-      deleteMany: async () => {},
+      delete: async () => undefined,
+      deleteMany: async () => undefined,
       exists: async () => true,
     };
 
@@ -56,12 +56,12 @@ describe('StorageService', () => {
 
   it('maps not found downloads to AppError(StorageFileNotFound)', async () => {
     const client: IStorageClient = {
-      upload: async () => {},
+      upload: async () => undefined,
       download: async () => {
         throw new Error('NoSuchKey');
       },
-      delete: async () => {},
-      deleteMany: async () => {},
+      delete: async () => undefined,
+      deleteMany: async () => undefined,
       exists: async () => false,
     };
 
@@ -73,12 +73,12 @@ describe('StorageService', () => {
 
   it('maps other download errors to AppError(StorageDownloadFailed)', async () => {
     const client: IStorageClient = {
-      upload: async () => {},
+      upload: async () => undefined,
       download: async () => {
         throw new Error('timeout');
       },
-      delete: async () => {},
-      deleteMany: async () => {},
+      delete: async () => undefined,
+      deleteMany: async () => undefined,
       exists: async () => false,
     };
 
@@ -90,12 +90,12 @@ describe('StorageService', () => {
 
   it('maps delete errors to AppError(StorageDeleteFailed)', async () => {
     const client: IStorageClient = {
-      upload: async () => {},
+      upload: async () => undefined,
       download: async () => Buffer.from('x'),
       delete: async () => {
         throw new Error('nope');
       },
-      deleteMany: async () => {},
+      deleteMany: async () => undefined,
       exists: async () => true,
     };
 
@@ -108,9 +108,9 @@ describe('StorageService', () => {
   it('deleteMany is a no-op for empty list', async () => {
     let called = false;
     const client: IStorageClient = {
-      upload: async () => {},
+      upload: async () => undefined,
       download: async () => Buffer.from('x'),
-      delete: async () => {},
+      delete: async () => undefined,
       deleteMany: async () => {
         called = true;
       },
@@ -124,10 +124,10 @@ describe('StorageService', () => {
 
   it('exists returns false on client error', async () => {
     const client: IStorageClient = {
-      upload: async () => {},
+      upload: async () => undefined,
       download: async () => Buffer.from('x'),
-      delete: async () => {},
-      deleteMany: async () => {},
+      delete: async () => undefined,
+      deleteMany: async () => undefined,
       exists: async () => {
         throw new Error('boom');
       },

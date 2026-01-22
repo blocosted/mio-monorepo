@@ -9,7 +9,7 @@ import 'reflect-metadata';
 import { injectable, inject } from 'inversify';
 import { AppError, ErrorCodes, DiagnoseSeverity } from '@mio/shared';
 
-import { IocInfrastructure } from '../../ioc';
+import { IocConnection } from '../../ioc';
 import type { IRedisClient } from '@mio/shared/server/connections/redis';
 import type { ICacheService, CacheSetOptions } from './cache.service.types';
 
@@ -24,7 +24,7 @@ const DEFAULT_TTL_SECONDS = 3600;
 @injectable()
 export class CacheService implements ICacheService {
     constructor(
-        @inject(IocInfrastructure.REDIS_CLIENT) private readonly redis: IRedisClient
+        @inject(IocConnection.REDIS) private readonly redis: IRedisClient
     ) { }
 
     /**

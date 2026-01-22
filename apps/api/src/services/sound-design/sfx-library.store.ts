@@ -7,7 +7,7 @@
 
 import 'reflect-metadata';
 import { injectable, inject } from 'inversify';
-import { eq, desc, sql, and, or, type SQL } from 'drizzle-orm';
+import { eq, desc, sql, and, type SQL } from 'drizzle-orm';
 
 import { audioLibrarySfx } from '@mio/db/schema';
 import type { DatabaseConnection } from '@mio/shared/server/connections/db';
@@ -155,7 +155,11 @@ export class SfxLibraryStore {
             conditions.push(eq(audioLibrarySfx.intensity, params.intensity));
         }
 
-        let query = this.db.select().from(audioLibrarySfx);
+        let query = this.db
+            .select()
+            .from(audioLibrarySfx)
+            .orderBy(desc(audioLibrarySfx.usageCount))
+            .$dynamic();
 
         if (conditions.length > 0) {
             query = query.where(and(...conditions));
@@ -165,8 +169,6 @@ export class SfxLibraryStore {
             query = query.limit(params.limit);
         }
 
-        query = query.orderBy(desc(audioLibrarySfx.usageCount));
-
         const rows = await query;
         return rows.map(this.mapRow);
     }
@@ -174,7 +176,7 @@ export class SfxLibraryStore {
     /**
      * Cache an SFX entry
      */
-    async cache(params: FindSfxParams, sfx: StoredSfx): Promise<void> {
+    async cacheSfx(params: FindSfxParams, sfx: StoredSfx): Promise<void> {
         const cacheKey = this.buildCacheKey(params);
         await this.cache.set(cacheKey, sfx, { ex: CACHE_TTL_SECONDS });
     }
@@ -188,11 +190,11 @@ export class SfxLibraryStore {
             .values({
                 canonicalKey: params.canonicalKey,
                 category: params.category,
-                subcategory: params.subcategory,
+                subcategory: params.subcategory ?? 'general',
                 environment: params.environment,
                 intensity: params.intensity,
                 prompt: params.prompt,
-                promptInfluence: params.promptInfluence,
+                promptInfluence: params.promptInfluence ?? 0.3,
                 s3Url: params.s3Url,
                 durationSeconds: params.durationSeconds,
                 format: params.format,
@@ -200,6 +202,10 @@ export class SfxLibraryStore {
                 storyUniverses: params.storyUniverses ?? [],
             })
             .returning();
+
+        if (!row) {
+            throw new Error('Failed to insert SFX into library');
+        }
 
         return this.mapRow(row);
     }
@@ -286,9 +292,9 @@ export class SfxLibraryStore {
             s3Url: row.s3Url,
             durationSeconds: row.durationSeconds,
             format: row.format,
-            tags: row.tags,
-            storyUniverses: row.storyUniverses,
-            usageCount: row.usageCount,
+            tags: row.tags ?? [],
+            storyUniverses: row.storyUniverses ?? [],
+            usageCount: row.usageCount ?? 0,
             lastUsedAt: row.lastUsedAt,
             createdAt: row.createdAt,
         };

@@ -2,8 +2,6 @@
  * Audio Cache Service Types
  */
 
-import type { ElevenLabsVoiceSettings } from '@mio/shared/models';
-
 /**
  * Cached audio metadata
  */

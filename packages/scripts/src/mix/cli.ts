@@ -12,6 +12,8 @@
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 
+import type { IStorageService } from '@mio/api/services/storage';
+
 import { runMixStoryCommand } from './mix-story';
 
 yargs(hideBin(process.argv))
@@ -170,19 +172,19 @@ yargs(hideBin(process.argv))
         async () => {
             try {
                 const { Logger } = await import('@mio/shared/server/logger');
-                const { FFmpegMixerService } = await import('@mio/api/services/audio');
+                const { FFmpegMixerService } = await import('@mio/api/services/audio-mixing');
 
                 const logger = await Logger.create();
-                const mockStorage = {
+                const mockStorage: IStorageService = {
                     download: async () => Buffer.from(''),
                     upload: async () => ({ path: '', url: '' }),
-                    delete: async () => {},
-                    deleteMany: async () => {},
+                    delete: async () => { /* mock */ },
+                    deleteMany: async () => { /* mock */ },
                     getPublicUrl: () => '',
                     exists: async () => true,
                 };
 
-                const mixerService = new FFmpegMixerService(logger as any, mockStorage as any);
+                const mixerService = new FFmpegMixerService(logger, mockStorage);
                 const result = await mixerService.verifyFFmpegInstalled();
 
                 console.log('FFmpeg verification:');

@@ -18,16 +18,14 @@ import {
     writeJsonFile,
 } from '../_local-run-store/run-store';
 
-import { Language } from '@mio/shared/types';
-
+import { VoicesRepository } from '@mio/api/repositories/audio';
 import {
-    ElevenLabsProvider,
     VOICE_IDS_BY_LANGUAGE,
     EMOTION_VOICE_SETTINGS,
     TimelineSyncService,
     type CharacterArchetype,
     type TTSSegmentResult,
-} from '@mio/api/services/audio';
+} from '@mio/api/services/narration';
 
 function loadEnv(envFile?: string): void {
     const files = envFile ? [envFile] : ['.env.local', '.env'];
@@ -321,9 +319,9 @@ export async function runGenerateFromScriptCommand(args: {
         return;
     }
 
-    // Initialize provider
+    // Initialize repository
     const logger = await Logger.create();
-    const provider = new ElevenLabsProvider(logger);
+    const repository = new VoicesRepository(logger);
 
     console.log('Generating speech for all segments...\n');
     const startTime = Date.now();
@@ -342,7 +340,7 @@ export async function runGenerateFromScriptCommand(args: {
                 ? EMOTION_VOICE_SETTINGS[segment.emotion]
                 : undefined;
 
-            const result = await provider.convertWithTimestamps({
+            const result = await repository.convertWithTimestamps({
                 text: segment.text,
                 voiceId: segment.voiceId,
                 voiceSettings,
@@ -382,10 +380,12 @@ export async function runGenerateFromScriptCommand(args: {
 
     // Sync timings based on actual TTS durations
     const ttsResults: TTSSegmentResult[] = results
-        .filter(r => r.success && r.durationSeconds !== undefined)
+        .filter((r): r is typeof r & { durationSeconds: number } =>
+            r.success && r.durationSeconds !== undefined
+        )
         .map(r => ({
             segmentId: r.id,
-            actualDurationSeconds: r.durationSeconds!,
+            actualDurationSeconds: r.durationSeconds,
         }));
 
     let syncedScript = null;

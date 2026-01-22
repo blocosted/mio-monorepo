@@ -234,7 +234,7 @@ export class VoicesRepository implements IVoicesRepository {
         try {
             // Lazy load VoiceRegistry to avoid circular dependency at import time
             const { getInstance, IocService } = await import('../../ioc');
-            const voiceRegistry = getInstance<import('../../services/audio/voice-registry.service.types').IVoiceRegistryService>(
+            const voiceRegistry = getInstance<import('../../services/narration/voice-registry.service.types').IVoiceRegistryService>(
                 IocService.VOICE_REGISTRY
             );
             return voiceRegistry.isValidVoice(voiceId);

@@ -7,7 +7,7 @@
 
 import 'reflect-metadata';
 import { injectable, inject } from 'inversify';
-import ffmpeg, { type FfmpegCommand } from 'fluent-ffmpeg';
+import ffmpeg from 'fluent-ffmpeg';
 import { mkdir, rm, writeFile, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
@@ -15,7 +15,7 @@ import { randomUUID } from 'node:crypto';
 import { AppError, ErrorCodes, DiagnoseSeverity } from '@mio/shared';
 import { Logger } from '@mio/shared/server/logger';
 
-import { IocInfrastructure, IocService } from '../../ioc';
+import { IocConnection, IocService } from '../../ioc';
 import type { IStorageService } from '../storage';
 import type {
     IFFmpegMixerService,
@@ -26,7 +26,6 @@ import type {
     MusicTrackInput,
     AmbianceTrackInput,
     SfxTrackInput,
-    AudioFile,
 } from './ffmpeg-mixer.service.types';
 import {
     TEMP_DIR_BASE,
@@ -56,9 +55,9 @@ import {
 @injectable()
 export class FFmpegMixerService implements IFFmpegMixerService {
     constructor(
-        @inject(IocInfrastructure.LOGGER) private readonly logger: Logger,
+        @inject(IocConnection.LOGGER) private readonly logger: Logger,
         @inject(IocService.STORAGE) private readonly storage: IStorageService
-    ) {}
+    ) { }
 
     /**
      * Mix all audio tracks into a final story audio file
@@ -199,7 +198,7 @@ export class FFmpegMixerService implements IFFmpegMixerService {
      */
     async verifyFFmpegInstalled(): Promise<FFmpegVerifyResult> {
         return new Promise((resolve, reject) => {
-            ffmpeg.getAvailableFormats((err, formats) => {
+            ffmpeg.getAvailableFormats((err) => {
                 if (err) {
                     reject(
                         new AppError(ErrorCodes.FFmpegNotFound, {
@@ -251,7 +250,7 @@ export class FFmpegMixerService implements IFFmpegMixerService {
                     }
 
                     // Get version through ffprobe
-                    ffmpeg.ffprobe('', (probeErr) => {
+                    ffmpeg.ffprobe('', () => {
                         // ffprobe on empty string will error but give us version info
                         const version = 'ffmpeg available';
                         resolve({
@@ -339,13 +338,13 @@ export class FFmpegMixerService implements IFFmpegMixerService {
         // Download SFX files
         const sfxFiles = sfx
             ? await Promise.all(
-                  sfx.files.map(async (file, index) => {
-                      const localPath = join(workdir, `sfx-${index}.mp3`);
-                      const buffer = await this.storage.download(file.path);
-                      await writeFile(localPath, buffer);
-                      return localPath;
-                  })
-              )
+                sfx.files.map(async (file, index) => {
+                    const localPath = join(workdir, `sfx-${index}.mp3`);
+                    const buffer = await this.storage.download(file.path);
+                    await writeFile(localPath, buffer);
+                    return localPath;
+                })
+            )
             : [];
 
         this.logger.debug('Downloaded audio files', {

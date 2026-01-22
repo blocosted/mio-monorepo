@@ -27,9 +27,9 @@ import type {
     AudioMood,
 } from '@mio/shared/types';
 
-import { getInstance, IocInfrastructure, IocService } from '../../ioc';
-import type { ISoundEffectsProvider } from './soundEffects.provider.types';
-import type { IAudioLibraryService } from '../audio-library';
+import { getInstance, IocConnection, IocRepository, IocService } from '../../ioc';
+import type { ISoundEffectsRepository } from '../../repositories/audio/audio-repository.types';
+import type { IAmbianceLibraryService } from './ambiance-library.service.types';
 import type { IStorageService } from '../storage';
 import type {
     IAmbianceGeneratorService,
@@ -139,19 +139,19 @@ export class AmbianceGeneratorService implements IAmbianceGeneratorService {
     private libraryMisses = 0;
 
     constructor(
-        @inject(IocInfrastructure.LOGGER) private readonly logger: Logger,
-        @inject('ISoundEffectsProvider') private readonly sfxProvider: ISoundEffectsProvider,
-    ) {}
+        @inject(IocConnection.LOGGER) private readonly logger: Logger,
+        @inject(IocRepository.SOUND_EFFECTS) private readonly sfxRepository: ISoundEffectsRepository,
+    ) { }
 
     /**
-     * Lazily get AudioLibrary service
+     * Lazily get AmbianceLibrary service
      */
-    private _audioLibrary: IAudioLibraryService | null = null;
-    private get audioLibrary(): IAudioLibraryService {
-        if (!this._audioLibrary) {
-            this._audioLibrary = getInstance<IAudioLibraryService>(IocService.AUDIO_LIBRARY);
+    private _ambianceLibrary: IAmbianceLibraryService | null = null;
+    private get ambianceLibrary(): IAmbianceLibraryService {
+        if (!this._ambianceLibrary) {
+            this._ambianceLibrary = getInstance<IAmbianceLibraryService>(IocService.AMBIANCE_LIBRARY);
         }
-        return this._audioLibrary;
+        return this._ambianceLibrary;
     }
 
     /**
@@ -212,11 +212,11 @@ export class AmbianceGeneratorService implements IAmbianceGeneratorService {
         // Step 1: Check library for existing source clip
         // =====================================================================
         let sourceAudio: Buffer | null = null;
-        let sourceDuration: number = 0;
+        let sourceDuration = 0;
         let fromLibrary = false;
 
         if (environment) {
-            const libraryResult = await this.audioLibrary.findAmbiance({
+            const libraryResult = await this.ambianceLibrary.findAmbiance({
                 description,
                 environment,
                 timeOfDay,
@@ -239,7 +239,7 @@ export class AmbianceGeneratorService implements IAmbianceGeneratorService {
                     fromLibrary = true;
 
                     // Increment usage counter (fire and forget)
-                    this.audioLibrary.incrementAmbianceUsage(libraryResult.ambiance.id).catch((err) => {
+                    this.ambianceLibrary.incrementAmbianceUsage(libraryResult.ambiance.id).catch((err) => {
                         this.logger.warn('Failed to increment ambiance usage', { error: err.message });
                     });
                 } catch (error) {
@@ -266,7 +266,7 @@ export class AmbianceGeneratorService implements IAmbianceGeneratorService {
             const sourceClipDuration = Math.min(targetDurationSeconds, MAX_SFX_CLIP_DURATION);
 
             // Generate base ambient clip via ElevenLabs
-            const sfxResult = await this.sfxProvider.convert({
+            const sfxResult = await this.sfxRepository.convert({
                 text: this.buildAmbiancePrompt(description),
                 durationSeconds: sourceClipDuration,
                 promptInfluence,
@@ -283,7 +283,19 @@ export class AmbianceGeneratorService implements IAmbianceGeneratorService {
                         contentType: 'audio/mpeg',
                     });
 
-                    await this.audioLibrary.storeAmbiance({
+                    // Generate canonical key
+                    const canonicalParts = [
+                        'ambiance',
+                        environment,
+                        timeOfDay ?? 'any',
+                        weather ?? 'any',
+                        mood ?? 'any',
+                        Bun.hash(description).toString(36),
+                    ];
+                    const canonicalKey = canonicalParts.join(':');
+
+                    await this.ambianceLibrary.storeAmbiance({
+                        canonicalKey,
                         environment,
                         timeOfDay,
                         weather,
@@ -292,6 +304,7 @@ export class AmbianceGeneratorService implements IAmbianceGeneratorService {
                         promptInfluence,
                         s3Url: storagePath,
                         sourceDurationSeconds: sourceDuration,
+                        format: 'mp3',
                         isLoopable: true,
                         tags: this.extractTags(description),
                     });
@@ -650,7 +663,7 @@ export class AmbianceGeneratorService implements IAmbianceGeneratorService {
     /**
      * Generate a safe filename from description
      */
-    private sanitizeFilename(text: string, maxLength: number = 30): string {
+    private sanitizeFilename(text: string, maxLength = 30): string {
         return text
             .toLowerCase()
             .replace(/[^a-z0-9]+/g, '-')
