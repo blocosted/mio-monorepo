@@ -25,6 +25,10 @@ export enum IocService {
     TTS = 'TTSService',
     ELEVENLABS_PROVIDER = 'ElevenLabsProvider',
     VOICE_REGISTRY = 'VoiceRegistryService',
+    FFMPEG_MIXER = 'FFmpegMixerService',
+    SOUND_EFFECTS_PROVIDER = 'SoundEffectsProvider',
+    SOUND_EFFECTS = 'SoundEffectsService',
+    SFX_CACHE = 'SfxCacheService',
 }
 
 /**

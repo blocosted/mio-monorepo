@@ -59,23 +59,27 @@ yargs(hideBin(process.argv))
                     description:
                         'Optional dotenv file to load (default: tries .env.local then .env if present)',
                 })
+                .option('provider', {
+                    type: 'string',
+                    description: 'LLM provider to use',
+                    default: 'anthropic',
+                    choices: ['openai', 'anthropic'],
+                })
                 .option('model', {
                     type: 'string',
-                    description: 'LLM model (default: OpenAI service default)',
+                    description: 'LLM model (default varies by provider)',
                 })
                 .option('maxTokens', {
                     type: 'number',
-                    description:
-                        'Max tokens for completion (default: OpenAI service default)',
+                    description: 'Max tokens for completion',
                 })
                 .option('temperature', {
                     type: 'number',
-                    description:
-                        'Sampling temperature (0-1) (default: OpenAI service default)',
+                    description: 'Sampling temperature (0-1)',
                 })
                 .option('timeout', {
                     type: 'number',
-                    description: 'Timeout in ms (default: OpenAI service default)',
+                    description: 'Timeout in ms',
                 })
                 .option('dryRun', {
                     type: 'boolean',
@@ -92,6 +96,7 @@ yargs(hideBin(process.argv))
                     storeDir: argv.storeDir,
                     save: argv.save,
                     envFile: argv.envFile,
+                    provider: argv.provider as 'openai' | 'anthropic',
                     options: {
                         model: argv.model,
                         maxTokens: argv.maxTokens,
@@ -155,7 +160,7 @@ yargs(hideBin(process.argv))
                 .option('provider', {
                     type: 'string',
                     description: 'LLM provider to use',
-                    default: 'openai',
+                    default: 'anthropic',
                     choices: ['openai', 'anthropic'],
                 })
                 .option('model', {

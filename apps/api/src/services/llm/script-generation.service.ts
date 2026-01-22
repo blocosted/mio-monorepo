@@ -31,9 +31,13 @@ import { getVocabularyLevel, type EnrichmentProfile } from './llm.service.types'
 
 /**
  * Constants for duration calculation
+ *
+ * Note: 120 WPM is more realistic for expressive TTS (ElevenLabs with emotions,
+ * pauses, and prosody). The previous 150 WPM was too optimistic and caused
+ * stories to exceed their target duration significantly.
  */
-const WORDS_PER_MINUTE = 150;
-const WORDS_PER_SECOND = WORDS_PER_MINUTE / 60; // 2.5
+const WORDS_PER_MINUTE = 120;
+const WORDS_PER_SECOND = WORDS_PER_MINUTE / 60; // 2.0
 
 /**
  * Default duration allocation percentages
@@ -280,7 +284,9 @@ export class ScriptGenerationService {
     // Calculate word count
     const wordCount = this.calculateScriptWordCount(script);
     const targetWordCount = constraints.durationBudget.targetWordCount;
-    const tolerance = 0.25; // 25% tolerance - LLMs tend to generate shorter content
+    // 15% tolerance for stricter word count control
+    // With WPM=120 and proper prompt instructions, LLMs should hit the target more accurately
+    const tolerance = 0.15;
     const minWords = Math.round(targetWordCount * (1 - tolerance));
     const maxWords = Math.round(targetWordCount * (1 + tolerance));
 

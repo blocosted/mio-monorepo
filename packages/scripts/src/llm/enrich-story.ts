@@ -17,9 +17,12 @@ import {
 } from '../_local-run-store/run-store';
 
 import {
-  OpenAILLMService,
+  OpenAIProvider,
+  AnthropicProvider,
+  parseEnrichedConcept,
   type EnrichmentProfile,
   type LLMCompletionOptions,
+  type ILLMProvider,
   getVocabularyLevel,
 } from '@mio/api/services/llm';
 import {
@@ -88,13 +91,22 @@ export async function runEnrichStoryCommand(args: {
   storeDir?: string;
   save: boolean;
   envFile?: string;
+  provider?: 'openai' | 'anthropic';
   options?: LLMCompletionOptions;
   dryRun: boolean;
 }): Promise<void> {
   loadEnv(args.envFile);
 
   const logger = await Logger.create();
-  const llm = new OpenAILLMService(logger);
+
+  // Create the selected provider
+  const providerType = args.provider ?? 'anthropic';
+  let provider: ILLMProvider;
+  if (providerType === 'anthropic') {
+    provider = new AnthropicProvider(logger as any);
+  } else {
+    provider = new OpenAIProvider(logger as any);
+  }
 
   const storedInput: EnrichStoryStoredInput | null = args.inputFile
     ? readJsonFile<EnrichStoryStoredInput>(args.inputFile)
@@ -154,6 +166,7 @@ export async function runEnrichStoryCommand(args: {
       writeJsonFile(run.runDir, 'meta.json', {
         command: 'llm enrich-story',
         profileName: name,
+        provider: providerType,
         createdAt: new Date().toISOString(),
         dryRun: args.dryRun,
       });
@@ -172,13 +185,43 @@ export async function runEnrichStoryCommand(args: {
       continue;
     }
 
-    const result = await llm.enrichStory(
+    logger.info('Enriching story', {
+      storyId,
+      childName: profile.firstName,
+      childAge: profile.age,
+      vocabularyLevel,
+      provider: providerType,
+    });
+
+    // Use provider's generateEnrichedConcept method
+    const response = await provider.generateEnrichedConcept(
       {
-        story: { id: storyId, initialPrompt: prompt },
-        profile,
+        childName: profile.firstName,
+        childAge: profile.age,
+        childGender: profile.gender,
+        favoriteThemes: profile.favoriteThemes ?? [],
+        avoidThemes: profile.avoidThemes ?? [],
+        includeChildAsCharacter: profile.includeChildAsCharacter ?? false,
+        preferredHeroGender: profile.preferredHeroGender ?? 'any',
+        language: profile.language ?? 'fr',
+        vocabularyLevel,
+        initialPrompt: prompt,
       },
       options,
     );
+
+    // Parse the enriched concept from the response
+    const enrichedConcept = parseEnrichedConcept(response.content);
+
+    const result = {
+      enrichedConcept,
+      vocabularyLevel,
+    };
+
+    logger.info('Story enrichment complete', {
+      storyId,
+      title: enrichedConcept.title,
+    });
 
     if (run) {
       writeJsonFile(run.runDir, 'output.json', {

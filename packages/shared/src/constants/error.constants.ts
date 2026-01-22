@@ -51,6 +51,19 @@ export enum ErrorCodes {
   TTSRateLimited = 'TTSRateLimited',
   TTSTimeout = 'TTSTimeout',
   TTSInvalidVoice = 'TTSInvalidVoice',
+
+  // FFmpeg
+  FFmpegNotFound = 'FFmpegNotFound',
+  FFmpegMissingCodec = 'FFmpegMissingCodec',
+  FFmpegMixingFailed = 'FFmpegMixingFailed',
+  FFmpegTimeout = 'FFmpegTimeout',
+  FFmpegInvalidInput = 'FFmpegInvalidInput',
+
+  // Sound Effects (SFX)
+  SFXGenerationFailed = 'SFXGenerationFailed',
+  SFXRateLimited = 'SFXRateLimited',
+  SFXTimeout = 'SFXTimeout',
+  SFXInvalidInput = 'SFXInvalidInput',
 }
 
 const errorDefinitions: {
@@ -130,6 +143,49 @@ const errorDefinitions: {
   [ErrorCodes.TTSInvalidVoice]: {
     code: 'TTS_INVALID_VOICE',
     message: 'Invalid voice ID specified',
+    statusCode: HttpStatusCode.BadRequest
+  },
+
+  // FFmpeg
+  [ErrorCodes.FFmpegNotFound]: {
+    code: 'FFMPEG_NOT_FOUND',
+    message: 'FFmpeg is not installed or not accessible'
+  },
+  [ErrorCodes.FFmpegMissingCodec]: {
+    code: 'FFMPEG_MISSING_CODEC',
+    message: 'Required FFmpeg codec not found (libmp3lame)'
+  },
+  [ErrorCodes.FFmpegMixingFailed]: {
+    code: 'FFMPEG_MIXING_FAILED',
+    message: 'Failed to mix audio tracks'
+  },
+  [ErrorCodes.FFmpegTimeout]: {
+    code: 'FFMPEG_TIMEOUT',
+    message: 'FFmpeg operation timed out'
+  },
+  [ErrorCodes.FFmpegInvalidInput]: {
+    code: 'FFMPEG_INVALID_INPUT',
+    message: 'Invalid input files provided to FFmpeg',
+    statusCode: HttpStatusCode.BadRequest
+  },
+
+  // Sound Effects (SFX)
+  [ErrorCodes.SFXGenerationFailed]: {
+    code: 'SFX_GENERATION_FAILED',
+    message: 'Failed to generate sound effect'
+  },
+  [ErrorCodes.SFXRateLimited]: {
+    code: 'SFX_RATE_LIMITED',
+    message: 'Sound effects API rate limit exceeded',
+    statusCode: HttpStatusCode.TooManyRequests
+  },
+  [ErrorCodes.SFXTimeout]: {
+    code: 'SFX_TIMEOUT',
+    message: 'Sound effect generation timed out'
+  },
+  [ErrorCodes.SFXInvalidInput]: {
+    code: 'SFX_INVALID_INPUT',
+    message: 'Invalid input for sound effect generation',
     statusCode: HttpStatusCode.BadRequest
   },
 } as const;

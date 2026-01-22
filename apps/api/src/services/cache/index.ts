@@ -23,3 +23,11 @@ export type {
     JobProgress,
     JobStatus,
 } from './job-progress.service.types';
+
+// SFX cache service
+export { SfxCacheService } from './sfx-cache.service';
+export type {
+    ISfxCacheService,
+    CachedSfx,
+    SfxCacheKeyParams,
+} from './sfx-cache.service.types';

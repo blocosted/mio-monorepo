@@ -285,63 +285,109 @@ export const DEFAULT_TTS_MODEL = 'eleven_v3' as const;
 export const DEFAULT_OUTPUT_FORMAT = 'mp3_44100_128' as const;
 
 /**
+ * Archetype detection priority order
+ *
+ * IMPORTANT: Order matters for archetype detection!
+ * When a character matches multiple archetypes (e.g., "dragon" could be villain or magical),
+ * the first match in this priority order wins.
+ *
+ * Priority rationale:
+ * 1. narrator - explicit narrator role
+ * 2. childHero - main protagonist detection
+ * 3. magical - dragons, fairies, etc. should be magical, not villain
+ * 4. animal - animal characters before villain
+ * 5. wiseCharacter - mentors and guides
+ * 6. comedic - funny sidekicks
+ * 7. parent - family members
+ * 8. friend - companions
+ * 9. villain - last resort, only if explicitly villainous
+ */
+export const ARCHETYPE_PRIORITY: CharacterArchetype[] = [
+    'narrator',
+    'childHero',
+    'magical',
+    'animal',
+    'wiseCharacter',
+    'comedic',
+    'parent',
+    'friend',
+    'villain',
+];
+
+/**
  * Keywords for character archetype detection (multilingual)
  *
  * Includes both English and French keywords for each archetype.
+ * IMPORTANT: "dragon" was moved from villain to magical - dragons in children's stories
+ * are typically friendly magical creatures, not villains.
  */
 export const ARCHETYPE_KEYWORDS: Record<CharacterArchetype, string[]> = {
     narrator: [
         // English
         'narrator', 'narration', 'story', 'storyteller',
         // French
-        'narrateur', 'narratrice', 'conteur', 'conteuse', 'histoire',
+        'narrateur', 'narratrice', 'conteur', 'conteuse',
     ],
     childHero: [
         // English
-        'child', 'kid', 'boy', 'girl', 'young', 'hero', 'protagonist',
+        'child', 'kid', 'young', 'hero', 'protagonist', 'main character',
         // French
-        'enfant', 'garcon', 'fille', 'jeune', 'heros', 'heroine', 'protagoniste', 'petit', 'petite',
+        'enfant', 'jeune', 'heros', 'héros', 'heroine', 'héroïne', 'protagoniste', 'petit', 'petite',
+        // Age markers
+        '7 years', '8 years', '9 years', '10 years', 'ans',
+    ],
+    magical: [
+        // English - DRAGON IS HERE, not in villain!
+        'magical', 'fairy', 'elf', 'sprite', 'unicorn', 'magic', 'enchanted',
+        'dragon', 'pixie', 'gnome', 'nymph', 'crystal', 'sparkle', 'glitter',
+        'phoenix', 'mermaid', 'centaur', 'griffin',
+        // French
+        'magique', 'fee', 'fée', 'elfe', 'lutin', 'licorne', 'magie', 'enchante', 'enchanté',
+        'dragon', 'farfadet', 'gnome', 'nymphe', 'cristal', 'brillant', 'scintillant',
+        'fantastique', 'sirene', 'sirène', 'phenix', 'phénix',
+    ],
+    animal: [
+        // English
+        'animal', 'pet', 'dog', 'cat', 'bird', 'rabbit', 'bear', 'fox', 'creature',
+        'wolf', 'mouse', 'owl', 'butterfly', 'lion', 'tiger', 'elephant', 'horse',
+        // French
+        'animal', 'chien', 'chat', 'oiseau', 'lapin', 'ours', 'renard', 'creature', 'créature',
+        'loup', 'souris', 'hibou', 'chouette', 'papillon', 'cheval', 'lion', 'tigre',
     ],
     wiseCharacter: [
         // English
         'wise', 'elder', 'sage', 'mentor', 'wizard', 'grandmother', 'grandfather', 'old',
+        'ancient', 'teacher', 'master', 'guide',
         // French
-        'sage', 'ancien', 'ancienne', 'mentor', 'sorcier', 'magicien', 'grand-mere', 'grand-pere', 'vieux', 'vieille',
-    ],
-    villain: [
-        // English
-        'villain', 'evil', 'bad', 'witch', 'monster', 'dragon', 'dark',
-        // French
-        'mechant', 'mechante', 'mal', 'mauvais', 'sorciere', 'monstre', 'dragon', 'sombre', 'vilain',
+        'sage', 'ancien', 'ancienne', 'mentor', 'sorcier', 'magicien',
+        'grand-mere', 'grand-mère', 'grand-pere', 'grand-père', 'vieux', 'vieille',
+        'professeur', 'maitre', 'maître', 'guide',
     ],
     comedic: [
         // English
-        'funny', 'silly', 'comic', 'clown', 'joker', 'goofy',
+        'funny', 'silly', 'comic', 'clown', 'joker', 'goofy', 'playful',
         // French
-        'drole', 'rigolo', 'comique', 'clown', 'bouffon', 'amusant', 'farceur',
+        'drole', 'drôle', 'rigolo', 'comique', 'clown', 'bouffon', 'amusant', 'farceur', 'joueur',
     ],
     parent: [
         // English
         'parent', 'mom', 'dad', 'mother', 'father', 'mama', 'papa',
         // French
-        'parent', 'maman', 'papa', 'mere', 'pere', 'mère', 'père',
+        'maman', 'mere', 'mère', 'pere', 'père', 'papa',
     ],
     friend: [
         // English
-        'friend', 'buddy', 'sidekick', 'companion', 'pal',
+        'friend', 'buddy', 'sidekick', 'companion', 'pal', 'partner',
         // French
         'ami', 'amie', 'copain', 'copine', 'compagnon', 'compagne', 'camarade',
     ],
-    animal: [
-        // English
-        'animal', 'pet', 'dog', 'cat', 'bird', 'rabbit', 'bear', 'fox', 'creature',
+    villain: [
+        // English - NOTE: dragon removed, now only explicit villains
+        'villain', 'evil', 'bad', 'witch', 'monster', 'dark', 'wicked', 'sinister',
+        'demon', 'ogre', 'troll',
         // French
-        'animal', 'chien', 'chat', 'oiseau', 'lapin', 'ours', 'renard', 'creature', 'loup', 'souris',
-    ],
-    magical: [
-        // English
-        'magical', 'fairy', 'elf', 'sprite', 'unicorn', 'magic', 'enchanted',
-        // French
-        'magique', 'fee', 'elfe', 'lutin', 'licorne', 'magie', 'enchante', 'fantastique',
+        'mechant', 'méchant', 'mechante', 'méchante', 'mal', 'mauvais',
+        'sorciere', 'sorcière', 'monstre', 'sombre', 'vilain',
+        'demon', 'démon', 'ogre', 'troll',
     ],
 };

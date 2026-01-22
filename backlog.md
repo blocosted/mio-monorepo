@@ -1,6 +1,6 @@
 # Backlog — Mio
 
-**Dernière mise à jour:** Janvier 2026
+**Dernière mise à jour:** 22 Janvier 2026
 **Légende:** `[ ]` Todo | `[~]` In Progress | `[x]` Done | `[!]` Blocked
 
 ---
@@ -9,11 +9,11 @@
 
 | Phase | US | Tâches | Complétées |
 |-------|-----|--------|------------|
-| Phase 1 - MVP Minimal | 13 | 65 | 63 |
+| Phase 1 - MVP Minimal | 13 | 87 | 85 |
 | Phase 2 - MVP Complet | 18 | 68 | 0 |
-| Phase 3 - Production Ready | 16 | 58 | 0 |
+| Phase 3 - Production Ready | 16 | 58 | 35 |
 | Phase 4 - Polish & Sécurité | 9 | 27 | 0 |
-| **Total** | **56** | **218** | **63** |
+| **Total** | **56** | **240** | **120** |
 
 ---
 
@@ -179,7 +179,7 @@
 
 ### Epic 6: Synthèse Audio (Minimal pour Phase 1)
 
-#### US-050: Service ElevenLabs TTS (Backend) [4/5] 🚧
+#### US-050: Service ElevenLabs TTS (Backend) [4/5] ✅
 - [x] Installer SDK ElevenLabs ou utiliser fetch
 - [x] Créer `apps/api/src/services/audio/elevenLabsProvider.ts`
 - [x] Configurer ELEVENLABS_API_KEY dans `environment.constants.ts`
@@ -192,8 +192,8 @@
 - [x] CLI TTS fonctionnel (`tts generate`, `tts from-script`, `tts test-emotions`, `tts list-voices`, `tts sync-voices`)
 - [x] **Prosody Guide:** Guide de prosodie ElevenLabs intégré au prompt de génération de script (contexte narratif, ponctuation expressive, audio tags)
 - [x] **Multi-langue:** Exemples de prosodie spécifiques par langue (FR/EN) dans `scriptGeneration.prompts.ts`
-- [ ] Gérer rate limits (429) avec retry automatique
-- [ ] Gérer erreurs API avec retry exponentiel
+- [x] Gérer rate limits (429) avec retry automatique
+- [x] Gérer erreurs API avec retry exponentiel
 - [x] **Tests:** Créer `apps/api/src/services/audio/__tests__/elevenLabs.provider.test.ts`
 - [x] **Tests:** Créer `apps/api/src/services/audio/__tests__/tts.service.test.ts`
 - [x] **Tests:** Créer `apps/api/src/services/audio/__tests__/voice-registry.service.test.ts`
@@ -207,31 +207,31 @@
 
 ### Epic 7: Mixage Audio (Minimal pour Phase 1)
 
-#### US-060: Service FFmpeg Mixer (Backend) [5/5]
-- [ ] Installer `fluent-ffmpeg` et `@types/fluent-ffmpeg`
-- [ ] Vérifier FFmpeg installé sur la machine
-- [ ] Créer `apps/api/src/services/audio/ffmpegMixer.ts`
-- [ ] Implémenter `mixStory(params): Promise<Buffer>`
-- [ ] Créer workdir temporaire (`/tmp/story-{id}/`)
-- [ ] Télécharger tous les fichiers audio dans workdir
-- [ ] Générer fichiers silence (.wav) pour les pauses
-- [ ] Créer concat.txt pour timeline vocale
-- [ ] Concaténer voix avec `ffmpeg -f concat`
-- [ ] Ajouter musique de fond avec volume réduit (0.15)
-- [ ] Implémenter sidechain compression (ducking)
-- [ ] Ajouter ambiance en loop avec acrossfade
-- [ ] Insérer SFX aux timings corrects avec adelay
-- [ ] Mixer toutes les pistes avec amix
-- [ ] Appliquer normalisation loudnorm (I=-16, TP=-1.5)
-- [ ] Exporter MP3 192kbps, 44.1kHz, stereo
-- [ ] Nettoyer workdir temporaire
-- [ ] Tester mixage avec fichiers audio de test
-- [ ] **Tests:** Créer `apps/api/src/services/audio/__tests__/ffmpegMixer.spec.ts` (intégration)
-- [ ] **Tests:** Créer fichiers audio de test (fixtures .wav)
-- [ ] **Tests:** Test création timeline vocale avec pauses
-- [ ] **Tests:** Test calcul durées correctes
-- [ ] **Tests:** Test nettoyage workdir après mixage
-- [ ] **Tests:** Test gestion erreur FFmpeg manquant
+#### US-060: Service FFmpeg Mixer (Backend) [5/5] ✅
+- [x] Installer `fluent-ffmpeg` et `@types/fluent-ffmpeg`
+- [x] Vérifier FFmpeg installé sur la machine
+- [x] Créer `apps/api/src/services/audio/ffmpeg-mixer.service.ts`
+- [x] Implémenter `mixStory(params): Promise<Buffer>`
+- [x] Créer workdir temporaire (`/tmp/story-{id}/`)
+- [x] Télécharger tous les fichiers audio dans workdir
+- [x] Générer fichiers silence (.wav) pour les pauses
+- [x] Créer concat.txt pour timeline vocale
+- [x] Concaténer voix avec `ffmpeg -f concat`
+- [x] Ajouter musique de fond avec volume réduit (0.15)
+- [x] Implémenter sidechain compression (ducking)
+- [x] Ajouter ambiance en loop avec acrossfade
+- [x] Insérer SFX aux timings corrects avec adelay
+- [x] Mixer toutes les pistes avec amix
+- [x] Appliquer normalisation loudnorm (I=-16, TP=-1.5)
+- [x] Exporter MP3 192kbps, 44.1kHz, stereo
+- [x] Nettoyer workdir temporaire
+- [x] Tester mixage avec fichiers audio de test
+- [x] **Tests:** Créer `apps/api/src/services/audio/__tests__/ffmpeg-mixer.service.spec.ts` (intégration)
+- [x] **Tests:** Créer fichiers audio de test (fixtures .wav)
+- [x] **Tests:** Test création timeline vocale avec pauses
+- [x] **Tests:** Test calcul durées correctes
+- [x] **Tests:** Test nettoyage workdir après mixage
+- [x] **Tests:** Test gestion erreur FFmpeg manquant
 
 #### US-063: Step workflow - Upload et finalisation (Backend) [3/5]
 - [ ] Créer step `finalize` dans le workflow
@@ -440,23 +440,25 @@
 
 ### Epic 6: Synthèse Audio (Complet)
 
-#### US-051: Service ElevenLabs SFX (Backend) [3/5]
-- [ ] Implémenter `generateSFX({ prompt, duration, promptInfluence })`
-- [ ] Optimiser prompts pour ElevenLabs
-- [ ] Configurer durée (0.5 - 22s)
-- [ ] Intégrer cache Redis
-- [ ] Retourner buffer audio
-- [ ] Tester génération SFX
+#### US-051: Service ElevenLabs SFX (Backend) [3/5] ✅
+- [x] Implémenter `generateSFX({ prompt, duration, promptInfluence })` via `soundEffects.service.ts`
+- [x] Optimiser prompts pour ElevenLabs via `soundEffects.provider.ts`
+- [x] Configurer durée (0.5 - 22s)
+- [x] Intégrer cache Redis via `sfx-cache.service.ts`
+- [x] Retourner buffer audio
+- [x] CLI SFX fonctionnel (`sfx generate`, `sfx batch`)
+- [x] **Tests:** `soundEffects.provider.spec.ts`, `soundEffects.service.spec.ts`, `sfx-cache.service.spec.ts`
 
-#### US-052: Service Suno pour la musique (Backend) [3/5]
-- [ ] Créer `apps/api/src/services/audio/suno.ts`
-- [ ] Configurer SUNO_API_KEY
-- [ ] Implémenter `generateMusic({ mood, duration, instrumental })`
-- [ ] Créer mapping mood -> prompts musicaux
-- [ ] Toujours générer en instrumental
+#### US-052: Service de génération musicale (Backend) [3/5] 🚧
+- [x] Créer `apps/api/src/services/audio/music-generator.service.ts`
+- [x] Créer `apps/api/src/services/audio/music-strategy.service.ts` pour déterminer le mood
+- [x] Implémenter `generateMusic({ mood, duration, instrumental })`
+- [x] Créer mapping mood -> prompts musicaux
+- [x] CLI Music fonctionnel (`music generate`, `music from-script`)
+- [x] **Tests:** `music-generator.service.test.ts`, `music-strategy.service.test.ts`
+- [ ] Intégration provider Suno API (actuellement placeholder/ElevenLabs)
 - [ ] Gérer durée max 2 min
 - [ ] Implémenter looping pour durées plus longues
-- [ ] Tester génération musique
 
 #### US-053: Step workflow - Génération voix (Backend) [3/5]
 - [ ] Créer step `generate-voices` dans workflow
@@ -484,25 +486,26 @@
 - [ ] Mettre à jour progression (70% -> 80%)
 - [ ] Tester step isolé
 
-#### US-056: Step workflow - Génération ambiance (Backend) [2/5]
-- [ ] Créer step `generate-ambiance` dans workflow
-- [ ] Détecter setting depuis script
-- [ ] Mapper setting -> prompt ambiance
-- [ ] Générer via ElevenLabs SFX (30s)
-- [ ] Mettre à jour progression (82% -> 85%)
-- [ ] Tester step isolé
+#### US-056: Service de génération d'ambiance (Backend) [2/5] ✅
+- [x] Créer `apps/api/src/services/audio/ambiance-generator.service.ts`
+- [x] Détecter setting depuis script (SETTING_AMBIANCE_MAP)
+- [x] Mapper setting -> prompt ambiance
+- [x] Générer via ElevenLabs SFX (30s)
+- [x] CLI Ambiance fonctionnel (`ambiance generate`, `ambiance from-script`)
+- [x] **Tests:** `ambiance-generator.service.test.ts`
+- [ ] Créer step `generate-ambiance` dans workflow (intégration)
 
 ---
 
 ### Epic 7: Mixage Audio (Complet)
 
-#### US-061: Création de la timeline vocale (Backend) [3/5]
-- [ ] Créer fonction `createVoiceTimeline(segments, voiceFiles)`
-- [ ] Générer fichiers silence de durées variées
-- [ ] Créer fichier concat.txt avec séquence
-- [ ] Respecter pauses avant/après segments
-- [ ] Concaténer avec ffmpeg -f concat
-- [ ] Tester timeline avec segments variés
+#### US-061: Création de la timeline vocale (Backend) [3/5] ✅
+- [x] Créer `apps/api/src/services/audio/timeline-sync.service.ts`
+- [x] Générer fichiers silence de durées variées
+- [x] Calculer timings SFX synchronisés avec la voix
+- [x] Respecter pauses avant/après segments
+- [x] Intégration avec FFmpeg Mixer
+- [x] **Tests:** `timeline-sync.service.test.ts`
 
 #### US-062: Step workflow - Mixage final (Backend) [3/5]
 - [ ] Créer step `mix-audio` dans workflow
@@ -695,3 +698,4 @@ _Aucun blocker identifié pour le moment_
 | 19 Janvier 2026 | US-003 complétée - Supabase Storage + Inversify DI |
 | 20 Janvier 2026 | Refactor infra: `bun test` via preload, Redis via Bun, Storage via Bun S3 |
 | 21 Janvier 2026 | US-050 en cours - ElevenLabs TTS: provider, mapping émotions/voix, CLI TTS, guide de prosodie multi-langue |
+| 22 Janvier 2026 | Services audio complets: US-050 TTS ✅, US-060 FFmpeg Mixer ✅, US-051 SFX ✅, US-052 Music 🚧, US-056 Ambiance ✅, US-061 Timeline ✅. Nouveaux CLI: sfx, music, ambiance, mix, pipeline |

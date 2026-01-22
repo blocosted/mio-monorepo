@@ -24,7 +24,9 @@ import {
     ElevenLabsProvider,
     VOICE_IDS_BY_LANGUAGE,
     EMOTION_VOICE_SETTINGS,
+    TimelineSyncService,
     type CharacterArchetype,
+    type TTSSegmentResult,
 } from '@mio/api/services/audio';
 
 function loadEnv(envFile?: string): void {
@@ -37,61 +39,137 @@ function loadEnv(envFile?: string): void {
     loadEnvironmentFromProcessEnv({ override: true });
 }
 
-function selectVoiceForCharacter(
-    description: string,
-    gender: 'male' | 'female' = 'female',
-    language: 'fr' | 'en' = 'fr'
-): string {
-    const lowerDescription = description.toLowerCase();
-    const voiceIds = VOICE_IDS_BY_LANGUAGE[language];
+/**
+ * Gender detection keywords
+ */
+const GENDER_KEYWORDS = {
+    male: [
+        // English
+        'male', 'man', 'boy', 'father', 'dad', 'papa', 'grandfather', 'king', 'prince',
+        'his', 'him', 'he', 'brother', 'son', 'uncle', 'gentleman', 'mister', 'mr',
+        // French
+        'homme', 'garcon', 'garçon', 'pere', 'père', 'grand-pere', 'grand-père', 'roi', 'prince',
+        'frere', 'frère', 'fils', 'oncle', 'monsieur',
+    ],
+    female: [
+        // English
+        'female', 'woman', 'girl', 'mother', 'mom', 'mama', 'grandmother', 'queen', 'princess',
+        'her', 'she', 'sister', 'daughter', 'aunt', 'lady', 'miss', 'mrs',
+        // French
+        'femme', 'fille', 'mere', 'mère', 'maman', 'grand-mere', 'grand-mère', 'reine', 'princesse',
+        'soeur', 'sœur', 'tante', 'madame', 'mademoiselle',
+    ],
+};
 
-    const archetypeKeywords: Record<CharacterArchetype, string[]> = {
-        narrator: [
-            'narrator', 'narration', 'story', 'storyteller',
-            'narrateur', 'narratrice', 'conteur', 'conteuse', 'histoire',
-        ],
-        childHero: [
-            'child', 'kid', 'boy', 'girl', 'young', 'hero', 'protagonist',
-            'enfant', 'garcon', 'fille', 'jeune', 'heros', 'heroine', 'protagoniste', 'petit', 'petite',
-        ],
-        wiseCharacter: [
-            'wise', 'elder', 'sage', 'mentor', 'wizard', 'grandmother', 'grandfather', 'old',
-            'sage', 'ancien', 'ancienne', 'mentor', 'sorcier', 'magicien', 'grand-mere', 'grand-pere', 'vieux', 'vieille',
-        ],
-        villain: [
-            'villain', 'evil', 'bad', 'witch', 'monster', 'dragon', 'dark',
-            'mechant', 'mechante', 'mal', 'mauvais', 'sorciere', 'monstre', 'dragon', 'sombre', 'vilain',
-        ],
-        comedic: [
-            'funny', 'silly', 'comic', 'clown', 'joker', 'goofy',
-            'drole', 'rigolo', 'comique', 'clown', 'bouffon', 'amusant', 'farceur',
-        ],
-        parent: [
-            'parent', 'mom', 'dad', 'mother', 'father', 'mama', 'papa',
-            'parent', 'maman', 'papa', 'mere', 'pere', 'mère', 'père',
-        ],
-        friend: [
-            'friend', 'buddy', 'sidekick', 'companion', 'pal',
-            'ami', 'amie', 'copain', 'copine', 'compagnon', 'compagne', 'camarade',
-        ],
-        animal: [
-            'animal', 'pet', 'dog', 'cat', 'bird', 'rabbit', 'bear', 'fox', 'creature',
-            'animal', 'chien', 'chat', 'oiseau', 'lapin', 'ours', 'renard', 'creature', 'loup', 'souris',
-        ],
-        magical: [
-            'magical', 'fairy', 'elf', 'sprite', 'unicorn', 'magic', 'enchanted',
-            'magique', 'fee', 'elfe', 'lutin', 'licorne', 'magie', 'enchante', 'fantastique',
-        ],
-    };
+/**
+ * Archetype keywords - ORDER MATTERS!
+ * Priority: narrator > childHero > magical > animal > wiseCharacter > comedic > parent > friend > villain
+ * This ensures "dragon" matches "magical" not "villain"
+ */
+const ARCHETYPE_KEYWORDS_ORDERED: Array<[CharacterArchetype, string[]]> = [
+    ['narrator', [
+        'narrator', 'narration', 'story', 'storyteller',
+        'narrateur', 'narratrice', 'conteur', 'conteuse',
+    ]],
+    ['childHero', [
+        'child', 'kid', 'young', 'hero', 'protagonist', 'main character',
+        'enfant', 'jeune', 'heros', 'héros', 'heroine', 'héroïne', 'protagoniste', 'petit', 'petite',
+        '7 years', '8 years', '9 years', '10 years', 'ans',
+    ]],
+    ['magical', [
+        // IMPORTANT: dragon, fairy, etc. should match magical, not villain
+        'magical', 'fairy', 'elf', 'sprite', 'unicorn', 'magic', 'enchanted',
+        'dragon', 'pixie', 'gnome', 'nymph', 'crystal', 'sparkle', 'glitter',
+        'magique', 'fee', 'fée', 'elfe', 'lutin', 'licorne', 'magie', 'enchante', 'enchanté',
+        'fantastique', 'farfadet', 'cristal', 'brillant', 'scintillant',
+    ]],
+    ['animal', [
+        'animal', 'pet', 'dog', 'cat', 'bird', 'rabbit', 'bear', 'fox', 'creature',
+        'wolf', 'mouse', 'owl', 'butterfly', 'lion', 'tiger', 'elephant',
+        'chien', 'chat', 'oiseau', 'lapin', 'ours', 'renard', 'creature', 'créature',
+        'loup', 'souris', 'hibou', 'papillon',
+    ]],
+    ['wiseCharacter', [
+        'wise', 'elder', 'sage', 'mentor', 'wizard', 'grandmother', 'grandfather', 'old',
+        'ancient', 'teacher', 'master', 'guide',
+        'sage', 'ancien', 'ancienne', 'mentor', 'sorcier', 'magicien',
+        'grand-mere', 'grand-mère', 'grand-pere', 'grand-père', 'vieux', 'vieille',
+    ]],
+    ['comedic', [
+        'funny', 'silly', 'comic', 'clown', 'joker', 'goofy', 'playful',
+        'drole', 'drôle', 'rigolo', 'comique', 'clown', 'bouffon', 'amusant', 'farceur',
+    ]],
+    ['parent', [
+        'parent', 'mom', 'dad', 'mother', 'father', 'mama', 'papa',
+        'maman', 'mere', 'mère', 'pere', 'père',
+    ]],
+    ['friend', [
+        'friend', 'buddy', 'sidekick', 'companion', 'pal', 'partner',
+        'ami', 'amie', 'copain', 'copine', 'compagnon', 'compagne', 'camarade',
+    ]],
+    ['villain', [
+        // villain is LAST - this ensures other types match first
+        'villain', 'evil', 'bad', 'witch', 'monster', 'dark', 'wicked', 'sinister',
+        'mechant', 'méchant', 'mechante', 'méchante', 'mal', 'mauvais',
+        'sorciere', 'sorcière', 'monstre', 'sombre', 'vilain',
+    ]],
+];
 
-    for (const [archetype, keywords] of Object.entries(archetypeKeywords)) {
-        if (keywords.some(keyword => lowerDescription.includes(keyword))) {
-            const voices = voiceIds[archetype as CharacterArchetype];
-            return voices[gender];
+/**
+ * Detect gender from character name and description
+ */
+function detectGender(name: string, description: string): 'male' | 'female' {
+    const combined = `${name} ${description}`.toLowerCase();
+
+    const maleScore = GENDER_KEYWORDS.male.filter(kw => combined.includes(kw)).length;
+    const femaleScore = GENDER_KEYWORDS.female.filter(kw => combined.includes(kw)).length;
+
+    // Return male only if male score is strictly higher
+    return maleScore > femaleScore ? 'male' : 'female';
+}
+
+/**
+ * Detect archetype from character name and description
+ */
+function detectArchetype(name: string, description: string): CharacterArchetype {
+    const combined = `${name} ${description}`.toLowerCase();
+
+    for (const [archetype, keywords] of ARCHETYPE_KEYWORDS_ORDERED) {
+        if (keywords.some(keyword => combined.includes(keyword))) {
+            return archetype;
         }
     }
 
-    return voiceIds.narrator[gender];
+    return 'narrator'; // Default
+}
+
+interface VoiceSelectionResult {
+    voiceId: string;
+    detectedGender: 'male' | 'female';
+    detectedArchetype: CharacterArchetype;
+}
+
+/**
+ * Select voice for a character based on name, description, and language
+ * Uses improved gender detection and ordered archetype matching
+ */
+function selectVoiceForCharacter(
+    characterName: string,
+    voiceDescription: string,
+    language: 'fr' | 'en' = 'fr'
+): VoiceSelectionResult {
+    const voiceIds = VOICE_IDS_BY_LANGUAGE[language];
+
+    const detectedGender = detectGender(characterName, voiceDescription);
+    const detectedArchetype = detectArchetype(characterName, voiceDescription);
+
+    const voiceId = voiceIds[detectedArchetype][detectedGender];
+
+    return {
+        voiceId,
+        detectedGender,
+        detectedArchetype,
+    };
 }
 
 interface VoiceSegmentInfo {
@@ -100,35 +178,72 @@ interface VoiceSegmentInfo {
     characterName?: string;
     emotion?: Emotion;
     voiceId: string;
+    detectedGender?: 'male' | 'female';
+    detectedArchetype?: CharacterArchetype;
+}
+
+interface CharacterVoiceInfo {
+    voiceId: string;
+    gender: 'male' | 'female';
+    archetype: CharacterArchetype;
 }
 
 function extractVoiceSegments(script: StoryScript, language: 'fr' | 'en'): VoiceSegmentInfo[] {
     const segments: VoiceSegmentInfo[] = [];
 
-    // Build character to voice map
-    const characterVoices: Record<string, string> = {};
+    // Build character to voice map with improved detection
+    const characterVoices: Record<string, CharacterVoiceInfo> = {};
+
+    console.log('\nVoice selection:');
     for (const char of script.characters) {
         if (char.voiceId) {
-            characterVoices[char.characterName] = char.voiceId;
+            characterVoices[char.characterName] = {
+                voiceId: char.voiceId,
+                gender: 'female', // Default when manually specified
+                archetype: 'narrator',
+            };
+            console.log(`  "${char.characterName}": custom voice (${char.voiceId})`);
         } else {
-            // Select voice based on description and language
-            characterVoices[char.characterName] = selectVoiceForCharacter(char.voiceDescription, 'female', language);
+            const selection = selectVoiceForCharacter(
+                char.characterName,
+                char.voiceDescription,
+                language
+            );
+            characterVoices[char.characterName] = {
+                voiceId: selection.voiceId,
+                gender: selection.detectedGender,
+                archetype: selection.detectedArchetype,
+            };
+            console.log(`  "${char.characterName}": ${selection.detectedArchetype} (${selection.detectedGender})`);
         }
     }
+    console.log('');
 
     for (const track of script.tracks) {
         if (track.type === 'voice') {
             for (const segment of track.segments) {
                 const content = segment.content as VoiceSegmentContent;
                 const characterName = content.characterName ?? 'narrator';
-                const voiceId = characterVoices[characterName] ?? selectVoiceForCharacter(characterName, 'female', language);
+
+                // Get voice info or create new selection for unknown character
+                let voiceInfo = characterVoices[characterName];
+                if (!voiceInfo) {
+                    const selection = selectVoiceForCharacter(characterName, '', language);
+                    voiceInfo = {
+                        voiceId: selection.voiceId,
+                        gender: selection.detectedGender,
+                        archetype: selection.detectedArchetype,
+                    };
+                }
 
                 segments.push({
                     id: segment.id,
                     text: content.text,
                     characterName,
                     emotion: content.emotion as Emotion | undefined,
-                    voiceId,
+                    voiceId: voiceInfo.voiceId,
+                    detectedGender: voiceInfo.gender,
+                    detectedArchetype: voiceInfo.archetype,
                 });
             }
         }
@@ -152,7 +267,10 @@ export async function runGenerateFromScriptCommand(args: {
         throw new Error(`Script file not found: ${args.scriptFile}`);
     }
     const scriptJson = readFileSync(args.scriptFile, 'utf-8');
-    const script: StoryScript = JSON.parse(scriptJson);
+    const parsed = JSON.parse(scriptJson);
+
+    // Handle both direct StoryScript and wrapped format (from generate-script output.json)
+    const script: StoryScript = parsed.script ?? parsed;
 
     // Determine language: CLI override > script metadata > default (French)
     const language = args.language ?? (script.metadata.language as 'fr' | 'en') ?? 'fr';
@@ -262,6 +380,25 @@ export async function runGenerateFromScriptCommand(args: {
         .filter(r => r.durationSeconds)
         .reduce((sum, r) => sum + (r.durationSeconds ?? 0), 0);
 
+    // Sync timings based on actual TTS durations
+    const ttsResults: TTSSegmentResult[] = results
+        .filter(r => r.success && r.durationSeconds !== undefined)
+        .map(r => ({
+            segmentId: r.id,
+            actualDurationSeconds: r.durationSeconds!,
+        }));
+
+    let syncedScript = null;
+    if (ttsResults.length > 0) {
+        console.log('\nSynchronizing timeline with actual TTS durations...');
+        const syncService = new TimelineSyncService(logger);
+        syncedScript = syncService.syncTimings(script, ttsResults);
+
+        console.log(`  Original duration: ${syncedScript.syncMetadata.originalTotalDuration.toFixed(2)}s`);
+        console.log(`  Actual duration: ${syncedScript.syncMetadata.actualTotalDuration.toFixed(2)}s`);
+        console.log(`  Drift: ${syncedScript.syncMetadata.driftPercentage > 0 ? '+' : ''}${syncedScript.syncMetadata.driftPercentage}%`);
+    }
+
     // Save output
     if (run) {
         writeJsonFile(run.runDir, 'output.json', {
@@ -272,6 +409,11 @@ export async function runGenerateFromScriptCommand(args: {
             results,
         });
 
+        // Save synced script with recalculated timings
+        if (syncedScript) {
+            writeJsonFile(run.runDir, 'synced-script.json', syncedScript);
+        }
+
         writeJsonFile(run.runDir, 'meta.json', {
             command: 'tts from-script',
             storyTitle: script.metadata.title,
@@ -281,6 +423,7 @@ export async function runGenerateFromScriptCommand(args: {
             failCount,
             totalDurationSeconds: totalDuration,
             generationTimeSeconds: parseFloat(elapsed),
+            syncMetadata: syncedScript?.syncMetadata,
             createdAt: new Date().toISOString(),
         });
     }
@@ -291,6 +434,7 @@ export async function runGenerateFromScriptCommand(args: {
         failCount,
         totalDurationSeconds: totalDuration.toFixed(2),
         generationTimeSeconds: elapsed,
+        syncMetadata: syncedScript?.syncMetadata,
         artifactsDir: run?.runDir,
     }, null, 2));
 }

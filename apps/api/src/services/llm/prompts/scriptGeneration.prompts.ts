@@ -431,9 +431,25 @@ DO NOT generate one-sentence segments! Each segment should be a full paragraph.
 
 | Metric | Target | Minimum |
 |--------|--------|---------|
-| **TOTAL WORDS** | **${inflatedTargetWordCount}** | ${Math.round(durationBudget.targetWordCount * 0.75)} |
-| Voice duration | ${durationBudget.voiceSeconds}s | Based on 150 words/minute |
+| **TOTAL WORDS** | **${inflatedTargetWordCount}** | ${Math.round(durationBudget.targetWordCount * 0.85)} |
+| Voice duration | ${durationBudget.voiceSeconds}s | Based on 120 words/minute |
 | Total duration | ${durationBudget.totalSeconds}s | ~${Math.round(durationBudget.totalSeconds / 60)} minutes |
+
+### ⚠️ FORMULA STRICTE (memorisez ceci)
+
+**Conversion durée → mots:**
+- 40 secondes = ~80 mots total
+- 1 minute = ~120 mots total
+- 2 minutes = ~240 mots total
+- 5 minutes = ~600 mots total
+- 10 minutes = ~1200 mots total
+
+**VOTRE CIBLE EXACTE: ${inflatedTargetWordCount} mots (+/- ${Math.round(inflatedTargetWordCount * 0.15)} mots)**
+
+**EXEMPLE CONCRET pour ${Math.round(durationBudget.totalSeconds / 60)} minute(s):**
+- Si vous écrivez ${Math.round(inflatedTargetWordCount * 0.5)} mots → TROP COURT (sera rejeté)
+- Si vous écrivez ${inflatedTargetWordCount} mots → PARFAIT ✓
+- Si vous écrivez ${Math.round(inflatedTargetWordCount * 1.3)} mots → Acceptable (un peu long)
 
 ### Word Distribution by Act
 
@@ -588,8 +604,8 @@ Return ONLY valid JSON with this structure:
 ## Duration Calculation Rules
 
 For voice segments (narration/dialogue):
-- **150 words per minute = 2.5 words per second**
-- duration = word_count / 2.5
+- **120 words per minute = 2.0 words per second** (realistic for expressive TTS)
+- duration = word_count / 2.0
 - Add 0.3-0.5s for audio tags ([laughs], [sighs], etc.)
 
 For other segments:

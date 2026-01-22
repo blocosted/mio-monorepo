@@ -27,9 +27,11 @@ import { StorageService, type IStorageService } from '../services/storage';
 import {
     CacheService,
     AudioCacheService,
+    SfxCacheService,
     JobProgressService,
     type ICacheService,
     type IAudioCacheService,
+    type ISfxCacheService,
     type IJobProgressService,
 } from '../services/cache';
 import {
@@ -49,9 +51,15 @@ import {
     TTSService,
     ElevenLabsProvider,
     VoiceRegistryService,
+    FFmpegMixerService,
+    SoundEffectsProvider,
+    SoundEffectsService,
     type ITTSService,
     type IElevenLabsProvider,
     type IVoiceRegistryService,
+    type IFFmpegMixerService,
+    type ISoundEffectsProvider,
+    type ISoundEffectsService,
 } from '../services/audio';
 
 // Create container instance
@@ -100,6 +108,10 @@ export async function initializeContainer(): Promise<void> {
         [IocService.ELEVENLABS_PROVIDER]: () => container.get(ElevenLabsProvider, { autobind: true }),
         [IocService.VOICE_REGISTRY]: () => container.get(VoiceRegistryService, { autobind: true }),
         [IocService.TTS]: () => container.get(TTSService, { autobind: true }),
+        [IocService.FFMPEG_MIXER]: () => container.get(FFmpegMixerService, { autobind: true }),
+        [IocService.SOUND_EFFECTS_PROVIDER]: () => container.get(SoundEffectsProvider, { autobind: true }),
+        [IocService.SFX_CACHE]: () => container.get(SfxCacheService, { autobind: true }),
+        [IocService.SOUND_EFFECTS]: () => container.get(SoundEffectsService, { autobind: true }),
     } as const;
 
     // Register all factories
@@ -137,6 +149,7 @@ export type {
     IStorageService,
     ICacheService,
     IAudioCacheService,
+    ISfxCacheService,
     IJobProgressService,
     IProfilesService,
     IProfilesStore,
@@ -146,6 +159,9 @@ export type {
     ITTSService,
     IElevenLabsProvider,
     IVoiceRegistryService,
+    IFFmpegMixerService,
+    ISoundEffectsProvider,
+    ISoundEffectsService,
 };
 export type { RedisClient, DatabaseConnection, Logger };
 

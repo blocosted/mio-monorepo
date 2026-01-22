@@ -1,7 +1,7 @@
 # Roadmap — Mio
 
 **Version:** 1.0.0
-**Dernière mise à jour:** Janvier 2026
+**Dernière mise à jour:** 22 Janvier 2026
 **Méthode:** Organisation par priorité MVP
 
 ---
@@ -202,7 +202,7 @@ Permettre aux enfants (et leurs parents) de créer des histoires audio personnal
 
 ---
 
-### US-050: Service ElevenLabs TTS (Backend) [Complexité: 4/5] 🚧
+### US-050: Service ElevenLabs TTS (Backend) [Complexité: 4/5] ✅
 
 **En tant que** système,
 **Je veux** générer les voix via ElevenLabs Text-to-Speech,
@@ -217,30 +217,30 @@ Permettre aux enfants (et leurs parents) de créer des histoires audio personnal
 - [x] CLI TTS fonctionnel (`tts generate`, `tts from-script`, `tts test-emotions`)
 - [x] **Prosody Guide:** Guide ElevenLabs best practices intégré au prompt LLM (contexte narratif, ponctuation expressive, audio tags)
 - [x] **Multi-langue:** Exemples de prosodie spécifiques FR/EN pour une qualité professionnelle
-- [ ] Gestion des erreurs et rate limits avec retry
-- [ ] **Tests:** Mapping émotions, sélection voix, gestion erreurs (avec mock ElevenLabs)
+- [x] Gestion des erreurs et rate limits avec retry
+- [x] **Tests:** Mapping émotions, sélection voix, gestion erreurs (avec mock ElevenLabs)
 
 ---
 
-### US-060: Service FFmpeg Mixer (Backend) [Complexité: 5/5]
+### US-060: Service FFmpeg Mixer (Backend) [Complexité: 5/5] ✅
 
 **En tant que** système,
 **Je veux** mixer toutes les pistes audio avec FFmpeg,
 **Afin de** produire le fichier audio final.
 
 **Critères d'acceptation:**
-- [ ] Service `ffmpegMixer` avec fluent-ffmpeg
-- [ ] Téléchargement de tous les fichiers audio dans un workdir temporaire
-- [ ] Création de la timeline vocale avec pauses
-- [ ] Ajout de la musique de fond avec volume réduit
-- [ ] Sidechain compression (ducking) musique/voix
-- [ ] Ajout de l'ambiance en loop
-- [ ] Insertion des SFX avec leurs timings
-- [ ] Mix final avec amix
-- [ ] Normalisation loudnorm (I=-16, TP=-1.5)
-- [ ] Export MP3 192kbps, 44.1kHz, stereo
-- [ ] Nettoyage du workdir temporaire
-- [ ] **Tests:** Timeline vocale, calcul pauses, nettoyage workdir (tests d'intégration avec fichiers audio de test)
+- [x] Service `ffmpegMixer` avec fluent-ffmpeg
+- [x] Téléchargement de tous les fichiers audio dans un workdir temporaire
+- [x] Création de la timeline vocale avec pauses
+- [x] Ajout de la musique de fond avec volume réduit
+- [x] Sidechain compression (ducking) musique/voix
+- [x] Ajout de l'ambiance en loop
+- [x] Insertion des SFX avec leurs timings
+- [x] Mix final avec amix
+- [x] Normalisation loudnorm (I=-16, TP=-1.5)
+- [x] Export MP3 192kbps, 44.1kHz, stereo
+- [x] Nettoyage du workdir temporaire
+- [x] **Tests:** Timeline vocale, calcul pauses, nettoyage workdir (tests d'intégration avec fichiers audio de test)
 
 ---
 
@@ -539,32 +539,37 @@ Permettre aux enfants (et leurs parents) de créer des histoires audio personnal
 
 > **Objectif:** Tous les services audio et bibliothèque complète
 
-### US-051: Service ElevenLabs SFX (Backend) [Complexité: 3/5]
+### US-051: Service ElevenLabs SFX (Backend) [Complexité: 3/5] ✅
 
 **En tant que** système,
 **Je veux** générer les effets sonores via ElevenLabs Sound Effects,
 **Afin de** produire les ambiances et bruitages.
 
 **Critères d'acceptation:**
-- [ ] Méthode `generateSFX` avec: prompt, duration, promptInfluence
-- [ ] Optimisation des prompts pour ElevenLabs
-- [ ] Durée configurable (0.5 - 22s)
-- [ ] Cache Redis pour éviter les régénérations
-- [ ] Retour du buffer audio
+- [x] Méthode `generateSFX` avec: prompt, duration, promptInfluence
+- [x] Optimisation des prompts pour ElevenLabs
+- [x] Durée configurable (0.5 - 22s)
+- [x] Cache Redis pour éviter les régénérations (`sfx-cache.service.ts`)
+- [x] Retour du buffer audio
+- [x] CLI SFX fonctionnel (`sfx generate`, `sfx batch`)
+- [x] **Tests:** Provider et service complets (`soundEffects.provider.spec.ts`, `soundEffects.service.spec.ts`)
 
 ---
 
-### US-052: Service Suno pour la musique (Backend) [Complexité: 3/5]
+### US-052: Service de génération musicale (Backend) [Complexité: 3/5] 🚧
 
 **En tant que** système,
-**Je veux** générer la musique de fond via Suno,
+**Je veux** générer la musique de fond,
 **Afin de** produire une bande sonore adaptée.
 
 **Critères d'acceptation:**
-- [ ] Client Suno API configuré
-- [ ] Méthode `generateMusic` avec: mood, duration, instrumental
-- [ ] Mapping mood -> prompts musicaux (adventure, mystery, joyful, calm, magical, exciting)
-- [ ] Toujours en mode instrumental
+- [x] Service `music-generator.service.ts` implémenté
+- [x] Méthode `generateMusic` avec: mood, duration, instrumental
+- [x] Service `music-strategy.service.ts` pour déterminer le mood depuis le script
+- [x] Mapping mood -> prompts musicaux (adventure, mystery, joyful, calm, magical, exciting)
+- [x] CLI Music fonctionnel (`music generate`, `music from-script`)
+- [x] **Tests:** `music-generator.service.test.ts`, `music-strategy.service.test.ts`
+- [ ] Intégration provider Suno API (actuellement placeholder/ElevenLabs)
 - [ ] Durée max 2 minutes par génération
 - [ ] Gestion des musiques plus longues (looping)
 
@@ -617,33 +622,36 @@ Permettre aux enfants (et leurs parents) de créer des histoires audio personnal
 
 ---
 
-### US-056: Step workflow - Génération ambiance (Backend) [Complexité: 2/5]
+### US-056: Service de génération d'ambiance (Backend) [Complexité: 2/5] ✅
 
 **En tant que** système,
-**Je veux** générer l'ambiance de fond dans le workflow,
+**Je veux** générer l'ambiance de fond,
 **Afin d'** avoir un environnement sonore immersif.
 
 **Critères d'acceptation:**
-- [ ] Step `generate-ambiance` dans le workflow
-- [ ] Détection du setting depuis le script
-- [ ] Mapping setting -> prompt d'ambiance
-- [ ] Génération via ElevenLabs SFX (30s)
-- [ ] Progression (82% -> 85%)
+- [x] Service `ambiance-generator.service.ts` implémenté
+- [x] Détection du setting depuis le script
+- [x] Mapping setting -> prompt d'ambiance (SETTING_AMBIANCE_MAP)
+- [x] Génération via ElevenLabs SFX (30s)
+- [x] CLI Ambiance fonctionnel (`ambiance generate`, `ambiance from-script`)
+- [x] **Tests:** `ambiance-generator.service.test.ts`
+- [ ] Step `generate-ambiance` dans le workflow (intégration)
 
 ---
 
-### US-061: Création de la timeline vocale (Backend) [Complexité: 3/5]
+### US-061: Création de la timeline vocale (Backend) [Complexité: 3/5] ✅
 
 **En tant que** système,
 **Je veux** créer une timeline des voix avec silences,
 **Afin de** respecter le rythme narratif.
 
 **Critères d'acceptation:**
-- [ ] Fonction `createVoiceTimeline`
-- [ ] Génération de fichiers silence de différentes durées
-- [ ] Fichier concat.txt avec la séquence
-- [ ] Pauses avant/après chaque segment selon le timing
-- [ ] Concaténation avec FFmpeg
+- [x] Service `timeline-sync.service.ts` implémenté
+- [x] Génération de fichiers silence de différentes durées
+- [x] Calcul des timings SFX synchronisés avec la voix
+- [x] Pauses avant/après chaque segment selon le timing
+- [x] Intégration avec FFmpeg Mixer
+- [x] **Tests:** `timeline-sync.service.test.ts`
 
 ---
 
