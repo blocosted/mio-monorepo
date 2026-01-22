@@ -20,12 +20,11 @@ import type {
     AudioIntensity,
 } from '@mio/shared/types';
 
-import { getInstance, IocInfrastructure, IocService } from '../../ioc';
+import { getInstance, IocConnection, IocStore, IocRepository, IocService } from '../../ioc';
 import type { ICacheService } from '../cache/cache.service.types';
-import type { ISfxCacheService } from '../cache/sfx-cache.service.types';
-import type { IStorageService } from '../storage';
-import type { ISoundEffectsProvider } from './soundEffects.provider.types';
-import type { IAudioLibraryService } from '../audio-library';
+import type { ISoundEffectsRepository } from '../../repositories/audio/audio-repository.types';
+import { AbstractService } from '../service.abstract';
+import type { SoundEffectsStore } from './soundEffects.service.store';
 import type {
     ISoundEffectsService,
     GenerateSfxInput,
@@ -142,7 +141,7 @@ function inferIntensity(text: string): AudioIntensity {
  * - Category-based configuration
  */
 @injectable()
-export class SoundEffectsService implements ISoundEffectsService {
+export class SoundEffectsService extends AbstractService implements ISoundEffectsService {
     private readonly localLimit: ReturnType<typeof pLimit>;
     private cacheHits = 0;
     private cacheMisses = 0;
@@ -150,34 +149,22 @@ export class SoundEffectsService implements ISoundEffectsService {
     private libraryMisses = 0;
 
     constructor(
-        @inject(IocInfrastructure.LOGGER) private readonly logger: Logger,
+        @inject(IocStore.SOUND_EFFECTS_STORE) private readonly sfxStore: SoundEffectsStore,
         @inject(IocService.CACHE) private readonly cache: ICacheService,
-        @inject(IocService.SFX_CACHE) private readonly sfxCache: ISfxCacheService,
-        @inject(IocService.STORAGE) private readonly storage: IStorageService,
     ) {
+        super();
         this.localLimit = pLimit(SFX_CONCURRENCY_CONFIG.maxLocalConcurrency);
     }
 
     /**
-     * Lazily create SoundEffects provider to avoid initialization issues
+     * Lazily create SoundEffects repository to avoid initialization issues
      */
-    private _provider: ISoundEffectsProvider | null = null;
-    private get provider(): ISoundEffectsProvider {
-        if (!this._provider) {
-            this._provider = getInstance<ISoundEffectsProvider>(IocService.SOUND_EFFECTS_PROVIDER);
+    private _repository: ISoundEffectsRepository | null = null;
+    private get repository(): ISoundEffectsRepository {
+        if (!this._repository) {
+            this._repository = getInstance<ISoundEffectsRepository>(IocRepository.SOUND_EFFECTS);
         }
-        return this._provider;
-    }
-
-    /**
-     * Lazily get AudioLibrary service
-     */
-    private _audioLibrary: IAudioLibraryService | null = null;
-    private get audioLibrary(): IAudioLibraryService {
-        if (!this._audioLibrary) {
-            this._audioLibrary = getInstance<IAudioLibraryService>(IocService.AUDIO_LIBRARY);
-        }
-        return this._audioLibrary;
+        return this._repository;
     }
 
     /**
@@ -215,60 +202,41 @@ export class SoundEffectsService implements ISoundEffectsService {
         });
 
         // =====================================================================
-        // Step 1: Check persistent library for matching SFX
+        // Step 1: Check persistent library for matching SFX via store
         // =====================================================================
-        if (libraryCategory) {
-            const libraryResult = await this.audioLibrary.findSfx({
-                text,
-                category: libraryCategory,
-                subcategory,
-                environment,
-                intensity,
+        const librarySfx = await this.sfxStore.getLibrarySfx({
+            text,
+            category: libraryCategory,
+            subcategory,
+            environment,
+            intensity,
+        });
+
+        if (librarySfx) {
+            this.logger.info('[LIBRARY HIT] Found SFX in persistent library', {
+                sfxId: librarySfx.sfxId,
+                canonicalKey: librarySfx.canonicalKey,
             });
+            this.libraryHits++;
 
-            if (libraryResult.sfx) {
-                this.logger.info('[LIBRARY HIT] Found SFX in persistent library', {
-                    sfxId: libraryResult.sfx.id,
-                    canonicalKey: libraryResult.sfx.canonicalKey,
-                    fromCache: libraryResult.fromCache,
-                });
-                this.libraryHits++;
-
-                try {
-                    // Download from storage
-                    const audio = await this.storage.download(libraryResult.sfx.s3Url);
-
-                    // Increment usage counter (fire and forget)
-                    this.audioLibrary.incrementSfxUsage(libraryResult.sfx.id).catch((err) => {
-                        this.logger.warn('Failed to increment SFX usage', { error: err.message });
-                    });
-
-                    return {
-                        audio,
-                        durationSeconds: libraryResult.sfx.durationSeconds,
-                        format: SFX_AUDIO_FORMAT,
-                        fromCache: false,
-                        fromLibrary: true,
-                        cacheKey: libraryResult.sfx.canonicalKey,
-                    };
-                } catch (error) {
-                    this.logger.warn('[LIBRARY INVALID] Library entry exists but file not found', {
-                        sfxId: libraryResult.sfx.id,
-                        error: error instanceof Error ? error.message : 'Unknown',
-                    });
-                    // Fall through to cache/API
-                }
-            } else {
-                this.logger.info('[LIBRARY MISS] No SFX found in persistent library', {
-                    text: text.substring(0, 50),
-                    category: libraryCategory,
-                });
-                this.libraryMisses++;
-            }
+            return {
+                audio: librarySfx.audio,
+                durationSeconds: librarySfx.durationSeconds,
+                format: SFX_AUDIO_FORMAT,
+                fromCache: false,
+                fromLibrary: true,
+                cacheKey: librarySfx.canonicalKey,
+            };
         }
 
+        this.logger.info('[LIBRARY MISS] No SFX found in persistent library', {
+            text: text.substring(0, 50),
+            category: libraryCategory,
+        });
+        this.libraryMisses++;
+
         // =====================================================================
-        // Step 2: Check Redis cache for recent generations
+        // Step 2: Check Redis cache for recent generations via store
         // =====================================================================
         const cacheKeyParams = {
             text,
@@ -277,105 +245,63 @@ export class SoundEffectsService implements ISoundEffectsService {
             promptInfluence: effectivePromptInfluence,
         };
 
-        const cacheKey = this.sfxCache.generateCacheKey(cacheKeyParams);
+        const cacheKey = this.sfxStore.generateCacheKey(cacheKeyParams);
 
-        const cached = await this.sfxCache.get(cacheKeyParams);
-        if (cached) {
+        const cachedSfx = await this.sfxStore.getCachedSfx(cacheKeyParams);
+        if (cachedSfx) {
             this.logger.info('[SFX CACHE HIT] Found cached SFX', {
                 cacheKey,
-                cachedUrl: cached.url,
+                cachedUrl: cachedSfx.url,
             });
+            this.cacheHits++;
 
-            try {
-                // Download from storage
-                const audio = await this.storage.download(cached.url);
-
-                // Increment usage counter
-                await this.sfxCache.incrementUsage(cacheKeyParams);
-                this.cacheHits++;
-
-                return {
-                    audio,
-                    durationSeconds: cached.durationSeconds,
-                    format: SFX_AUDIO_FORMAT,
-                    fromCache: true,
-                    fromLibrary: false,
-                    cacheKey,
-                };
-            } catch (error) {
-                // Cache entry exists but file not found, continue to generate
-                this.logger.warn('[SFX CACHE INVALID] Cache entry exists but file not found, regenerating', {
-                    cacheKey,
-                    error: error instanceof Error ? error.message : 'Unknown',
-                });
-            }
-        } else {
-            this.logger.info('[SFX CACHE MISS] No cached SFX found, will call API', {
+            return {
+                audio: cachedSfx.audio,
+                durationSeconds: cachedSfx.durationSeconds,
+                format: SFX_AUDIO_FORMAT,
+                fromCache: true,
+                fromLibrary: false,
                 cacheKey,
-            });
-            this.cacheMisses++;
+            };
         }
+
+        this.logger.info('[SFX CACHE MISS] No cached SFX found, will call API', {
+            cacheKey,
+        });
+        this.cacheMisses++;
 
         // =====================================================================
         // Step 3: Generate new SFX via ElevenLabs API
         // =====================================================================
         await this.waitForRateLimitSlot();
 
-        const result = await this.provider.convert({
+        const result = await this.repository.convert({
             text,
             outputFormat: DEFAULT_SFX_OUTPUT_FORMAT,
             durationSeconds,
             promptInfluence: effectivePromptInfluence,
         });
 
-        // Store in storage
-        const storagePath = `sfx/${category ?? 'general'}/${Date.now()}-${Bun.hash(text).toString(36)}.mp3`;
-        await this.storage.upload(result.audio, storagePath, {
-            contentType: 'audio/mpeg',
-        });
-
         // =====================================================================
-        // Step 4: Store in both cache and library for future reuse
+        // Step 4: Persist to storage, cache, and library via store
         // =====================================================================
-
-        // Store in Redis cache (short-term)
-        await this.sfxCache.set(
+        const { url: storagePath } = await this.sfxStore.persistSfx(
             cacheKeyParams,
             {
-                url: storagePath,
+                audio: result.audio,
                 durationSeconds: result.durationSeconds,
+                text,
                 category,
+                libraryCategory,
+                subcategory,
+                environment,
+                intensity,
+                promptInfluence: effectivePromptInfluence,
+                tags: this.extractTags(text),
             }
         );
 
-        // Store in persistent library (long-term)
-        if (libraryCategory) {
-            try {
-                await this.audioLibrary.storeSfx({
-                    category: libraryCategory,
-                    subcategory,
-                    environment,
-                    intensity,
-                    prompt: text,
-                    promptInfluence: effectivePromptInfluence,
-                    s3Url: storagePath,
-                    durationSeconds: result.durationSeconds,
-                    tags: this.extractTags(text),
-                });
-                this.logger.info('SFX stored in persistent library', {
-                    category: libraryCategory,
-                    subcategory,
-                    storagePath,
-                });
-            } catch (error) {
-                // Don't fail if library storage fails
-                this.logger.warn('Failed to store SFX in library', {
-                    error: error instanceof Error ? error.message : 'Unknown',
-                });
-            }
-        }
-
-        this.logger.info('Sound effect generated', {
+        this.logger.info('Sound effect generated and persisted', {
             textPreview: text.substring(0, 50),
             durationSeconds: result.durationSeconds,
             category,

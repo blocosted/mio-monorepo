@@ -3,6 +3,7 @@
  */
 
 export { AudioLibraryService } from './audio-library.service';
+export { AudioLibraryStore } from './audio-library.store';
 export type {
     IAudioLibraryService,
     StoredSfx,

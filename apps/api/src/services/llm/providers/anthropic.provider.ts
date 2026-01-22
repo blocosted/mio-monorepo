@@ -14,7 +14,7 @@ import { AppError, ErrorCodes } from '@mio/shared';
 import { environment } from '@mio/shared/constants/environment.constants';
 import { Logger } from '@mio/shared/server/logger';
 
-import { IocInfrastructure } from '../../../ioc';
+import { IocConnection } from '../../../ioc';
 import type {
   ILLMProvider,
   LLMProviderType,
@@ -50,7 +50,7 @@ export class AnthropicProvider implements ILLMProvider {
   private readonly client: Anthropic;
 
   constructor(
-    @inject(IocInfrastructure.LOGGER)
+    @inject(IocConnection.LOGGER)
     private readonly logger: Logger,
   ) {
     const apiKey = environment.ANTHROPIC_API_KEY;

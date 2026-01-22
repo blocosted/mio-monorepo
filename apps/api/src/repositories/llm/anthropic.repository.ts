@@ -1,39 +1,39 @@
 /**
- * OpenAI LLM Provider
+ * Anthropic (Claude) LLM Repository
  *
- * Implements ILLMProvider using the OpenAI API.
- * Handles prompt construction and API communication for OpenAI models.
+ * Implements ILLMRepository using the Anthropic API.
+ * Handles prompt construction and API communication for Claude models.
  */
 
 import 'reflect-metadata';
 import { injectable, inject } from 'inversify';
-import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
+import type { Model } from '@anthropic-ai/sdk/resources';
 
 import { AppError, ErrorCodes } from '@mio/shared';
 import { environment } from '@mio/shared/constants/environment.constants';
 import { Logger } from '@mio/shared/server/logger';
 
-import { IocConnection } from '../../../ioc';
+import { IocConnection } from '../../ioc';
 import type {
-  ILLMProvider,
-  LLMProviderType,
+  ILLMRepository,
+  LLMRepositoryType,
   LLMCompletionOptions,
   LLMRawResponse,
   EnrichmentContext,
   ScriptGenerationContext,
-} from './llm-provider.types';
+} from './llm-repository.types';
 import {
   buildEnrichmentSystemPrompt,
   buildEnrichmentUserPrompt,
-} from '../prompts/enrichment.prompts';
+} from '../../services/llm/prompts/enrichment.prompts';
 import {
   buildScriptGenerationSystemPrompt,
   buildScriptGenerationUserPrompt,
-} from '../prompts/scriptGeneration.prompts';
-import type { ChatModel } from 'openai/resources/index.mjs';
+} from '../../services/llm/prompts/scriptGeneration.prompts';
 
 /** Default configuration */
-const DEFAULT_MODEL: ChatModel = 'gpt-4o';
+const DEFAULT_MODEL: Model = 'claude-sonnet-4-20250514';
 const DEFAULT_MAX_TOKENS = 2000;
 const DEFAULT_SCRIPT_MAX_TOKENS = 12000;
 const DEFAULT_TEMPERATURE = 0.7;
@@ -45,27 +45,27 @@ const MAX_RETRIES = 3;
 const INITIAL_RETRY_DELAY = 1000;
 
 @injectable()
-export class OpenAIProvider implements ILLMProvider {
-  readonly providerType: LLMProviderType = 'openai';
-  private readonly client: OpenAI;
+export class AnthropicRepository implements ILLMRepository {
+  readonly repositoryType: LLMRepositoryType = 'anthropic';
+  private readonly client: Anthropic;
 
   constructor(
     @inject(IocConnection.LOGGER)
     private readonly logger: Logger,
   ) {
-    const apiKey = environment.OPENAI_API_KEY;
+    const apiKey = environment.ANTHROPIC_API_KEY;
     if (!apiKey) {
-      throw new Error('OPENAI_API_KEY is not configured');
+      throw new Error('ANTHROPIC_API_KEY is not configured');
     }
 
-    this.client = new OpenAI({
+    this.client = new Anthropic({
       apiKey,
       timeout: DEFAULT_TIMEOUT,
     });
   }
 
   isAvailable(): boolean {
-    return !!environment.OPENAI_API_KEY;
+    return !!environment.ANTHROPIC_API_KEY;
   }
 
   async generateEnrichedConcept(
@@ -87,7 +87,7 @@ export class OpenAIProvider implements ILLMProvider {
     );
     const userPrompt = buildEnrichmentUserPrompt(context.initialPrompt);
 
-    this.logger.info('OpenAI: Generating enriched concept', {
+    this.logger.info('Anthropic: Generating enriched concept', {
       childName: context.childName,
       vocabularyLevel: context.vocabularyLevel,
     });
@@ -117,7 +117,7 @@ export class OpenAIProvider implements ILLMProvider {
       context.previousAttemptFeedback,
     );
 
-    this.logger.info('OpenAI: Generating script', {
+    this.logger.info('Anthropic: Generating script', {
       title: context.enrichedConcept.title,
       targetWordCount: context.constraints.durationBudget.targetWordCount,
       targetDuration: context.constraints.durationBudget.totalSeconds,
@@ -146,35 +146,38 @@ export class OpenAIProvider implements ILLMProvider {
 
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       try {
-        const completion = await this.client.chat.completions.create({
+        const message = await this.client.messages.create({
           model,
           max_tokens: maxTokens,
           temperature,
+          system: systemPrompt,
           messages: [
-            { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt },
           ],
-          response_format: { type: 'json_object' },
         });
 
-        const content = completion.choices[0]?.message?.content;
-        if (!content) {
+        // Extract text content from the response
+        const textBlock = message.content.find((block) => block.type === 'text');
+        if (!textBlock || textBlock.type !== 'text') {
           throw new AppError(ErrorCodes.InternalError, {
             name: 'LLMEmptyResponse',
           });
         }
 
+        // Claude doesn't have native JSON mode, so we need to extract JSON from the response
+        const content = this.extractJson(textBlock.text);
+
         return {
           content,
-          promptTokens: completion.usage?.prompt_tokens,
-          completionTokens: completion.usage?.completion_tokens,
-          model: completion.model,
+          promptTokens: message.usage.input_tokens,
+          completionTokens: message.usage.output_tokens,
+          model: message.model,
         };
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
 
         if (this.isRateLimitError(error)) {
-          this.logger.warn('OpenAI rate limit, retrying', {
+          this.logger.warn('Anthropic rate limit, retrying', {
             attempt,
             retryDelay,
           });
@@ -187,7 +190,7 @@ export class OpenAIProvider implements ILLMProvider {
         }
 
         if (this.isTimeoutError(error)) {
-          this.logger.error('OpenAI timeout', { attempt });
+          this.logger.error('Anthropic timeout', { attempt });
           throw new AppError(ErrorCodes.InternalError, {
             name: 'LLMTimeout',
             error: lastError,
@@ -198,21 +201,42 @@ export class OpenAIProvider implements ILLMProvider {
       }
     }
 
-    this.logger.error('OpenAI request failed', { error: lastError?.message });
+    this.logger.error('Anthropic request failed', { error: lastError?.message });
     throw new AppError(ErrorCodes.InternalError, {
       name: 'LLMRequestFailed',
       error: lastError ?? undefined,
     });
   }
 
+  /**
+   * Extract JSON from Claude's response
+   * Claude doesn't have native JSON mode, so we need to find and extract the JSON
+   */
+  private extractJson(text: string): string {
+    // Try to find JSON in code blocks first
+    const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (codeBlockMatch && codeBlockMatch[1]) {
+      return codeBlockMatch[1].trim();
+    }
+
+    // Try to find raw JSON (starts with { and ends with })
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      return jsonMatch[0];
+    }
+
+    // If no JSON found, return the raw text (will fail validation later)
+    return text;
+  }
+
   private isRateLimitError(error: unknown): boolean {
-    if (error instanceof OpenAI.RateLimitError) return true;
-    if (error instanceof OpenAI.APIError && error.status === 429) return true;
+    if (error instanceof Anthropic.RateLimitError) return true;
+    if (error instanceof Anthropic.APIError && error.status === 429) return true;
     return false;
   }
 
   private isTimeoutError(error: unknown): boolean {
-    if (error instanceof OpenAI.APIConnectionTimeoutError) return true;
+    if (error instanceof Anthropic.APIConnectionTimeoutError) return true;
     if (error instanceof Error && error.message.includes('timeout')) return true;
     return false;
   }

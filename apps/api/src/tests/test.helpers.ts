@@ -190,3 +190,135 @@ export async function cleanupRedisKeys(redis: RedisClient, pattern: string): Pro
         await redis.del(...keys);
     }
 }
+
+/**
+ * Clean all test data using IoC container instances
+ */
+export async function cleanTestData(): Promise<void> {
+    const { getInstance } = await import('../ioc/ioc.config');
+    const { IocConnection } = await import('../ioc/ioc.types');
+    const { cleanTestPostgresData } = await import('./test-utils');
+
+    // Get DB and Redis from IoC container
+    const db = getInstance(IocConnection.DATABASE);
+    const redis = getInstance(IocConnection.REDIS);
+
+    // Clean PostgreSQL
+    await cleanTestPostgresData(db);
+
+    // Clean Redis (FLUSHALL)
+    await redis.del(...(await redis.keys('*')));
+}
+
+// =============================================================================
+// External API Mock Helpers
+// =============================================================================
+
+/**
+ * Mock ElevenLabs Provider
+ *
+ * Returns a mocked provider instance that can be injected into services.
+ * Use this to avoid calling the real ElevenLabs API during tests.
+ */
+export function mockElevenLabsProvider() {
+    return {
+        convert: mock(async (params: { text: string; voiceId: string; outputFormat: string }) => {
+            return {
+                audio: createTestAudioBuffer(),
+                durationSeconds: 3.5,
+                format: params.outputFormat,
+            };
+        }),
+        getVoices: mock(async () => {
+            return [
+                {
+                    voiceId: 'test-voice-1',
+                    name: 'Test Voice 1',
+                    category: 'premade',
+                    labels: { accent: 'american', age: 'young' },
+                },
+            ];
+        }),
+    };
+}
+
+/**
+ * Mock OpenAI Provider
+ *
+ * Returns a mocked provider instance that can be injected into services.
+ * Use this to avoid calling the real OpenAI API during tests.
+ */
+export function mockOpenAIProvider() {
+    return {
+        generateCompletion: mock(async (params: { prompt: string; model: string }) => {
+            return {
+                content: JSON.stringify({
+                    title: 'Test Story',
+                    scenes: [
+                        {
+                            id: 'scene-1',
+                            narration: 'Once upon a time...',
+                            dialogue: [],
+                            soundEffects: [],
+                        },
+                    ],
+                }),
+                model: params.model,
+                usage: {
+                    prompt_tokens: 100,
+                    completion_tokens: 50,
+                    total_tokens: 150,
+                },
+            };
+        }),
+    };
+}
+
+/**
+ * Mock Anthropic Provider
+ *
+ * Returns a mocked provider instance that can be injected into services.
+ * Use this to avoid calling the real Anthropic API during tests.
+ */
+export function mockAnthropicProvider() {
+    return {
+        generateCompletion: mock(async (params: { prompt: string; model: string }) => {
+            return {
+                content: JSON.stringify({
+                    title: 'Test Story',
+                    scenes: [
+                        {
+                            id: 'scene-1',
+                            narration: 'Once upon a time...',
+                            dialogue: [],
+                            soundEffects: [],
+                        },
+                    ],
+                }),
+                model: params.model,
+                usage: {
+                    input_tokens: 100,
+                    output_tokens: 50,
+                },
+            };
+        }),
+    };
+}
+
+/**
+ * Mock SoundEffects Provider
+ *
+ * Returns a mocked provider instance that can be injected into services.
+ * Use this to avoid calling the real sound effects API during tests.
+ */
+export function mockSoundEffectsProvider() {
+    return {
+        generate: mock(async (params: { prompt: string; duration: number }) => {
+            return {
+                audio: createTestAudioBuffer(),
+                durationSeconds: params.duration,
+                format: 'mp3',
+            };
+        }),
+    };
+}

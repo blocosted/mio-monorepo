@@ -16,11 +16,11 @@ import { AppError, ErrorCodes, Emotion } from '@mio/shared';
 import type { ElevenLabsVoiceSettings } from '@mio/shared/models';
 import { Logger } from '@mio/shared/server/logger';
 
-import { getInstance, IocInfrastructure, IocService } from '../../ioc';
+import { getInstance, IocConnection, IocStore, IocRepository, IocService } from '../../ioc';
 import type { ICacheService } from '../cache/cache.service.types';
-import type { IAudioCacheService } from '../cache/audio-cache.service.types';
-import type { IStorageService } from '../storage';
-import type { IElevenLabsProvider } from './elevenLabs.provider.types';
+import type { IVoicesRepository } from '../../repositories/audio/audio-repository.types';
+import { AbstractService } from '../service.abstract';
+import type { TTSStore } from './tts.service.store';
 import type {
     ITTSService,
     GenerateSpeechInput,
@@ -42,7 +42,6 @@ import {
     DEFAULT_OUTPUT_FORMAT,
 } from './tts.service.constants';
 import { Language } from '@mio/shared/types';
-import { ElevenLabsProvider } from './elevenLabs.provider';
 
 /**
  * TTS Service
@@ -54,28 +53,27 @@ import { ElevenLabsProvider } from './elevenLabs.provider';
  * - Emotion-based voice customization
  */
 @injectable()
-export class TTSService implements ITTSService {
+export class TTSService extends AbstractService implements ITTSService {
     private readonly localLimit: ReturnType<typeof pLimit>;
 
     constructor(
-        @inject(IocInfrastructure.LOGGER) private readonly logger: Logger,
+        @inject(IocStore.TTS_STORE) private readonly ttsStore: TTSStore,
         @inject(IocService.CACHE) private readonly cache: ICacheService,
-        @inject(IocService.AUDIO_CACHE) private readonly audioCache: IAudioCacheService,
-        @inject(IocService.STORAGE) private readonly storage: IStorageService,
     ) {
+        super();
         this.localLimit = pLimit(CONCURRENCY_CONFIG.maxLocalConcurrency);
     }
 
     /**
-     * Lazily create ElevenLabs provider to avoid initialization issues
+     * Lazily create Voices repository to avoid initialization issues
      */
-    private _provider: IElevenLabsProvider | null = null;
-    private get provider(): IElevenLabsProvider {
-        if (!this._provider) {
-            // Create provider lazily to ensure Logger is available
-            this._provider = getInstance<IElevenLabsProvider>(IocService.ELEVENLABS_PROVIDER);
+    private _repository: IVoicesRepository | null = null;
+    private get repository(): IVoicesRepository {
+        if (!this._repository) {
+            // Create repository lazily to ensure Logger is available
+            this._repository = getInstance<IVoicesRepository>(IocRepository.VOICES);
         }
-        return this._provider;
+        return this._repository;
     }
 
     /**
@@ -112,52 +110,38 @@ export class TTSService implements ITTSService {
             emotion,
             audioTag,
             characterName,
-            cacheKey: this.audioCache.generateCacheKey(cacheKeyParams),
+            cacheKey: this.ttsStore.generateCacheKey(cacheKeyParams),
         });
 
-        // Check cache first (with all parameters)
-        const cached = await this.audioCache.get(cacheKeyParams);
+        // Check cache first via store
+        const cached = await this.ttsStore.getCachedAudio(cacheKeyParams);
         if (cached) {
             this.logger.info('[TTS CACHE HIT] Found cached audio', {
                 voiceId,
-                cacheKey: this.audioCache.generateCacheKey(cacheKeyParams),
+                cacheKey: this.ttsStore.generateCacheKey(cacheKeyParams),
                 cachedUrl: cached.url,
             });
 
-            try {
-                // Download from storage
-                const audio = await this.storage.download(cached.url);
-
-                // Increment usage counter
-                await this.audioCache.incrementUsage(cacheKeyParams);
-
-                return {
-                    audio,
-                    durationSeconds: cached.duration / 1000, // Convert ms to seconds
-                    voiceId,
-                    format: AUDIO_FORMAT,
-                    fromCache: true,
-                };
-            } catch (error) {
-                // Cache entry exists but file not found, continue to generate
-                this.logger.warn('[TTS CACHE INVALID] Cache entry exists but file not found, regenerating', {
-                    voiceId,
-                    error: error instanceof Error ? error.message : 'Unknown',
-                });
-            }
-        } else {
-            this.logger.info('[TTS CACHE MISS] No cached audio found, will call API', {
+            return {
+                audio: cached.audio,
+                durationSeconds: cached.duration / 1000, // Convert ms to seconds
                 voiceId,
-                cacheKey: this.audioCache.generateCacheKey(cacheKeyParams),
-                voiceSettings: cacheKeyParams.voiceSettings,
-            });
+                format: AUDIO_FORMAT,
+                fromCache: true,
+            };
         }
+
+        this.logger.info('[TTS CACHE MISS] No cached audio found, will call API', {
+            voiceId,
+            cacheKey: this.ttsStore.generateCacheKey(cacheKeyParams),
+            voiceSettings: cacheKeyParams.voiceSettings,
+        });
 
         // Wait for rate limit slot
         await this.waitForRateLimitSlot();
 
         // Generate speech (with audio tag if emotion specified)
-        const result = await this.provider.convertWithTimestamps({
+        const result = await this.repository.convertWithTimestamps({
             text: textWithEmotion,
             voiceId,
             modelId: DEFAULT_TTS_MODEL,
@@ -165,26 +149,19 @@ export class TTSService implements ITTSService {
             voiceSettings: mergedSettings,
         });
 
-        // Store in storage and cache
-        const storagePath = `tts/${voiceId}/${Date.now()}-${Bun.hash(text)}.mp3`;
-        await this.storage.upload(result.audio, storagePath, {
-            contentType: 'audio/mpeg',
-        });
-
-        await this.audioCache.set(
+        // Persist via store
+        await this.ttsStore.persistAudio(
             cacheKeyParams,
+            result.audio,
             {
-                url: storagePath,
-                duration: result.durationSeconds * 1000, // Convert to ms
                 voiceId,
-                metadata: {
-                    emotion,
-                    characterName,
-                },
+                durationSeconds: result.durationSeconds,
+                emotion,
+                characterName,
             }
         );
 
-        this.logger.info('Speech generated', {
+        this.logger.info('Speech generated and cached', {
             voiceId,
             durationSeconds: result.durationSeconds,
             characterName,

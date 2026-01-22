@@ -6,8 +6,12 @@
 
 // Types and identifiers
 export {
-    IocInfrastructure,
+    IocConnection,
+    IocStore,
+    IocRepository,
+    IocProvider,
     IocService,
+    IocInfrastructure,
     BUCKETS,
     type BucketName,
 } from './ioc.types';

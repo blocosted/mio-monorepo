@@ -7,7 +7,7 @@
 import 'reflect-metadata';
 import { injectable, inject } from 'inversify';
 
-import { IocService } from '../../ioc';
+import { IocStore } from '../../ioc';
 import type {
     ChildProfile,
     CreateChildProfileInput,
@@ -20,7 +20,7 @@ import { mapRowToProfile, mapRowsToProfiles } from './profiles.service.map';
 @injectable()
 export class ProfilesService implements IProfilesService {
     constructor(
-        @inject(IocService.PROFILES_STORE)
+        @inject(IocStore.PROFILES_STORE)
         private readonly store: IProfilesStore
     ) {}
 

@@ -10,7 +10,7 @@
  */
 
 import 'reflect-metadata';
-import { injectable, inject } from 'inversify';
+import { injectable } from 'inversify';
 
 import {
   AppError,
@@ -19,15 +19,18 @@ import {
   type DurationBudget,
   type NarrativeStructure,
   type ScriptGenerationConstraints,
-  type EnrichedConcept,
-  type StoryAnswer,
   type VoiceSegmentContent,
 } from '@mio/shared';
-import { Logger } from '@mio/shared/server/logger';
 
-import { IocInfrastructure } from '../../ioc';
-import type { ILLMProvider, ScriptGenerationContext } from './providers/llm-provider.types';
-import { getVocabularyLevel, type EnrichmentProfile } from './llm.service.types';
+import { AbstractService } from '../service.abstract';
+import type { ILLMRepository, ScriptGenerationContext } from '../../repositories/llm/llm-repository.types';
+import { getVocabularyLevel } from './llm.service.types';
+import type {
+  IScriptGenerationService,
+  ScriptValidationResult,
+  ScriptGenerationInput,
+  ScriptGenerationResult,
+} from './script-generation.service.types';
 
 /**
  * Constants for duration calculation
@@ -85,44 +88,9 @@ const SEGMENT_REQUIREMENTS = {
   },
 };
 
-/**
- * Validation result
- */
-export interface ScriptValidationResult {
-  isValid: boolean;
-  wordCount: number;
-  estimatedDuration: number;
-  errors: string[];
-  warnings: string[];
-}
-
-/**
- * Script generation input (timeline-based)
- */
-export interface ScriptGenerationInput {
-  enrichedConcept: EnrichedConcept;
-  profile: EnrichmentProfile;
-  answers: StoryAnswer[];
-  targetDurationMinutes?: number;
-}
-
-/**
- * Script generation result (timeline-based)
- */
-export interface ScriptGenerationResult {
-  script: StoryScript;
-  validation: ScriptValidationResult;
-  attempts: number;
-}
-
 @injectable()
-export class ScriptGenerationService {
+export class ScriptGenerationService extends AbstractService implements IScriptGenerationService {
   private readonly maxAttempts = 3;
-
-  constructor(
-    @inject(IocInfrastructure.LOGGER)
-    private readonly logger: Logger,
-  ) { }
 
   /**
    * Calculate duration budget for given target duration
@@ -437,10 +405,10 @@ export class ScriptGenerationService {
    */
   async generateScript(
     input: ScriptGenerationInput,
-    provider: ILLMProvider,
+    provider: ILLMRepository,
   ): Promise<ScriptGenerationResult> {
     const targetMinutes = input.targetDurationMinutes ?? 5;
-    const providerType = provider.providerType === 'anthropic' ? 'anthropic' : 'openai';
+    const providerType = provider.repositoryType === 'anthropic' ? 'anthropic' : 'openai';
     const constraints = this.buildConstraints(targetMinutes, providerType);
     const vocabularyLevel = getVocabularyLevel(input.profile.age);
 

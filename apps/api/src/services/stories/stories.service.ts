@@ -9,7 +9,7 @@ import { injectable, inject } from 'inversify';
 
 import { AppError, ErrorCodes } from '@mio/shared';
 
-import { IocService } from '../../ioc';
+import { IocStore } from '../../ioc';
 import type { IProfilesStore } from '../profiles';
 import type {
     CreateStoryInput,
@@ -22,9 +22,9 @@ import { mapRowToStory } from './stories.service.map';
 @injectable()
 export class StoriesService implements IStoriesService {
     constructor(
-        @inject(IocService.STORIES_STORE)
+        @inject(IocStore.STORIES_STORE)
         private readonly store: IStoriesStore,
-        @inject(IocService.PROFILES_STORE)
+        @inject(IocStore.PROFILES_STORE)
         private readonly profilesStore: IProfilesStore
     ) {}
 

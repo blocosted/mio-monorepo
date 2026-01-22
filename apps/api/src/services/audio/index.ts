@@ -6,6 +6,7 @@
 
 // TTS Service
 export { TTSService } from './tts.service';
+export { TTSStore } from './tts.service.store';
 export type {
     ITTSService,
     GenerateSpeechInput,
@@ -92,6 +93,7 @@ export type {
 
 // Sound Effects Service
 export { SoundEffectsService } from './soundEffects.service';
+export { SoundEffectsStore } from './soundEffects.service.store';
 export type {
     ISoundEffectsService,
     GenerateSfxInput,

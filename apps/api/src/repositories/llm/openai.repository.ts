@@ -1,7 +1,7 @@
 /**
- * OpenAI LLM Provider
+ * OpenAI LLM Repository
  *
- * Implements ILLMProvider using the OpenAI API.
+ * Implements ILLMRepository using the OpenAI API.
  * Handles prompt construction and API communication for OpenAI models.
  */
 
@@ -13,23 +13,23 @@ import { AppError, ErrorCodes } from '@mio/shared';
 import { environment } from '@mio/shared/constants/environment.constants';
 import { Logger } from '@mio/shared/server/logger';
 
-import { IocConnection } from '../../../ioc';
+import { IocConnection } from '../../ioc';
 import type {
-  ILLMProvider,
-  LLMProviderType,
+  ILLMRepository,
+  LLMRepositoryType,
   LLMCompletionOptions,
   LLMRawResponse,
   EnrichmentContext,
   ScriptGenerationContext,
-} from './llm-provider.types';
+} from './llm-repository.types';
 import {
   buildEnrichmentSystemPrompt,
   buildEnrichmentUserPrompt,
-} from '../prompts/enrichment.prompts';
+} from '../../services/llm/prompts/enrichment.prompts';
 import {
   buildScriptGenerationSystemPrompt,
   buildScriptGenerationUserPrompt,
-} from '../prompts/scriptGeneration.prompts';
+} from '../../services/llm/prompts/scriptGeneration.prompts';
 import type { ChatModel } from 'openai/resources/index.mjs';
 
 /** Default configuration */
@@ -45,8 +45,8 @@ const MAX_RETRIES = 3;
 const INITIAL_RETRY_DELAY = 1000;
 
 @injectable()
-export class OpenAIProvider implements ILLMProvider {
-  readonly providerType: LLMProviderType = 'openai';
+export class OpenAIRepository implements ILLMRepository {
+  readonly repositoryType: LLMRepositoryType = 'openai';
   private readonly client: OpenAI;
 
   constructor(

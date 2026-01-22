@@ -22,26 +22,26 @@ export {
   AVAILABLE_AMBIANCES,
 } from './llm.service.types';
 
-// Provider types
+// Repository types (re-exported for convenience)
 export type {
-  LLMProviderType,
+  LLMRepositoryType,
   LLMRawResponse,
   EnrichmentContext,
   ScriptGenerationContext,
-  ILLMProvider,
-  ILLMProviderRegistry,
-} from './providers';
+  ILLMRepository,
+  ILLMRepositoryRegistry,
+} from '../../repositories/llm';
 
 // Script generation service types (timeline-based)
 export type {
+  IScriptGenerationService,
   ScriptValidationResult,
   ScriptGenerationInput,
   ScriptGenerationResult,
-} from './script-generation.service';
+} from './script-generation.service.types';
 
 // Implementations
 export { OpenAILLMService } from './openai';
-export { OpenAIProvider, AnthropicProvider } from './providers';
 export { ScriptGenerationService } from './script-generation.service';
 
 // Parsers

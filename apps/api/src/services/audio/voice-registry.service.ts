@@ -22,9 +22,9 @@ import {
     VoiceUseCaseValues,
 } from '@mio/shared/types';
 
-import { getInstance, IocInfrastructure, IocService } from '../../ioc';
+import { getInstance, IocInfrastructure, IocRepository } from '../../ioc';
 import type { DatabaseConnection } from '@mio/shared/server/connections/db';
-import type { IElevenLabsProvider } from './elevenLabs.provider.types';
+import type { IVoicesRepository } from '../../repositories/audio/audio-repository.types';
 import type {
     IVoiceRegistryService,
     StoredVoice,
@@ -191,15 +191,15 @@ export class VoiceRegistryService implements IVoiceRegistryService {
     ) {}
 
     /**
-     * Lazily get the ElevenLabs provider to avoid circular dependencies
+     * Lazily get the Voices repository to avoid circular dependencies
      */
-    private _provider: IElevenLabsProvider | null = null;
-    private getProvider(): IElevenLabsProvider {
-        if (!this._provider) {
+    private _repository: IVoicesRepository | null = null;
+    private getRepository(): IVoicesRepository {
+        if (!this._repository) {
             // Import dynamically to avoid circular dependency
-            this._provider = getInstance<IElevenLabsProvider>(IocService.ELEVENLABS_PROVIDER);
+            this._repository = getInstance<IVoicesRepository>(IocRepository.VOICES);
         }
-        return this._provider;
+        return this._repository;
     }
 
     /**
@@ -283,7 +283,7 @@ export class VoiceRegistryService implements IVoiceRegistryService {
      */
     async syncFromApi(options?: SyncOptions): Promise<SyncResult> {
         const opts = { ...DEFAULT_SYNC_OPTIONS, ...options };
-        const provider = this.getProvider();
+        const repository = this.getRepository();
 
         this.logger.info('Starting voice sync from ElevenLabs API', {
             pageSize: opts.pageSize,
@@ -292,7 +292,7 @@ export class VoiceRegistryService implements IVoiceRegistryService {
         });
 
         // Fetch voices from API
-        const apiVoices = await provider.listVoices();
+        const apiVoices = await repository.listVoices();
 
         this.logger.debug('Fetched voices from API', { count: apiVoices.length });
 

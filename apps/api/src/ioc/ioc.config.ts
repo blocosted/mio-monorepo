@@ -12,7 +12,7 @@ import '@mio/helpers/env.loader';
 // Import ensures env loader hydration happens before wiring connections
 import '@mio/shared/constants/environment.constants';
 
-import { IocInfrastructure, IocService } from './ioc.types';
+import { IocConnection, IocStore, IocRepository, IocProvider, IocService, IocInfrastructure } from './ioc.types';
 
 // Connections
 import { dbConnectionFactory, type DatabaseConnection } from '@mio/shared/server/connections/db';
@@ -46,23 +46,43 @@ import {
     type IStoriesService,
     type IStoriesStore,
 } from '../services/stories';
-import { OpenAILLMService, type ILLMService } from '../services/llm';
+// Repositories (external API clients)
+import {
+    OpenAIRepository,
+    AnthropicRepository,
+    type ILLMRepository,
+} from '../repositories/llm';
+import {
+    VoicesRepository,
+    SoundEffectsRepository,
+    type IVoicesRepository,
+    type ISoundEffectsRepository,
+} from '../repositories/audio';
+
+// LLM Services
+import {
+    OpenAILLMService,
+    ScriptGenerationService,
+    type ILLMService,
+    type IScriptGenerationService,
+} from '../services/llm';
+
+// Audio Services
 import {
     TTSService,
-    ElevenLabsProvider,
+    TTSStore,
     VoiceRegistryService,
     FFmpegMixerService,
-    SoundEffectsProvider,
     SoundEffectsService,
+    SoundEffectsStore,
     type ITTSService,
-    type IElevenLabsProvider,
     type IVoiceRegistryService,
     type IFFmpegMixerService,
-    type ISoundEffectsProvider,
     type ISoundEffectsService,
 } from '../services/audio';
 import {
     AudioLibraryService,
+    AudioLibraryStore,
     type IAudioLibraryService,
 } from '../services/audio-library';
 
@@ -82,6 +102,8 @@ export async function initializeContainer(): Promise<void> {
     const logger = await Logger.create();
 
     // Bind the pre-created Logger instance
+    container.bind<Logger>(IocConnection.LOGGER).toConstantValue(logger);
+    // Backwards compatibility
     container.bind<Logger>(IocInfrastructure.LOGGER).toConstantValue(logger);
 
     /**
@@ -89,34 +111,42 @@ export async function initializeContainer(): Promise<void> {
      * Maps IoC identifiers to their factory functions
      */
     const factories = {
-        // Infrastructure - Database Client
-        [IocInfrastructure.DATABASE_CLIENT]: () => dbConnectionFactory(),
+        // Connections
+        // Connections (IocInfrastructure enum values map to same strings for backwards compatibility)
+        [IocConnection.DATABASE]: () => dbConnectionFactory(),
+        [IocConnection.STORAGE]: () => storageConnectionFactory(),
+        [IocConnection.REDIS]: () =>
+            redisConnectionFactory(container.get<Logger>(IocConnection.LOGGER)),
 
-        // Infrastructure - Storage Client
-        [IocInfrastructure.STORAGE_CLIENT]: () => storageConnectionFactory(),
+        // Stores (private to their services)
+        [IocStore.PROFILES_STORE]: () => container.get(ProfilesStore, { autobind: true }),
+        [IocStore.STORIES_STORE]: () => container.get(StoriesStore, { autobind: true }),
+        [IocStore.TTS_STORE]: () => container.get(TTSStore, { autobind: true }),
+        [IocStore.SOUND_EFFECTS_STORE]: () => container.get(SoundEffectsStore, { autobind: true }),
+        [IocStore.AUDIO_LIBRARY_STORE]: () => container.get(AudioLibraryStore, { autobind: true }),
 
-        // Infrastructure - Redis Client
-        [IocInfrastructure.REDIS_CLIENT]: () =>
-            redisConnectionFactory(container.get<Logger>(IocInfrastructure.LOGGER)),
+        // Repositories (shared external API clients)
+        // Note: IocProvider enum values map to the same strings for backwards compatibility
+        [IocRepository.OPENAI]: () => container.get(OpenAIRepository, { autobind: true }),
+        [IocRepository.ANTHROPIC]: () => container.get(AnthropicRepository, { autobind: true }),
+        [IocRepository.VOICES]: () => container.get(VoicesRepository, { autobind: true }),
+        [IocRepository.SOUND_EFFECTS]: () => container.get(SoundEffectsRepository, { autobind: true }),
 
         // Services
         [IocService.STORAGE]: () => container.get(StorageService, { autobind: true }),
         [IocService.CACHE]: () => container.get(CacheService, { autobind: true }),
         [IocService.AUDIO_CACHE]: () => container.get(AudioCacheService, { autobind: true }),
         [IocService.JOB_PROGRESS]: () => container.get(JobProgressService, { autobind: true }),
-        [IocService.PROFILES_STORE]: () => container.get(ProfilesStore, { autobind: true }),
         [IocService.PROFILES]: () => container.get(ProfilesService, { autobind: true }),
-        [IocService.STORIES_STORE]: () => container.get(StoriesStore, { autobind: true }),
         [IocService.STORIES]: () => container.get(StoriesService, { autobind: true }),
-        [IocService.LLM]: () => container.get(OpenAILLMService, { autobind: true }),
-        [IocService.ELEVENLABS_PROVIDER]: () => container.get(ElevenLabsProvider, { autobind: true }),
+        [IocService.SCRIPT_GENERATION]: () => container.get(ScriptGenerationService, { autobind: true }),
         [IocService.VOICE_REGISTRY]: () => container.get(VoiceRegistryService, { autobind: true }),
         [IocService.TTS]: () => container.get(TTSService, { autobind: true }),
         [IocService.FFMPEG_MIXER]: () => container.get(FFmpegMixerService, { autobind: true }),
-        [IocService.SOUND_EFFECTS_PROVIDER]: () => container.get(SoundEffectsProvider, { autobind: true }),
         [IocService.SFX_CACHE]: () => container.get(SfxCacheService, { autobind: true }),
         [IocService.SOUND_EFFECTS]: () => container.get(SoundEffectsService, { autobind: true }),
         [IocService.AUDIO_LIBRARY]: () => container.get(AudioLibraryService, { autobind: true }),
+
     } as const;
 
     // Register all factories
@@ -128,7 +158,7 @@ export async function initializeContainer(): Promise<void> {
 }
 
 // Type for all identifiers
-type IocIdentifier = IocInfrastructure | IocService;
+type IocIdentifier = IocConnection | IocStore | IocRepository | IocProvider | IocService | IocInfrastructure;
 
 /**
  * Get an instance from the container
@@ -151,6 +181,11 @@ export async function resetContainer(): Promise<void> {
 
 // Type exports for container access
 export type {
+    // Repositories
+    ILLMRepository,
+    IVoicesRepository,
+    ISoundEffectsRepository,
+    // Services
     IStorageService,
     ICacheService,
     IAudioCacheService,
@@ -161,11 +196,10 @@ export type {
     IStoriesService,
     IStoriesStore,
     ILLMService,
+    IScriptGenerationService,
     ITTSService,
-    IElevenLabsProvider,
     IVoiceRegistryService,
     IFFmpegMixerService,
-    ISoundEffectsProvider,
     ISoundEffectsService,
     IAudioLibraryService,
 };
