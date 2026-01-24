@@ -44,6 +44,37 @@ INFRASTRUCTURE → Drizzle, S3 (Bun), Redis (Bun)
 
 **Rule**: Inner layers NEVER depend on outer layers.
 
+## Dependency Constraints (Clean Architecture)
+
+| Layer | Can Call | Cannot Call |
+|-------|----------|-------------|
+| **Store** | DatabaseConnection only | Other stores, services, repositories, Redis |
+| **Repository** | External APIs, Logger only | Stores, services, other repositories |
+| **Service** | Own-scope stores, any service, any repository, CacheService | Cross-scope stores directly |
+| **Orchestrator** | Same as Service | Same as Service |
+| **Workflow** | Services, orchestrators only | Stores, repositories, handlers |
+| **Handler** | Services, workflows only | Stores, repositories directly |
+
+**Scope Rule**: A service can only access stores within its own feature scope. For cross-scope data, use the other scope's service.
+
+Example (WRONG):
+```typescript
+// StoriesService directly accessing ProfilesStore (cross-scope)
+@inject(IocStore.PROFILES_STORE) private readonly profilesStore: ProfilesStore
+```
+
+Example (CORRECT):
+```typescript
+// StoriesService uses ProfilesService for profile data
+@inject(IocService.PROFILES) private readonly profilesService: ProfilesService
+```
+
+**Caching Rule**: Cache logic belongs in services, not stores.
+- Use `CacheService.get/set()` for cache-aside pattern in services
+- Stores provide pure DB methods: `query()`, `insert()`, etc.
+
+**Transaction Responsibility**: Services use `AbstractService.withTrx()` for multi-operation transactions.
+
 ## File Organization (API)
 
 ```

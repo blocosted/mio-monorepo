@@ -2,7 +2,8 @@
  * SFX Library Store
  *
  * Data access layer for audioLibrarySfx table.
- * Handles CRUD operations and caching for sound effects library.
+ * Handles CRUD operations for sound effects library.
+ * Caching is handled by SfxLibraryService.
  */
 
 import 'reflect-metadata';
@@ -14,14 +15,7 @@ import type { DatabaseConnection } from '@mio/shared/server/connections/db';
 import type { AudioIntensity, SfxEnvironment, SfxLibraryCategory } from '@mio/shared/types';
 import { audioLibrarySfx } from '@mio/db/schema';
 
-import type { CacheService } from '../cache/cache.service';
-import { IocConnection, IocService } from '../../ioc/ioc.types';
-
-/** Redis cache TTL for SFX lookups (1 hour) */
-const CACHE_TTL_SECONDS = 3600;
-
-/** Cache key prefix */
-const CACHE_PREFIX = 'audio-library:sfx';
+import { IocConnection } from '../../ioc/ioc.types';
 
 /**
  * Stored SFX from database
@@ -107,29 +101,14 @@ export interface SfxLibraryStats {
  * SFX Library Store
  *
  * Provides data access methods for sound effects library.
+ * Pure DB access - no caching logic.
  */
 @injectable()
 export class SfxLibraryStore {
   constructor(
     @inject(IocConnection.DATABASE)
-    private readonly db: DatabaseConnection,
-    @inject(IocService.CACHE)
-    private readonly cache: CacheService
+    private readonly db: DatabaseConnection
   ) {}
-
-  /**
-   * Find SFX with cache check
-   */
-  async findWithCache(params: FindSfxParams): Promise<SfxLookupResult> {
-    const cacheKey = this.buildCacheKey(params);
-    const cached = await this.cache.get<StoredSfx>(cacheKey);
-
-    if (cached) {
-      return { sfx: cached, fromCache: true };
-    }
-
-    return { sfx: null, fromCache: false };
-  }
 
   /**
    * Query SFX from database
@@ -165,14 +144,6 @@ export class SfxLibraryStore {
 
     const rows = await query;
     return rows.map(this.mapRow);
-  }
-
-  /**
-   * Cache an SFX entry
-   */
-  async cacheSfx(params: FindSfxParams, sfx: StoredSfx): Promise<void> {
-    const cacheKey = this.buildCacheKey(params);
-    await this.cache.set(cacheKey, sfx, { ex: CACHE_TTL_SECONDS });
   }
 
   /**
@@ -284,18 +255,4 @@ export class SfxLibraryStore {
     };
   }
 
-  /**
-   * Build cache key for SFX lookup
-   */
-  private buildCacheKey(params: FindSfxParams): string {
-    const parts = [
-      CACHE_PREFIX,
-      params.category ?? 'any',
-      params.subcategory ?? 'any',
-      params.environment ?? 'any',
-      params.intensity ?? 'any',
-      Bun.hash(params.text).toString(36)
-    ];
-    return parts.join(':');
-  }
 }

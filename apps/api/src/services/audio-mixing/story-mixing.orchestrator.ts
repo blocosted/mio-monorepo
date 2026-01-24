@@ -14,11 +14,11 @@ import { inject, injectable } from 'inversify';
 
 import type { StoryScript, TimelineSegment } from '@mio/shared/types';
 
-import type { AudioAssetsStore } from '../stories/audio-assets.store';
+import type { AudioAssetsService } from '../stories/audio-assets.service';
 import type { AudioFile, MixStoryInput } from './ffmpeg-mixer.service.types';
 import type { FFmpegMixerService } from './ffmpeg-mixer.service';
 import type { LoadedAudioAsset, StoryMixingInput, StoryMixingResult } from './story-mixing.orchestrator.types';
-import { IocService, IocStore } from '../../ioc/ioc.types';
+import { IocService } from '../../ioc/ioc.types';
 import { AbstractService } from '../service.abstract';
 
 /** S3 temp path for mixed audio */
@@ -41,7 +41,7 @@ const DEFAULT_VOLUMES = {
 export class StoryMixingOrchestrator extends AbstractService {
   constructor(
     @inject(IocService.FFMPEG_MIXER) private readonly mixerService: FFmpegMixerService,
-    @inject(IocStore.AUDIO_ASSETS_STORE) private readonly audioAssetsStore: AudioAssetsStore
+    @inject(IocService.AUDIO_ASSETS) private readonly audioAssetsService: AudioAssetsService
   ) {
     super();
   }
@@ -185,7 +185,7 @@ export class StoryMixingOrchestrator extends AbstractService {
       return [];
     }
 
-    const assets = await Promise.all(assetIds.map((id) => this.audioAssetsStore.findById(id)));
+    const assets = await Promise.all(assetIds.map((id) => this.audioAssetsService.findById(id)));
 
     return assets
       .filter((a): a is NonNullable<typeof a> => a !== null)

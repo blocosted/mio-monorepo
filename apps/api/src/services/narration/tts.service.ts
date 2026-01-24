@@ -17,10 +17,12 @@ import type { ElevenLabsVoiceSettings, Emotion } from '@mio/shared/types';
 import { AppError, ErrorCodes } from '@mio/shared';
 
 import type { IAudioRepository } from '../../repositories/audio/audio-repository.types';
+import type { AudioCacheKeyParams } from '../cache/audio-cache.service.types';
+import type { AudioCacheService } from '../cache/audio-cache.service';
 import type { CacheService } from '../cache/cache.service';
-import type { TTSStore } from './tts.service.store';
+import type { StorageService } from '../storage';
 import type { BatchGenerateSpeechInput, BatchGenerateSpeechResult, GenerateSpeechInput, GenerateSpeechResult } from './tts.service.types';
-import { IocRepository, IocService, IocStore } from '../../ioc/ioc.types';
+import { IocRepository, IocService } from '../../ioc/ioc.types';
 import { getInstance } from '../../ioc/ioc.config';
 import { AbstractService } from '../service.abstract';
 import {
@@ -33,6 +35,17 @@ import {
   EMOTION_VOICE_SETTINGS,
   RATE_LIMIT_CONFIG
 } from './tts.service.constants';
+
+/**
+ * Cached audio metadata with full details
+ */
+interface CachedAudioMetadata {
+  url: string;
+  duration: number;
+  voiceId: string;
+  metadata?: { emotion?: string; characterName?: string };
+  audio: Buffer;
+}
 
 /**
  * TTS Service
@@ -48,8 +61,9 @@ export class TTSService extends AbstractService {
   private readonly localLimit: ReturnType<typeof pLimit>;
 
   constructor(
-    @inject(IocStore.TTS_STORE) private readonly ttsStore: TTSStore,
-    @inject(IocService.CACHE) private readonly cache: CacheService
+    @inject(IocService.AUDIO_CACHE) private readonly audioCache: AudioCacheService,
+    @inject(IocService.CACHE) private readonly cache: CacheService,
+    @inject(IocService.STORAGE) private readonly storage: StorageService
   ) {
     super();
     this.localLimit = pLimit(CONCURRENCY_CONFIG.maxLocalConcurrency);
@@ -97,21 +111,23 @@ export class TTSService extends AbstractService {
         : undefined
     };
 
+    const cacheKey = this.generateCacheKey(cacheKeyParams);
+
     this.logger.debug('Generating speech', {
       textLength: text.length,
       voiceId,
       emotion,
       audioTag,
       characterName,
-      cacheKey: this.ttsStore.generateCacheKey(cacheKeyParams)
+      cacheKey
     });
 
-    // Check cache first via store
-    const cached = await this.ttsStore.getCachedAudio(cacheKeyParams);
+    // Check cache first
+    const cached = await this.getCachedAudio(cacheKeyParams);
     if (cached) {
       this.logger.info('[TTS CACHE HIT] Found cached audio', {
         voiceId,
-        cacheKey: this.ttsStore.generateCacheKey(cacheKeyParams),
+        cacheKey,
         cachedUrl: cached.url
       });
 
@@ -126,7 +142,7 @@ export class TTSService extends AbstractService {
 
     this.logger.info('[TTS CACHE MISS] No cached audio found, will call API', {
       voiceId,
-      cacheKey: this.ttsStore.generateCacheKey(cacheKeyParams),
+      cacheKey,
       voiceSettings: cacheKeyParams.voiceSettings
     });
 
@@ -142,8 +158,8 @@ export class TTSService extends AbstractService {
       voiceSettings: mergedSettings
     });
 
-    // Persist via store
-    await this.ttsStore.persistAudio(cacheKeyParams, result.audio, {
+    // Persist audio to cache and storage
+    await this.persistAudio(cacheKeyParams, result.audio, {
       voiceId,
       durationSeconds: result.durationSeconds,
       emotion,
@@ -301,5 +317,81 @@ export class TTSService extends AbstractService {
    */
   private sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Get cached audio from cache and storage
+   *
+   * @returns Cached audio with blob and metadata, or null if not found
+   */
+  private async getCachedAudio(cacheParams: AudioCacheKeyParams): Promise<CachedAudioMetadata | null> {
+    // Check cache metadata
+    const cached = await this.audioCache.get(cacheParams);
+    if (!cached) {
+      return null;
+    }
+
+    try {
+      // Download audio from storage
+      const audio = await this.storage.download(cached.url);
+
+      // Increment usage counter
+      await this.audioCache.incrementUsage(cacheParams);
+
+      return {
+        ...cached,
+        audio
+      };
+    } catch {
+      // Cache entry exists but file not found in storage
+      // Return null to trigger regeneration
+      return null;
+    }
+  }
+
+  /**
+   * Persist generated audio to storage and cache
+   *
+   * @param cacheParams - Cache key parameters
+   * @param audio - Audio buffer to persist
+   * @param metadata - Audio metadata (duration, voiceId, etc.)
+   */
+  private async persistAudio(
+    cacheParams: AudioCacheKeyParams,
+    audio: Buffer,
+    metadata: {
+      voiceId: string;
+      durationSeconds: number;
+      emotion?: string;
+      characterName?: string;
+    }
+  ): Promise<{ url: string }> {
+    // Generate storage path
+    const storagePath = `tts/${metadata.voiceId}/${Date.now()}-${Bun.hash(cacheParams.text)}.mp3`;
+
+    // Upload to storage
+    await this.storage.upload(audio, storagePath, {
+      contentType: 'audio/mpeg'
+    });
+
+    // Store in cache
+    await this.audioCache.set(cacheParams, {
+      url: storagePath,
+      duration: metadata.durationSeconds * 1000, // Convert to ms
+      voiceId: metadata.voiceId,
+      metadata: {
+        emotion: metadata.emotion,
+        characterName: metadata.characterName
+      }
+    });
+
+    return { url: storagePath };
+  }
+
+  /**
+   * Generate cache key for logging/debugging
+   */
+  private generateCacheKey(cacheParams: AudioCacheKeyParams): string {
+    return this.audioCache.generateCacheKey(cacheParams);
   }
 }

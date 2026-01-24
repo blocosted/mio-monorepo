@@ -14,7 +14,7 @@ import { AudioAssetType, type MusicMood, type TimelineSegment } from '@mio/share
 import type { AmbianceGeneratorService } from '../ambiance/ambiance-generator.service';
 import type { MusicGeneratorService } from '../music/music-generator.service';
 import type { SfxService } from '../sound-design/sfx.service';
-import type { AudioAssetsStore } from '../stories/audio-assets.store';
+import type { AudioAssetsService } from '../stories/audio-assets.service';
 import type {
   AmbianceGenerationInput,
   AudioGenerationResult,
@@ -22,7 +22,7 @@ import type {
   MusicGenerationInput,
   SfxGenerationInput
 } from './audio-generation.orchestrator.types';
-import { IocService, IocStore } from '../../ioc/ioc.types';
+import { IocService } from '../../ioc/ioc.types';
 import { AbstractService } from '../service.abstract';
 
 /**
@@ -37,7 +37,7 @@ export class AudioGenerationOrchestrator extends AbstractService {
     @inject(IocService.SFX) private readonly sfxService: SfxService,
     @inject(IocService.MUSIC_GENERATOR) private readonly musicService: MusicGeneratorService,
     @inject(IocService.AMBIANCE_GENERATOR) private readonly ambianceService: AmbianceGeneratorService,
-    @inject(IocStore.AUDIO_ASSETS_STORE) private readonly audioAssetsStore: AudioAssetsStore
+    @inject(IocService.AUDIO_ASSETS) private readonly audioAssetsService: AudioAssetsService
   ) {
     super();
   }
@@ -152,7 +152,7 @@ export class AudioGenerationOrchestrator extends AbstractService {
       const cacheKey = `sfx_${descriptionHash}_${Math.round(segment.duration)}`;
 
       // Check for existing asset
-      const existing = await this.audioAssetsStore.findByCacheKey(cacheKey);
+      const existing = await this.audioAssetsService.findByCacheKey(cacheKey);
       if (existing) {
         this.logger.debug('Using cached SFX asset', { cacheKey, segmentId: segment.id });
         return {
@@ -171,7 +171,7 @@ export class AudioGenerationOrchestrator extends AbstractService {
       });
 
       // Store in audio_assets table (URL from service)
-      const asset = await this.audioAssetsStore.create({
+      const asset = await this.audioAssetsService.create({
         storyId,
         type: AudioAssetType.Sfx,
         url: result.url,
@@ -210,7 +210,7 @@ export class AudioGenerationOrchestrator extends AbstractService {
       const cacheKey = `music_${segment.content.mood}_${Math.round(segment.duration)}`;
 
       // Check for existing asset
-      const existing = await this.audioAssetsStore.findByCacheKey(cacheKey);
+      const existing = await this.audioAssetsService.findByCacheKey(cacheKey);
       if (existing) {
         this.logger.debug('Using cached music asset', { cacheKey, segmentId: segment.id });
         return {
@@ -230,7 +230,7 @@ export class AudioGenerationOrchestrator extends AbstractService {
       });
 
       // Store in audio_assets table (URL from service)
-      const asset = await this.audioAssetsStore.create({
+      const asset = await this.audioAssetsService.create({
         storyId,
         type: AudioAssetType.Music,
         url: result.url,
@@ -276,7 +276,7 @@ export class AudioGenerationOrchestrator extends AbstractService {
       const cacheKey = `ambiance_${descriptionHash}_${Math.round(targetDuration)}`;
 
       // Check for existing asset
-      const existing = await this.audioAssetsStore.findByCacheKey(cacheKey);
+      const existing = await this.audioAssetsService.findByCacheKey(cacheKey);
       if (existing) {
         this.logger.debug('Using cached ambiance asset', { cacheKey, segmentId: segment.id });
         return {
@@ -296,7 +296,7 @@ export class AudioGenerationOrchestrator extends AbstractService {
       });
 
       // Store in audio_assets table (URL from service)
-      const asset = await this.audioAssetsStore.create({
+      const asset = await this.audioAssetsService.create({
         storyId,
         type: AudioAssetType.Ambiance,
         url: result.url,

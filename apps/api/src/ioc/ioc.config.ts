@@ -49,7 +49,6 @@ import {
 // Narration Services
 import {
   TTSService,
-  TTSStore,
   VoiceAssignmentService,
   VoiceGenerationOrchestrator,
   VoiceRegistryService,
@@ -57,11 +56,13 @@ import {
 } from '../services/narration';
 import { ProfilesService, ProfilesStore } from '../services/profiles';
 // Sound Design Services
-import { SfxLibraryService, SfxLibraryStore, SfxService, SfxStore } from '../services/sound-design';
+import { SfxLibraryService, SfxLibraryStore, SfxService } from '../services/sound-design';
 // Services
 import { StorageService } from '../services/storage';
 import {
+  AudioAssetsService,
   AudioAssetsStore,
+  GenerationJobsService,
   GenerationJobsStore,
   StoriesService,
   StoriesStore,
@@ -106,8 +107,6 @@ export async function initializeContainer(): Promise<void> {
     [IocStore.STORY_SEGMENTS_STORE]: () => container.get(StorySegmentsStore, { autobind: true }),
     [IocStore.AUDIO_ASSETS_STORE]: () => container.get(AudioAssetsStore, { autobind: true }),
     [IocStore.GENERATION_JOBS_STORE]: () => container.get(GenerationJobsStore, { autobind: true }),
-    [IocStore.TTS_STORE]: () => container.get(TTSStore, { autobind: true }),
-    [IocStore.SOUND_EFFECTS_STORE]: () => container.get(SfxStore, { autobind: true }),
     [IocStore.VOICE_REGISTRY_STORE]: () => container.get(VoiceRegistryStore, { autobind: true }),
     [IocStore.SFX_LIBRARY_STORE]: () => container.get(SfxLibraryStore, { autobind: true }),
     [IocStore.AMBIANCE_LIBRARY_STORE]: () => container.get(AmbianceLibraryStore, { autobind: true }),
@@ -126,6 +125,8 @@ export async function initializeContainer(): Promise<void> {
     [IocService.JOB_PROGRESS]: () => container.get(JobProgressService, { autobind: true }),
     [IocService.PROFILES]: () => container.get(ProfilesService, { autobind: true }),
     [IocService.STORIES]: () => container.get(StoriesService, { autobind: true }),
+    [IocService.AUDIO_ASSETS]: () => container.get(AudioAssetsService, { autobind: true }),
+    [IocService.GENERATION_JOBS]: () => container.get(GenerationJobsService, { autobind: true }),
     [IocService.ENRICHMENT]: () => container.get(EnrichmentService, { autobind: true }),
     [IocService.SCRIPT_GENERATION]: () => container.get(ScriptGenerationService, { autobind: true }),
     [IocService.VOICE_REGISTRY]: () => container.get(VoiceRegistryService, { autobind: true }),

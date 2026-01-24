@@ -4,9 +4,9 @@ import { JobIdParamsSchema } from '@mio/shared/clients/mio/jobs';
 import { JobStatus } from '@mio/shared/types';
 
 import type { JobProgressService } from '../../services/cache';
-import type { GenerationJobsStore } from '../../services/stories/generation-jobs.store';
+import type { GenerationJobsService } from '../../services/stories/generation-jobs.service';
 import type { WorkflowOrchestratorService } from '../../services/workflows';
-import { IocService, IocStore } from '../../ioc/ioc.types';
+import { IocService } from '../../ioc/ioc.types';
 import { getInstance } from '../../ioc/ioc.config';
 
 export const jobsHandlers = new Elysia({ prefix: '/jobs', tags: ['jobs'] })
@@ -15,10 +15,10 @@ export const jobsHandlers = new Elysia({ prefix: '/jobs', tags: ['jobs'] })
     '/:id',
     async ({ params, set }) => {
       const jobProgress = getInstance<JobProgressService>(IocService.JOB_PROGRESS);
-      const jobsStore = getInstance<GenerationJobsStore>(IocStore.GENERATION_JOBS_STORE);
+      const jobsService = getInstance<GenerationJobsService>(IocService.GENERATION_JOBS);
 
-      // Get job from DB
-      const job = await jobsStore.findById(params.id);
+      // Get job from DB via service
+      const job = await jobsService.findById(params.id);
       if (!job) {
         set.status = 404;
         return { error: 'Job not found' };
@@ -50,10 +50,10 @@ export const jobsHandlers = new Elysia({ prefix: '/jobs', tags: ['jobs'] })
     '/:id/stream',
     async function* ({ params, set }) {
       const jobProgress = getInstance<JobProgressService>(IocService.JOB_PROGRESS);
-      const jobsStore = getInstance<GenerationJobsStore>(IocStore.GENERATION_JOBS_STORE);
+      const jobsService = getInstance<GenerationJobsService>(IocService.GENERATION_JOBS);
 
       // Verify job exists
-      const job = await jobsStore.findById(params.id);
+      const job = await jobsService.findById(params.id);
       if (!job) {
         set.status = 404;
         yield { event: 'error', data: JSON.stringify({ error: 'Job not found' }) };
@@ -94,7 +94,7 @@ export const jobsHandlers = new Elysia({ prefix: '/jobs', tags: ['jobs'] })
         }
 
         // Check if job was cancelled
-        const currentJob = await jobsStore.findById(params.id);
+        const currentJob = await jobsService.findById(params.id);
         if (currentJob && currentJob.status === JobStatus.Cancelled) {
           yield {
             event: 'cancelled',
@@ -113,11 +113,11 @@ export const jobsHandlers = new Elysia({ prefix: '/jobs', tags: ['jobs'] })
   .delete(
     '/:id',
     async ({ params, set }) => {
-      const jobsStore = getInstance<GenerationJobsStore>(IocStore.GENERATION_JOBS_STORE);
+      const jobsService = getInstance<GenerationJobsService>(IocService.GENERATION_JOBS);
       const orchestrator = getInstance<WorkflowOrchestratorService>(IocService.WORKFLOW_ORCHESTRATOR);
       const jobProgress = getInstance<JobProgressService>(IocService.JOB_PROGRESS);
 
-      const job = await jobsStore.findById(params.id);
+      const job = await jobsService.findById(params.id);
       if (!job) {
         set.status = 404;
         return { error: 'Job not found' };
@@ -130,7 +130,7 @@ export const jobsHandlers = new Elysia({ prefix: '/jobs', tags: ['jobs'] })
       }
 
       // Mark job as cancelled in DB
-      await jobsStore.cancel(params.id);
+      await jobsService.cancel(params.id);
 
       // Update Redis cache
       await jobProgress.update(params.id, { status: 'failed' });

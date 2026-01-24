@@ -105,11 +105,6 @@ export interface IAudioRepository {
    * List available voices
    */
   listVoices(): Promise<Array<{ voiceId: string; name: string; labels?: Record<string, string> }>>;
-
-  /**
-   * Check if a voice ID is valid
-   */
-  isValidVoice(voiceId: string): Promise<boolean>;
 }
 
 // ===== Sound Effects Repository Types =====

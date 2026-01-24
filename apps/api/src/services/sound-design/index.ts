@@ -2,11 +2,6 @@
  * Sound Design Service Exports
  */
 
-export type {
-  CachedSfxMetadata,
-  LibrarySearchParams,
-  PersistSfxParams
-} from './sfx.service.store';
 // Types
 export type {
   BatchGenerateSfxInput,
@@ -31,7 +26,6 @@ export type {
 } from './sfx-library.store';
 // Services
 export { SfxService } from './sfx.service';
-export { SfxStore } from './sfx.service.store';
 export { SfxLibraryService } from './sfx-library.service';
 // Stores
 export { SfxLibraryStore } from './sfx-library.store';

@@ -11,10 +11,10 @@ import { inject, injectable } from 'inversify';
 
 import { HeroGender, Language } from '@mio/shared/types';
 
-import type { ProfilesStore } from '../profiles/profiles.service.store';
+import type { ProfilesService } from '../profiles/profiles.service';
 import type { StoriesStore } from './stories.service.store';
 import type { ChildProfileData, EnrichmentProfile, StoryContext, StoryData } from './story-context.service.types';
-import { IocStore } from '../../ioc/ioc.types';
+import { IocService, IocStore } from '../../ioc/ioc.types';
 import { AbstractService } from '../service.abstract';
 
 /**
@@ -27,7 +27,7 @@ import { AbstractService } from '../service.abstract';
 export class StoryContextService extends AbstractService {
   constructor(
     @inject(IocStore.STORIES_STORE) private readonly storiesStore: StoriesStore,
-    @inject(IocStore.PROFILES_STORE) private readonly profilesStore: ProfilesStore
+    @inject(IocService.PROFILES) private readonly profilesService: ProfilesService
   ) {
     super();
   }
@@ -54,19 +54,19 @@ export class StoryContextService extends AbstractService {
       answers: storyRecord.answers
     };
 
-    // Load child profile
-    const profileRecord = await this.profilesStore.findById(story.childProfileId);
-    if (!profileRecord) {
+    // Load child profile via ProfilesService
+    const profile = await this.profilesService.getById(story.childProfileId);
+    if (!profile) {
       throw new Error(`Child profile not found: ${story.childProfileId}`);
     }
 
-    // Map DB record to ChildProfileData
+    // Map service profile to ChildProfileData
     const childProfile: ChildProfileData = {
-      id: profileRecord.id,
-      firstName: profileRecord.firstName,
-      age: profileRecord.age,
-      gender: profileRecord.gender,
-      preferences: profileRecord.preferences ?? {}
+      id: profile.id,
+      firstName: profile.firstName,
+      age: profile.age,
+      gender: profile.gender,
+      preferences: profile.preferences ?? {}
     };
 
     // Build enrichment profile

@@ -247,26 +247,6 @@ export class AudioRepository implements IAudioRepository, ISoundEffectsRepositor
     }
   }
 
-  /**
-   * Check if a voice ID is valid using VoiceRegistry (database lookup, no API call)
-   *
-   * Falls back to assuming valid if VoiceRegistry is not available
-   * (e.g., during initial setup before voices are synced).
-   */
-  async isValidVoice(voiceId: string): Promise<boolean> {
-    try {
-      // Lazy load VoiceRegistry to avoid circular dependency at import time
-      const { getInstance, IocService } = await import('../../ioc');
-      const voiceRegistry = getInstance<import('../../services/narration/voice-registry.service').VoiceRegistryService>(IocService.VOICE_REGISTRY);
-      return voiceRegistry.isValidVoice(voiceId);
-    } catch {
-      // If VoiceRegistry is not available (e.g., no voices synced yet),
-      // assume valid (will fail at generation time if invalid)
-      this.logger.warn('VoiceRegistry not available, assuming voice is valid', { voiceId });
-      return true;
-    }
-  }
-
   // ===== Sound Effects Methods =====
 
   /**

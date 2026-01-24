@@ -3,10 +3,16 @@
  */
 
 export type {
+  AudioAsset,
+  CreateAudioAssetInput,
+  CreateGenerationJobInput,
   CreateStoryInput,
   CreateStoryRowInput,
+  GenerationJob,
+  JobStepProgress,
   Story,
-  StoryRow
+  StoryRow,
+  UpdateGenerationJobInput
 } from './stories.service.types';
 export type {
   ChildProfileData,
@@ -20,7 +26,9 @@ export type {
   UploadFinalAudioInput,
   UploadFinalAudioResult
 } from './story-finalization.service.types';
+export { AudioAssetsService } from './audio-assets.service';
 export { AudioAssetsStore } from './audio-assets.store';
+export { GenerationJobsService } from './generation-jobs.service';
 export { GenerationJobsStore } from './generation-jobs.store';
 export { StoriesService } from './stories.service';
 export { mapRowToStory } from './stories.service.map';

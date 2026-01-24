@@ -132,6 +132,7 @@ export interface GenerationJob {
   progress: number;
   currentStep: JobStep | null;
   steps: JobStepProgress[];
+  workflowRunId?: string;
   result?: {
     audioUrl: string;
     duration: number;

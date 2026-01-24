@@ -2,7 +2,8 @@
  * Music Library Store
  *
  * Data access layer for audioLibraryMusic table.
- * Handles CRUD operations and caching for music library.
+ * Handles CRUD operations for music library.
+ * Caching is handled by MusicLibraryService.
  */
 
 import 'reflect-metadata';
@@ -14,14 +15,7 @@ import type { DatabaseConnection } from '@mio/shared/server/connections/db';
 import type { MusicIntensity, MusicMood, MusicTempo } from '@mio/shared/types';
 import { audioLibraryMusic } from '@mio/db/schema';
 
-import type { CacheService } from '../cache/cache.service';
-import { IocConnection, IocService } from '../../ioc/ioc.types';
-
-/** Redis cache TTL for music lookups (1 hour) */
-const CACHE_TTL_SECONDS = 3600;
-
-/** Cache key prefix */
-const CACHE_PREFIX = 'audio-library:music';
+import { IocConnection } from '../../ioc/ioc.types';
 
 /**
  * Stored Music from database
@@ -106,29 +100,14 @@ export interface MusicLibraryStats {
  * Music Library Store
  *
  * Provides data access methods for music library.
+ * Pure DB access - no caching logic.
  */
 @injectable()
 export class MusicLibraryStore {
   constructor(
     @inject(IocConnection.DATABASE)
-    private readonly db: DatabaseConnection,
-    @inject(IocService.CACHE)
-    private readonly cache: CacheService
+    private readonly db: DatabaseConnection
   ) {}
-
-  /**
-   * Find Music with cache check
-   */
-  async findWithCache(params: FindMusicParams): Promise<MusicLookupResult> {
-    const cacheKey = this.buildCacheKey(params);
-    const cached = await this.cache.get<StoredMusic>(cacheKey);
-
-    if (cached) {
-      return { music: cached, fromCache: true };
-    }
-
-    return { music: null, fromCache: false };
-  }
 
   /**
    * Query Music from database
@@ -160,14 +139,6 @@ export class MusicLibraryStore {
 
     const rows = await query;
     return rows.map(this.mapRow);
-  }
-
-  /**
-   * Cache a Music entry
-   */
-  async cacheMusic(params: FindMusicParams, music: StoredMusic): Promise<void> {
-    const cacheKey = this.buildCacheKey(params);
-    await this.cache.set(cacheKey, music, { ex: CACHE_TTL_SECONDS });
   }
 
   /**
@@ -281,11 +252,4 @@ export class MusicLibraryStore {
     };
   }
 
-  /**
-   * Build cache key for Music lookup
-   */
-  private buildCacheKey(params: FindMusicParams): string {
-    const parts = [CACHE_PREFIX, params.mood, params.intensity ?? 'any', params.tempo ?? 'any'];
-    return parts.join(':');
-  }
 }

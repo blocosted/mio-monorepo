@@ -2,7 +2,8 @@
  * Ambiance Library Store
  *
  * Data access layer for audioLibraryAmbiance table.
- * Handles CRUD operations and caching for ambiance library.
+ * Handles CRUD operations for ambiance library.
+ * Caching is handled by AmbianceLibraryService.
  */
 
 import 'reflect-metadata';
@@ -14,14 +15,7 @@ import type { DatabaseConnection } from '@mio/shared/server/connections/db';
 import type { AmbianceEnvironment, AudioMood, TimeOfDay, WeatherCondition } from '@mio/shared/types';
 import { audioLibraryAmbiance } from '@mio/db/schema';
 
-import type { CacheService } from '../cache/cache.service';
-import { IocConnection, IocService } from '../../ioc/ioc.types';
-
-/** Redis cache TTL for ambiance lookups (1 hour) */
-const CACHE_TTL_SECONDS = 3600;
-
-/** Cache key prefix */
-const CACHE_PREFIX = 'audio-library:ambiance';
+import { IocConnection } from '../../ioc/ioc.types';
 
 /**
  * Stored Ambiance from database
@@ -113,29 +107,14 @@ export interface AmbianceLibraryStats {
  * Ambiance Library Store
  *
  * Provides data access methods for ambiance library.
+ * Pure DB access - no caching logic.
  */
 @injectable()
 export class AmbianceLibraryStore {
   constructor(
     @inject(IocConnection.DATABASE)
-    private readonly db: DatabaseConnection,
-    @inject(IocService.CACHE)
-    private readonly cache: CacheService
+    private readonly db: DatabaseConnection
   ) {}
-
-  /**
-   * Find Ambiance with cache check
-   */
-  async findWithCache(params: FindAmbianceParams): Promise<AmbianceLookupResult> {
-    const cacheKey = this.buildCacheKey(params);
-    const cached = await this.cache.get<StoredAmbiance>(cacheKey);
-
-    if (cached) {
-      return { ambiance: cached, fromCache: true };
-    }
-
-    return { ambiance: null, fromCache: false };
-  }
 
   /**
    * Query Ambiance from database
@@ -175,14 +154,6 @@ export class AmbianceLibraryStore {
 
     const rows = await query;
     return rows.map(this.mapRow);
-  }
-
-  /**
-   * Cache an Ambiance entry
-   */
-  async cacheAmbiance(params: FindAmbianceParams, ambiance: StoredAmbiance): Promise<void> {
-    const cacheKey = this.buildCacheKey(params);
-    await this.cache.set(cacheKey, ambiance, { ex: CACHE_TTL_SECONDS });
   }
 
   /**
@@ -298,19 +269,4 @@ export class AmbianceLibraryStore {
     };
   }
 
-  /**
-   * Build cache key for Ambiance lookup
-   */
-  private buildCacheKey(params: FindAmbianceParams): string {
-    const parts = [
-      CACHE_PREFIX,
-      params.environment ?? 'any',
-      params.subEnvironment ?? 'any',
-      params.timeOfDay ?? 'any',
-      params.weather ?? 'any',
-      params.mood ?? 'any',
-      Bun.hash(params.description).toString(36)
-    ];
-    return parts.join(':');
-  }
 }

@@ -12,11 +12,11 @@ import { AppError, ErrorCodes } from '@mio/shared';
 import { JobStatus } from '@mio/shared/types';
 
 import type { EnrichmentService } from '../llm';
-import type { ProfilesStore } from '../profiles';
+import type { ProfilesService } from '../profiles';
 import type { StorageService } from '../storage';
-import type { AudioAssetsStore } from './audio-assets.store';
-import type { GenerationJobRow, GenerationJobsStore } from './generation-jobs.store';
-import type { CreateStoryInput, EnrichedConcept, Story } from './stories.service.types';
+import type { AudioAssetsService } from './audio-assets.service';
+import type { GenerationJobsService } from './generation-jobs.service';
+import type { CreateStoryInput, EnrichedConcept, GenerationJob, Story } from './stories.service.types';
 import type { StoriesStore } from './stories.service.store';
 import { getInstance, IocService, IocStore } from '../../ioc';
 import { mapRowToStory } from './stories.service.map';
@@ -26,12 +26,12 @@ export class StoriesService {
   constructor(
     @inject(IocStore.STORIES_STORE)
     private readonly store: StoriesStore,
-    @inject(IocStore.PROFILES_STORE)
-    private readonly profilesStore: ProfilesStore,
-    @inject(IocStore.GENERATION_JOBS_STORE)
-    private readonly jobsStore: GenerationJobsStore,
-    @inject(IocStore.AUDIO_ASSETS_STORE)
-    private readonly audioAssetsStore: AudioAssetsStore
+    @inject(IocService.PROFILES)
+    private readonly profilesService: ProfilesService,
+    @inject(IocService.GENERATION_JOBS)
+    private readonly jobsService: GenerationJobsService,
+    @inject(IocService.AUDIO_ASSETS)
+    private readonly audioAssetsService: AudioAssetsService
   ) {}
 
   /**
@@ -53,7 +53,7 @@ export class StoriesService {
    * Ensures the child profile exists before insertion.
    */
   async create(input: CreateStoryInput): Promise<Story> {
-    const profile = await this.profilesStore.findById(input.childProfileId);
+    const profile = await this.profilesService.getById(input.childProfileId);
     if (!profile) {
       throw new AppError(ErrorCodes.NotFound, { name: 'ChildProfileNotFound' });
     }
@@ -94,7 +94,7 @@ export class StoriesService {
       throw new AppError(ErrorCodes.NotFound, { name: 'StoryNotFound' });
     }
 
-    const profile = await this.profilesStore.findById(storyRow.childProfileId);
+    const profile = await this.profilesService.getById(storyRow.childProfileId);
     if (!profile) {
       throw new AppError(ErrorCodes.NotFound, { name: 'ChildProfileNotFound' });
     }
@@ -109,11 +109,11 @@ export class StoriesService {
         firstName: profile.firstName,
         age: profile.age,
         gender: profile.gender,
-        favoriteThemes: profile.preferences?.favoriteThemes,
-        avoidThemes: profile.preferences?.avoidThemes,
-        includeChildAsCharacter: profile.preferences?.includeChildAsCharacter,
-        preferredHeroGender: profile.preferences?.preferredHeroGender,
-        language: profile.preferences?.language
+        favoriteThemes: profile.preferences.favoriteThemes,
+        avoidThemes: profile.preferences.avoidThemes,
+        includeChildAsCharacter: profile.preferences.includeChildAsCharacter,
+        preferredHeroGender: profile.preferences.preferredHeroGender,
+        language: profile.preferences.language
       }
     });
 
@@ -132,7 +132,7 @@ export class StoriesService {
     }
 
     // Get audio assets to cleanup from S3
-    const audioAssets = await this.audioAssetsStore.findByStoryId(id);
+    const audioAssets = await this.audioAssetsService.findByStoryId(id);
     const urlsToDelete = audioAssets
       .map((asset) => asset.url)
       .filter((url): url is string => url !== null);
@@ -154,8 +154,8 @@ export class StoriesService {
   /**
    * Create a generation job for a story
    */
-  async createGenerationJob(storyId: string): Promise<GenerationJobRow> {
-    return this.jobsStore.create({
+  async createGenerationJob(storyId: string): Promise<GenerationJob> {
+    return this.jobsService.create({
       storyId,
       status: JobStatus.Pending
     });
@@ -165,6 +165,6 @@ export class StoriesService {
    * Update workflow run ID for a job
    */
   async updateJobWorkflowRunId(jobId: string, workflowRunId: string): Promise<void> {
-    await this.jobsStore.updateWorkflowRunId(jobId, workflowRunId);
+    await this.jobsService.updateWorkflowRunId(jobId, workflowRunId);
   }
 }

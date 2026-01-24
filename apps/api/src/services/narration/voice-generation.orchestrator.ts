@@ -15,14 +15,14 @@ import pLimit from 'p-limit';
 
 import { AudioAssetType, type StoryScript, type TimelineSegment } from '@mio/shared/types';
 
-import type { AudioAssetsStore } from '../stories/audio-assets.store';
+import type { AudioAssetsService } from '../stories/audio-assets.service';
 import type { TTSService } from './tts.service';
 import type {
   VoiceGenerationInput,
   VoiceGenerationResult,
   VoiceSegmentGenerationResult
 } from './voice-generation.orchestrator.types';
-import { IocService, IocStore } from '../../ioc/ioc.types';
+import { IocService } from '../../ioc/ioc.types';
 import { AbstractService } from '../service.abstract';
 
 /** Default concurrency for voice generation */
@@ -38,7 +38,7 @@ const DEFAULT_CONCURRENCY = 3;
 export class VoiceGenerationOrchestrator extends AbstractService {
   constructor(
     @inject(IocService.TTS) private readonly ttsService: TTSService,
-    @inject(IocStore.AUDIO_ASSETS_STORE) private readonly audioAssetsStore: AudioAssetsStore
+    @inject(IocService.AUDIO_ASSETS) private readonly audioAssetsService: AudioAssetsService
   ) {
     super();
   }
@@ -130,7 +130,7 @@ export class VoiceGenerationOrchestrator extends AbstractService {
       const cacheKey = `voice_${storyId}_${segment.id}`;
 
       // Check for existing asset
-      const existing = await this.audioAssetsStore.findByCacheKey(cacheKey);
+      const existing = await this.audioAssetsService.findByCacheKey(cacheKey);
       if (existing) {
         this.logger.debug('Using cached voice asset', { cacheKey, segmentId: segment.id });
         onComplete();
@@ -168,7 +168,7 @@ export class VoiceGenerationOrchestrator extends AbstractService {
       const uploadResult = await this.storageService.upload(result.audio, voicePath, { contentType: 'audio/mpeg' });
 
       // Store in audio_assets table
-      const asset = await this.audioAssetsStore.create({
+      const asset = await this.audioAssetsService.create({
         storyId,
         type: AudioAssetType.Voice,
         url: uploadResult.url,

@@ -54,7 +54,6 @@ export {
   EMOTION_AUDIO_TAGS,
   EMOTION_VOICE_SETTINGS
 } from './tts.service.constants';
-export { TTSStore } from './tts.service.store';
 export { VoiceAssignmentService } from './voice-assignment.service';
 export { VoiceGenerationOrchestrator } from './voice-generation.orchestrator';
 export { VoiceRegistryService } from './voice-registry.service';
