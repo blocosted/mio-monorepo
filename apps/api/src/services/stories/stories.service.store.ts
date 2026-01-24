@@ -13,11 +13,11 @@ import type { DatabaseConnection } from '@mio/shared/server/connections/db';
 import { stories } from '@mio/db/schema';
 import { StoryStatus } from '@mio/shared/types';
 
-import type { CreateStoryRowInput, EnrichedConcept, IStoriesStore, StoryRow } from './stories.service.types';
+import type { CreateStoryRowInput, EnrichedConcept, StoryRow } from './stories.service.types';
 import { IocConnection } from '../../ioc/ioc.types';
 
 @injectable()
-export class StoriesStore implements IStoriesStore {
+export class StoriesStore {
   constructor(
     @inject(IocConnection.DATABASE)
     private readonly db: DatabaseConnection

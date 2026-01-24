@@ -103,31 +103,3 @@ export interface MoodPromptMapping {
   recommendedDuration?: number;
 }
 
-/**
- * Music Generator Service Interface
- */
-export interface IMusicGeneratorService {
-  /**
-   * Generate music audio for a mood
-   *
-   * @param input - Generation parameters
-   * @returns Generated music audio
-   */
-  generate(input: MusicGenerateInput): Promise<MusicGenerateResult>;
-
-  /**
-   * Generate music for a script segment
-   *
-   * @param segment - Segment from script
-   * @returns Generation result
-   */
-  generateForSegment(segment: MusicSegmentInput): Promise<MusicSegmentResult>;
-
-  /**
-   * Get the prompt for a mood (for debugging/preview)
-   *
-   * @param mood - Music mood
-   * @returns Prompt that will be used
-   */
-  getPromptForMood(mood: MusicMood): string;
-}

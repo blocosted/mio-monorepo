@@ -115,38 +115,3 @@ export interface SyncOptions {
   verbose?: boolean;
 }
 
-/**
- * Voice Registry Service Interface
- */
-export interface IVoiceRegistryService {
-  /**
-   * Get all voices from the database (no API call)
-   */
-  getAllVoices(): Promise<StoredVoice[]>;
-
-  /**
-   * Get a voice by its ElevenLabs voice ID
-   */
-  getVoice(voiceId: string): Promise<StoredVoice | null>;
-
-  /**
-   * Get voices matching filter criteria
-   */
-  getVoicesByFilter(filter: VoiceFilterOptions): Promise<StoredVoice[]>;
-
-  /**
-   * Check if a voice ID exists in the database (no API call)
-   */
-  isValidVoice(voiceId: string): Promise<boolean>;
-
-  /**
-   * Synchronize voices from ElevenLabs API to database
-   * Should be called manually via CLI or on a schedule
-   */
-  syncFromApi(options?: SyncOptions): Promise<SyncResult>;
-
-  /**
-   * Get the timestamp of the last sync
-   */
-  getLastSyncTime(): Promise<Date | null>;
-}

@@ -7,8 +7,8 @@
 import type { DatabaseConnection } from '@mio/shared/server/connections/db';
 import { ErrorCodes, Gender, StoryStatus } from '@mio/shared';
 
-import type { IProfilesStore } from '../../profiles/profiles.service.types';
-import type { IStoriesService } from '../stories.service.types';
+import type { ProfilesStore } from '../../profiles/profiles.store';
+import type { StoriesService } from '../stories.service';
 import { IocConnection, IocService, IocStore } from '../../../ioc/ioc.types';
 import { getInstance } from '../../../ioc/ioc.config';
 import { cleanTestPostgresData } from '../../../tests/test-utils';
@@ -16,14 +16,14 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'bun:test
 
 describe('StoriesService', () => {
   let db: DatabaseConnection;
-  let profilesStore: IProfilesStore;
-  let service: IStoriesService;
+  let profilesStore: ProfilesStore;
+  let service: StoriesService;
 
   beforeAll(() => {
     // Use IoC to resolve real instances with injected dependencies.
     db = getInstance<DatabaseConnection>(IocConnection.DATABASE);
-    profilesStore = getInstance<IProfilesStore>(IocStore.PROFILES_STORE);
-    service = getInstance<IStoriesService>(IocService.STORIES);
+    profilesStore = getInstance<ProfilesStore>(IocStore.PROFILES_STORE);
+    service = getInstance<StoriesService>(IocService.STORIES);
   });
 
   beforeEach(async () => {

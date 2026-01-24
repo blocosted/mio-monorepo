@@ -8,7 +8,6 @@
 import type { Logger } from '@mio/shared/server/logger';
 
 import type {
-  IMusicStrategyService,
   MusicCue,
   MusicMood,
   MusicStrategyInput,
@@ -82,7 +81,7 @@ const MOOD_MAP: Record<string, MusicMood> = {
  *
  * Designed to be used standalone (without IoC) in CLI scripts.
  */
-export class MusicStrategyService implements IMusicStrategyService {
+export class MusicStrategyService {
   private readonly config: PunctualStrategyConfig;
 
   constructor(

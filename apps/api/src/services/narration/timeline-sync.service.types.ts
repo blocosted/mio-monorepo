@@ -68,35 +68,3 @@ export interface TimelineSyncOptions {
   preserveRelativePositioning?: boolean;
 }
 
-/**
- * Timeline Sync Service Interface
- */
-export interface ITimelineSyncService {
-  /**
-   * Recalculate SFX and music timings based on actual TTS durations
-   *
-   * @param script - Original script with LLM-estimated timings
-   * @param ttsResults - Actual TTS results with real durations
-   * @param options - Sync options
-   * @returns Script with synchronized timings
-   */
-  syncTimings(script: StoryScript, ttsResults: TTSSegmentResult[], options?: TimelineSyncOptions): SyncedStoryScript;
-
-  /**
-   * Build a timeline map from TTS results
-   * Maps segment IDs to their actual start/end times
-   *
-   * @param ttsResults - TTS results with actual durations
-   * @param pauseBetweenSegments - Pause duration between segments
-   * @returns Map of segment ID to timing info
-   */
-  buildVoiceTimeline(ttsResults: TTSSegmentResult[], pauseBetweenSegments?: number): Map<string, VoiceSegmentTiming>;
-
-  /**
-   * Calculate the total duration of the voice timeline
-   *
-   * @param voiceTimeline - Timeline map from buildVoiceTimeline
-   * @returns Total duration in seconds
-   */
-  calculateTotalDuration(voiceTimeline: Map<string, VoiceSegmentTiming>): number;
-}

@@ -8,7 +8,7 @@ import 'reflect-metadata';
 
 import { inject, injectable } from 'inversify';
 
-import type { AmbianceLookupResult, FindAmbianceParams, IAmbianceLibraryService, StoreAmbianceParams, StoredAmbiance } from './ambiance-library.service.types';
+import type { AmbianceLookupResult, FindAmbianceParams, StoreAmbianceParams, StoredAmbiance } from './ambiance-library.service.types';
 import type { AmbianceLibraryStore } from './ambiance-library.store';
 import { IocStore } from '../../ioc/ioc.types';
 
@@ -19,7 +19,7 @@ import { IocStore } from '../../ioc/ioc.types';
  * Delegates all data operations to AmbianceLibraryStore.
  */
 @injectable()
-export class AmbianceLibraryService implements IAmbianceLibraryService {
+export class AmbianceLibraryService {
   constructor(
     @inject(IocStore.AMBIANCE_LIBRARY_STORE)
     private readonly store: AmbianceLibraryStore

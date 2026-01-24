@@ -16,9 +16,8 @@ import pLimit from 'p-limit';
 import { AudioAssetType, type StoryScript, type TimelineSegment } from '@mio/shared/types';
 
 import type { AudioAssetsStore } from '../stories/audio-assets.store';
-import type { ITTSService } from './tts.service.types';
+import type { TTSService } from './tts.service';
 import type {
-  IVoiceGenerationOrchestrator,
   VoiceGenerationInput,
   VoiceGenerationResult,
   VoiceSegmentGenerationResult
@@ -36,9 +35,9 @@ const DEFAULT_CONCURRENCY = 3;
  * Provides caching, concurrency control, and progress reporting.
  */
 @injectable()
-export class VoiceGenerationOrchestrator extends AbstractService implements IVoiceGenerationOrchestrator {
+export class VoiceGenerationOrchestrator extends AbstractService {
   constructor(
-    @inject(IocService.TTS) private readonly ttsService: ITTSService,
+    @inject(IocService.TTS) private readonly ttsService: TTSService,
     @inject(IocStore.AUDIO_ASSETS_STORE) private readonly audioAssetsStore: AudioAssetsStore
   ) {
     super();

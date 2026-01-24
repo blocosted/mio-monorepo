@@ -8,7 +8,7 @@ import { Elysia } from 'elysia';
 
 import { CreateProfileBodySchema, ProfileIdParamsSchema, UpdateProfileBodySchema } from '@mio/shared/clients/mio/profiles';
 
-import type { IProfilesService } from '../../services/profiles';
+import type { ProfilesService } from '../../services/profiles';
 import { IocService } from '../../ioc/ioc.types';
 import { getInstance } from '../../ioc/ioc.config';
 import { mapCreateBodyToInput, mapProfilesToResponse, mapProfileToResponse, mapUpdateBodyToInput } from './profiles.handlers.map';
@@ -19,7 +19,7 @@ export const profilesHandlers = new Elysia({
 })
   // List all profiles
   .get('/', async () => {
-    const service = getInstance<IProfilesService>(IocService.PROFILES);
+    const service = getInstance<ProfilesService>(IocService.PROFILES);
     const profiles = await service.getAll();
     return mapProfilesToResponse(profiles);
   })
@@ -28,7 +28,7 @@ export const profilesHandlers = new Elysia({
   .post(
     '/',
     async ({ body, set }) => {
-      const service = getInstance<IProfilesService>(IocService.PROFILES);
+      const service = getInstance<ProfilesService>(IocService.PROFILES);
       const input = mapCreateBodyToInput(body);
       const profile = await service.create(input);
       set.status = 201;
@@ -43,7 +43,7 @@ export const profilesHandlers = new Elysia({
   .get(
     '/:id',
     async ({ params, set }) => {
-      const service = getInstance<IProfilesService>(IocService.PROFILES);
+      const service = getInstance<ProfilesService>(IocService.PROFILES);
       const profile = await service.getById(params.id);
 
       if (!profile) {
@@ -62,7 +62,7 @@ export const profilesHandlers = new Elysia({
   .patch(
     '/:id',
     async ({ params, body, set }) => {
-      const service = getInstance<IProfilesService>(IocService.PROFILES);
+      const service = getInstance<ProfilesService>(IocService.PROFILES);
       const input = mapUpdateBodyToInput(body);
       const profile = await service.update(params.id, input);
 
@@ -83,7 +83,7 @@ export const profilesHandlers = new Elysia({
   .delete(
     '/:id',
     async ({ params, set }) => {
-      const service = getInstance<IProfilesService>(IocService.PROFILES);
+      const service = getInstance<ProfilesService>(IocService.PROFILES);
       const deleted = await service.delete(params.id);
 
       if (!deleted) {

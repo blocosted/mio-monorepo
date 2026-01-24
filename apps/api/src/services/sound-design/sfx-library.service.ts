@@ -8,7 +8,7 @@ import 'reflect-metadata';
 
 import { inject, injectable } from 'inversify';
 
-import type { FindSfxParams, ISfxLibraryService, SfxLookupResult, StoredSfx, StoreSfxParams } from './sfx-library.service.types';
+import type { FindSfxParams, SfxLookupResult, StoredSfx, StoreSfxParams } from './sfx-library.service.types';
 import type { SfxLibraryStore } from './sfx-library.store';
 import { IocStore } from '../../ioc/ioc.types';
 
@@ -19,7 +19,7 @@ import { IocStore } from '../../ioc/ioc.types';
  * Delegates all data operations to SfxLibraryStore.
  */
 @injectable()
-export class SfxLibraryService implements ISfxLibraryService {
+export class SfxLibraryService {
   constructor(
     @inject(IocStore.SFX_LIBRARY_STORE)
     private readonly store: SfxLibraryStore

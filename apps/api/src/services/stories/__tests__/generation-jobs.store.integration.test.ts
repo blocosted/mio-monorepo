@@ -8,9 +8,10 @@ import type { DatabaseConnection } from '@mio/shared/server/connections/db';
 import { Gender } from '@mio/shared';
 import { JobStatus, JobStep } from '@mio/shared/types';
 
-import type { IProfilesStore } from '../../profiles/profiles.service.types';
+import type { ProfilesStore } from '../../profiles/profiles.store';
 import type { GenerationJobsStore } from '../generation-jobs.store';
-import type { IStoriesStore, JobStepProgress } from '../stories.service.types';
+import type { JobStepProgress } from '../stories.service.types';
+import type { StoriesStore } from '../stories.service.store';
 import { IocConnection, IocStore } from '../../../ioc/ioc.types';
 import { getInstance } from '../../../ioc/ioc.config';
 import { cleanTestPostgresData } from '../../../tests/test-utils';
@@ -18,14 +19,14 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'bun:test
 
 describe('GenerationJobsStore', () => {
   let db: DatabaseConnection;
-  let profilesStore: IProfilesStore;
-  let storiesStore: IStoriesStore;
+  let profilesStore: ProfilesStore;
+  let storiesStore: StoriesStore;
   let jobsStore: GenerationJobsStore;
 
   beforeAll(() => {
     db = getInstance<DatabaseConnection>(IocConnection.DATABASE);
-    profilesStore = getInstance<IProfilesStore>(IocStore.PROFILES_STORE);
-    storiesStore = getInstance<IStoriesStore>(IocStore.STORIES_STORE);
+    profilesStore = getInstance<ProfilesStore>(IocStore.PROFILES_STORE);
+    storiesStore = getInstance<StoriesStore>(IocStore.STORIES_STORE);
     jobsStore = getInstance<GenerationJobsStore>(IocStore.GENERATION_JOBS_STORE);
   });
 

@@ -8,7 +8,7 @@ import 'reflect-metadata';
 
 import { inject, injectable } from 'inversify';
 
-import type { FindMusicParams, IMusicLibraryService, MusicLookupResult, StoredMusic, StoreMusicParams } from './music-library.service.types';
+import type { FindMusicParams, MusicLookupResult, StoredMusic, StoreMusicParams } from './music-library.service.types';
 import type { MusicLibraryStore } from './music-library.store';
 import { IocStore } from '../../ioc/ioc.types';
 
@@ -19,7 +19,7 @@ import { IocStore } from '../../ioc/ioc.types';
  * Delegates all data operations to MusicLibraryStore.
  */
 @injectable()
-export class MusicLibraryService implements IMusicLibraryService {
+export class MusicLibraryService {
   constructor(
     @inject(IocStore.MUSIC_LIBRARY_STORE)
     private readonly store: MusicLibraryStore

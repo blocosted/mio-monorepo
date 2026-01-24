@@ -65,22 +65,3 @@ export interface SfxLookupResult {
   fromCache: boolean;
 }
 
-/**
- * SFX Library Service Interface
- */
-export interface ISfxLibraryService {
-  /**
-   * Find SFX in library
-   */
-  findSfx(params: FindSfxParams): Promise<SfxLookupResult>;
-
-  /**
-   * Store new SFX in library
-   */
-  storeSfx(params: StoreSfxParams): Promise<StoredSfx>;
-
-  /**
-   * Increment SFX usage counter
-   */
-  incrementSfxUsage(id: string): Promise<void>;
-}

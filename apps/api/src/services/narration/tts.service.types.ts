@@ -100,23 +100,3 @@ export interface BatchGenerateSpeechResult {
  */
 export type CharacterArchetype = 'narrator' | 'childHero' | 'wiseCharacter' | 'villain' | 'comedic' | 'parent' | 'friend' | 'animal' | 'magical';
 
-/**
- * TTS Service Interface
- */
-export interface ITTSService {
-  /**
-   * Generate speech from text
-   *
-   * @param input - Generation parameters
-   * @returns Audio buffer with duration and format metadata
-   */
-  generateSpeech(input: GenerateSpeechInput): Promise<GenerateSpeechResult>;
-
-  /**
-   * Generate speech for multiple segments with controlled concurrency
-   *
-   * @param input - Batch generation parameters
-   * @returns Results for all segments
-   */
-  generateBatch(input: BatchGenerateSpeechInput): Promise<BatchGenerateSpeechResult>;
-}

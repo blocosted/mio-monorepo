@@ -124,32 +124,3 @@ export interface PunctualStrategyConfig {
   };
 }
 
-/**
- * Music Strategy Service Interface
- */
-export interface IMusicStrategyService {
-  /**
-   * Generate music cues based on story structure
-   *
-   * @param input - Story information and optional config
-   * @returns Music cues and strategy info
-   */
-  generateMusicCues(input: MusicStrategyInput): MusicStrategyOutput;
-
-  /**
-   * Convert script music segments to standardized cues
-   *
-   * @param segments - Music segments from script
-   * @param totalDuration - Total story duration
-   * @returns Converted music cues
-   */
-  convertScriptMusicToCues(segments: Array<{ startTime: number; duration: number; mood: string }>, totalDuration: number): MusicCue[];
-
-  /**
-   * Normalize a mood string to MusicMood enum
-   *
-   * @param mood - Raw mood string from script
-   * @returns Normalized MusicMood
-   */
-  normalizeMood(mood: string): MusicMood;
-}

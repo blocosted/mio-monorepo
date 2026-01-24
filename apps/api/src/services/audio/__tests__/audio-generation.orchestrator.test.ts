@@ -9,9 +9,12 @@ import type { Logger } from '@mio/shared/server/logger';
 import type { AudioTrack, ScriptMetadata, StoryScript, TimelineSegment } from '@mio/shared/types';
 import { AudioAssetType, Language, VocabularyLevel } from '@mio/shared/types';
 
-import type { AmbianceGenerateResult, IAmbianceGeneratorService } from '../../ambiance/ambiance-generator.service.types';
-import type { IMusicGeneratorService, MusicGenerateResult } from '../../music/music-generator.service.types';
-import type { GenerateSfxResult, ISfxService, SfxAudioFormat } from '../../sound-design/sfx.service.types';
+import type { AmbianceGenerateResult } from '../../ambiance/ambiance-generator.service.types';
+import type { AmbianceGeneratorService } from '../../ambiance/ambiance-generator.service';
+import type { MusicGenerateResult } from '../../music/music-generator.service.types';
+import type { MusicGeneratorService } from '../../music/music-generator.service';
+import type { GenerateSfxResult, SfxAudioFormat } from '../../sound-design/sfx.service.types';
+import type { SfxService } from '../../sound-design/sfx.service';
 import type { AudioAssetRow, AudioAssetsStore } from '../../stories/audio-assets.store';
 import { AudioGenerationOrchestrator } from '../audio-generation.orchestrator';
 import { beforeEach, describe, expect, it, mock } from 'bun:test';
@@ -23,9 +26,9 @@ class TestableAudioGenerationOrchestrator extends AudioGenerationOrchestrator {
   private _mockLogger: Partial<Logger>;
 
   constructor(
-    sfxService: ISfxService,
-    musicService: IMusicGeneratorService,
-    ambianceService: IAmbianceGeneratorService,
+    sfxService: SfxService,
+    musicService: MusicGeneratorService,
+    ambianceService: AmbianceGeneratorService,
     audioAssetsStore: AudioAssetsStore,
     mockLogger: Partial<Logger>
   ) {
@@ -40,9 +43,9 @@ class TestableAudioGenerationOrchestrator extends AudioGenerationOrchestrator {
 
 describe('AudioGenerationOrchestrator', () => {
   let orchestrator: TestableAudioGenerationOrchestrator;
-  let mockSfxService: Partial<ISfxService>;
-  let mockMusicService: Partial<IMusicGeneratorService>;
-  let mockAmbianceService: Partial<IAmbianceGeneratorService>;
+  let mockSfxService: Partial<SfxService>;
+  let mockMusicService: Partial<MusicGeneratorService>;
+  let mockAmbianceService: Partial<AmbianceGeneratorService>;
   let mockAudioAssetsStore: Partial<AudioAssetsStore>;
   let mockLogger: Partial<Logger>;
 
@@ -197,9 +200,9 @@ describe('AudioGenerationOrchestrator', () => {
     };
 
     orchestrator = new TestableAudioGenerationOrchestrator(
-      mockSfxService as ISfxService,
-      mockMusicService as IMusicGeneratorService,
-      mockAmbianceService as IAmbianceGeneratorService,
+      mockSfxService as SfxService,
+      mockMusicService as MusicGeneratorService,
+      mockAmbianceService as AmbianceGeneratorService,
       mockAudioAssetsStore as AudioAssetsStore,
       mockLogger
     );

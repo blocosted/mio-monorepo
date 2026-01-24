@@ -17,17 +17,14 @@ export type {
   EnrichmentStory,
   EnrichStoryInput,
   EnrichStoryResult,
-  IEnrichmentService,
   LLMCompletionOptions
 } from './enrichment.service.types';
 // Legacy service types (kept for backward compatibility)
 export type {
-  ILLMService,
   LLMProvider
 } from './llm.service.types';
 // Script generation service types (timeline-based)
 export type {
-  IScriptGenerationService,
   ScriptGenerationContext,
   ScriptGenerationInput,
   ScriptGenerationResult,

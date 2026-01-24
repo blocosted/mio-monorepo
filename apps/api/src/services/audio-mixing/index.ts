@@ -7,7 +7,6 @@ export type {
   AmbianceTrackInput,
   AudioFile,
   FFmpegVerifyResult,
-  IFFmpegMixerService,
   MixStoryInput,
   MixStoryResult,
   MusicTrackInput,
@@ -15,7 +14,6 @@ export type {
   VoiceTrackInput
 } from './ffmpeg-mixer.service.types';
 export type {
-  IStoryMixingOrchestrator,
   LoadedAudioAsset,
   StoryMixingInput,
   StoryMixingResult

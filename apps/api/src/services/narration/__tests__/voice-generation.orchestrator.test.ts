@@ -8,9 +8,10 @@ import type { Logger } from '@mio/shared/server/logger';
 import type { ScriptMetadata, StoryScript, TimelineSegment } from '@mio/shared/types';
 import { AudioAssetType, Emotion, Language, VocabularyLevel } from '@mio/shared/types';
 
-import type { IStorageService } from '../../storage';
+import type { StorageService } from '../../storage';
 import type { AudioAssetRow, AudioAssetsStore } from '../../stories/audio-assets.store';
-import type { AudioFormat, GenerateSpeechResult, ITTSService } from '../tts.service.types';
+import type { AudioFormat, GenerateSpeechResult } from '../tts.service.types';
+import type { TTSService } from '../tts.service';
 import { VoiceGenerationOrchestrator } from '../voice-generation.orchestrator';
 import { beforeEach, describe, expect, it, mock } from 'bun:test';
 
@@ -19,9 +20,9 @@ import { beforeEach, describe, expect, it, mock } from 'bun:test';
  */
 class TestableVoiceGenerationOrchestrator extends VoiceGenerationOrchestrator {
   private _mockLogger: Partial<Logger>;
-  private _mockStorage: Partial<IStorageService>;
+  private _mockStorage: Partial<StorageService>;
 
-  constructor(ttsService: ITTSService, audioAssetsStore: AudioAssetsStore, mockLogger: Partial<Logger>, mockStorage: Partial<IStorageService>) {
+  constructor(ttsService: TTSService, audioAssetsStore: AudioAssetsStore, mockLogger: Partial<Logger>, mockStorage: Partial<StorageService>) {
     super(ttsService, audioAssetsStore);
     this._mockLogger = mockLogger;
     this._mockStorage = mockStorage;
@@ -31,17 +32,17 @@ class TestableVoiceGenerationOrchestrator extends VoiceGenerationOrchestrator {
     return this._mockLogger as Logger;
   }
 
-  protected override get storageService(): IStorageService {
-    return this._mockStorage as IStorageService;
+  protected override get storageService(): StorageService {
+    return this._mockStorage as StorageService;
   }
 }
 
 describe('VoiceGenerationOrchestrator', () => {
   let orchestrator: TestableVoiceGenerationOrchestrator;
-  let mockTtsService: Partial<ITTSService>;
+  let mockTtsService: Partial<TTSService>;
   let mockAudioAssetsStore: Partial<AudioAssetsStore>;
   let mockLogger: Partial<Logger>;
-  let mockStorage: Partial<IStorageService>;
+  let mockStorage: Partial<StorageService>;
 
   const storyId = 'story-123';
 
@@ -152,7 +153,7 @@ describe('VoiceGenerationOrchestrator', () => {
       )
     };
 
-    orchestrator = new TestableVoiceGenerationOrchestrator(mockTtsService as ITTSService, mockAudioAssetsStore as AudioAssetsStore, mockLogger, mockStorage);
+    orchestrator = new TestableVoiceGenerationOrchestrator(mockTtsService as TTSService, mockAudioAssetsStore as AudioAssetsStore, mockLogger, mockStorage);
   });
 
   describe('generateAll()', () => {

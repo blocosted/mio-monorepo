@@ -18,7 +18,6 @@ import { AppError, ErrorCodes } from '@mio/shared';
 
 import type { ILLMRepository } from '../../repositories/llm/llm-repository.types';
 import type {
-  IScriptGenerationService,
   ScriptGenerationContext,
   ScriptGenerationInput,
   ScriptGenerationResult,
@@ -88,7 +87,7 @@ const SEGMENT_REQUIREMENTS = {
 };
 
 @injectable()
-export class ScriptGenerationService extends AbstractService implements IScriptGenerationService {
+export class ScriptGenerationService extends AbstractService {
   private readonly maxAttempts = 3;
 
   /**

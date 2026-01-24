@@ -6,17 +6,14 @@
 
 export type {
   AudioCacheKeyParams,
-  CachedAudio,
-  IAudioCacheService
+  CachedAudio
 } from './audio-cache.service.types';
-export type { CacheSetOptions, ICacheService } from './cache.service.types';
+export type { CacheSetOptions } from './cache.service.types';
 export type {
-  IJobProgressService,
   JobProgress
 } from './job-progress.service.types';
 export type {
   CachedSfx,
-  ISfxCacheService,
   SfxCacheKeyParams
 } from './sfx-cache.service.types';
 // Audio cache service

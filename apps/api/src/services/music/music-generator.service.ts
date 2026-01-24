@@ -24,16 +24,15 @@ import type { MusicMood as LibraryMusicMood, MusicIntensity, MusicTempo } from '
 import { AppError, DiagnoseSeverity, ErrorCodes } from '@mio/shared';
 
 import type { ISoundEffectsRepository } from '../../repositories/audio/audio-repository.types';
-import type { IStorageService } from '../storage';
+import type { StorageService } from '../storage';
 import type {
-  IMusicGeneratorService,
   MoodPromptMapping,
   MusicGenerateInput,
   MusicGenerateResult,
   MusicSegmentInput,
   MusicSegmentResult
 } from './music-generator.service.types';
-import type { IMusicLibraryService } from './music-library.service.types';
+import type { MusicLibraryService } from './music-library.service';
 import type { MusicMood } from './music-strategy.service.types';
 import { IocConnection, IocRepository, IocService } from '../../ioc/ioc.types';
 import { getInstance } from '../../ioc/ioc.config';
@@ -148,7 +147,7 @@ function inferTempo(prompt: string): MusicTempo {
  * 6. Adjusting volume levels
  */
 @injectable()
-export class MusicGeneratorService implements IMusicGeneratorService {
+export class MusicGeneratorService {
   private libraryHits = 0;
   private libraryMisses = 0;
 
@@ -160,10 +159,10 @@ export class MusicGeneratorService implements IMusicGeneratorService {
   /**
    * Lazily get MusicLibrary service
    */
-  private _musicLibrary: IMusicLibraryService | null = null;
-  private get musicLibrary(): IMusicLibraryService {
+  private _musicLibrary: MusicLibraryService | null = null;
+  private get musicLibrary(): MusicLibraryService {
     if (!this._musicLibrary) {
-      this._musicLibrary = getInstance<IMusicLibraryService>(IocService.MUSIC_LIBRARY);
+      this._musicLibrary = getInstance<MusicLibraryService>(IocService.MUSIC_LIBRARY);
     }
     return this._musicLibrary;
   }
@@ -171,10 +170,10 @@ export class MusicGeneratorService implements IMusicGeneratorService {
   /**
    * Lazily get Storage service
    */
-  private _storage: IStorageService | null = null;
-  private get storage(): IStorageService {
+  private _storage: StorageService | null = null;
+  private get storage(): StorageService {
     if (!this._storage) {
-      this._storage = getInstance<IStorageService>(IocService.STORAGE);
+      this._storage = getInstance<StorageService>(IocService.STORAGE);
     }
     return this._storage;
   }

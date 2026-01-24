@@ -56,18 +56,3 @@ export interface CharacterVoiceAssignment {
   selection: VoiceSelection;
 }
 
-/**
- * Voice Assignment Service Interface
- */
-export interface IVoiceAssignmentService {
-  /**
-   * Assign voices to all characters in a script
-   * Updates the script with voiceIds for each character
-   */
-  assignVoices(input: VoiceAssignmentInput): Promise<VoiceAssignmentResult>;
-
-  /**
-   * Select a voice for a single character based on description
-   */
-  selectVoiceForCharacter(description: string, availableVoices: VoiceCandidate[], preferredLanguage: Language): VoiceSelection;
-}

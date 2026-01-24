@@ -10,7 +10,6 @@ export type {
   AmbianceGenerationInput,
   AudioGenerationResult,
   AudioSegmentGenerationResult,
-  IAudioGenerationOrchestrator,
   MusicGenerationInput,
   SfxGenerationInput
 } from './audio-generation.orchestrator.types';

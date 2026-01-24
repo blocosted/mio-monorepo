@@ -13,7 +13,7 @@ import type { DatabaseConnection } from '@mio/shared/server/connections/db';
 import type { RedisClient } from '@mio/shared/server/connections/redis';
 import type { Logger } from '@mio/shared/server/logger';
 
-import type { IStorageService } from './storage';
+import type { StorageService } from './storage';
 import { IocConnection, IocService } from '../ioc/ioc.types';
 
 @injectable()
@@ -38,7 +38,7 @@ export abstract class AbstractService {
   /**
    * Storage service (lazy-loaded via getter)
    */
-  private _storageService?: IStorageService;
+  private _storageService?: StorageService;
 
   /**
    * Get logger instance (lazy-loaded)
@@ -54,10 +54,10 @@ export abstract class AbstractService {
   /**
    * Get storage service (lazy-loaded)
    */
-  protected get storageService(): IStorageService {
+  protected get storageService(): StorageService {
     if (!this._storageService) {
       const { getInstance } = require('../ioc/ioc.config') as typeof import('../ioc/ioc.config');
-      this._storageService = getInstance<IStorageService>(IocService.STORAGE);
+      this._storageService = getInstance<StorageService>(IocService.STORAGE);
     }
     return this._storageService!;
   }

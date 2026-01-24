@@ -56,16 +56,3 @@ export interface LLMCompletionOptions {
   timeout?: number;
 }
 
-/**
- * Enrichment Service Interface
- */
-export interface IEnrichmentService {
-  /**
-   * Enrich a story prompt into a full concept with characters, setting, etc.
-   *
-   * @param input - Story and profile data
-   * @param options - Optional completion settings
-   * @returns Enriched story concept with vocabulary level
-   */
-  enrichStory(input: EnrichStoryInput, options?: LLMCompletionOptions): Promise<EnrichStoryResult>;
-}

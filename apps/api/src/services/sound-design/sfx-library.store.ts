@@ -14,7 +14,7 @@ import type { DatabaseConnection } from '@mio/shared/server/connections/db';
 import type { AudioIntensity, SfxEnvironment, SfxLibraryCategory } from '@mio/shared/types';
 import { audioLibrarySfx } from '@mio/db/schema';
 
-import type { ICacheService } from '../cache/cache.service.types';
+import type { CacheService } from '../cache/cache.service';
 import { IocConnection, IocService } from '../../ioc/ioc.types';
 
 /** Redis cache TTL for SFX lookups (1 hour) */
@@ -114,7 +114,7 @@ export class SfxLibraryStore {
     @inject(IocConnection.DATABASE)
     private readonly db: DatabaseConnection,
     @inject(IocService.CACHE)
-    private readonly cache: ICacheService
+    private readonly cache: CacheService
   ) {}
 
   /**

@@ -67,22 +67,6 @@ export interface LLMCompletionOptions {
   timeout?: number;
 }
 
-/**
- * LLM Service Interface
- *
- * Abstraction layer for LLM operations, allowing different providers.
- * Note: Script generation uses the new ILLMProvider + ScriptGenerationService architecture.
- */
-export interface ILLMService {
-  /**
-   * Enrich a story prompt into a full concept with characters, setting, etc.
-   *
-   * @param input - Story and profile data
-   * @param options - Optional completion settings
-   * @returns Enriched story concept with vocabulary level
-   */
-  enrichStory(input: EnrichStoryInput, options?: LLMCompletionOptions): Promise<EnrichStoryResult>;
-}
 
 /**
  * Vocabulary level mapping based on child age

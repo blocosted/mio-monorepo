@@ -14,7 +14,7 @@ import type { DatabaseConnection } from '@mio/shared/server/connections/db';
 import type { MusicIntensity, MusicMood, MusicTempo } from '@mio/shared/types';
 import { audioLibraryMusic } from '@mio/db/schema';
 
-import type { ICacheService } from '../cache/cache.service.types';
+import type { CacheService } from '../cache/cache.service';
 import { IocConnection, IocService } from '../../ioc/ioc.types';
 
 /** Redis cache TTL for music lookups (1 hour) */
@@ -113,7 +113,7 @@ export class MusicLibraryStore {
     @inject(IocConnection.DATABASE)
     private readonly db: DatabaseConnection,
     @inject(IocService.CACHE)
-    private readonly cache: ICacheService
+    private readonly cache: CacheService
   ) {}
 
   /**

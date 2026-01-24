@@ -7,7 +7,7 @@
 import type { DatabaseConnection } from '@mio/shared/server/connections/db';
 import { Gender, Language, StoryDuration } from '@mio/shared/types';
 
-import type { IProfilesService } from '../profiles.service.types';
+import type { ProfilesService } from '../profiles.service';
 import { IocConnection, IocService } from '../../../ioc/ioc.types';
 import { getInstance } from '../../../ioc/ioc.config';
 import { assertNotNull } from '../../../tests/test.helpers';
@@ -16,12 +16,12 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'bun:test
 
 describe('ProfilesService', () => {
   let db: DatabaseConnection;
-  let service: IProfilesService;
+  let service: ProfilesService;
 
   beforeAll(() => {
     // Use IoC to resolve real instances with injected dependencies.
     db = getInstance<DatabaseConnection>(IocConnection.DATABASE);
-    service = getInstance<IProfilesService>(IocService.PROFILES);
+    service = getInstance<ProfilesService>(IocService.PROFILES);
   });
 
   beforeEach(async () => {

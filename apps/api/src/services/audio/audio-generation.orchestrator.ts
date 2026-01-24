@@ -11,15 +11,14 @@ import { inject, injectable } from 'inversify';
 
 import { AudioAssetType, type MusicMood, type TimelineSegment } from '@mio/shared/types';
 
-import type { IAmbianceGeneratorService } from '../ambiance/ambiance-generator.service.types';
-import type { IMusicGeneratorService } from '../music/music-generator.service.types';
-import type { ISfxService } from '../sound-design/sfx.service.types';
+import type { AmbianceGeneratorService } from '../ambiance/ambiance-generator.service';
+import type { MusicGeneratorService } from '../music/music-generator.service';
+import type { SfxService } from '../sound-design/sfx.service';
 import type { AudioAssetsStore } from '../stories/audio-assets.store';
 import type {
   AmbianceGenerationInput,
   AudioGenerationResult,
   AudioSegmentGenerationResult,
-  IAudioGenerationOrchestrator,
   MusicGenerationInput,
   SfxGenerationInput
 } from './audio-generation.orchestrator.types';
@@ -33,11 +32,11 @@ import { AbstractService } from '../service.abstract';
  * Handles caching via audio_assets table and provides progress reporting.
  */
 @injectable()
-export class AudioGenerationOrchestrator extends AbstractService implements IAudioGenerationOrchestrator {
+export class AudioGenerationOrchestrator extends AbstractService {
   constructor(
-    @inject(IocService.SFX) private readonly sfxService: ISfxService,
-    @inject(IocService.MUSIC_GENERATOR) private readonly musicService: IMusicGeneratorService,
-    @inject(IocService.AMBIANCE_GENERATOR) private readonly ambianceService: IAmbianceGeneratorService,
+    @inject(IocService.SFX) private readonly sfxService: SfxService,
+    @inject(IocService.MUSIC_GENERATOR) private readonly musicService: MusicGeneratorService,
+    @inject(IocService.AMBIANCE_GENERATOR) private readonly ambianceService: AmbianceGeneratorService,
     @inject(IocStore.AUDIO_ASSETS_STORE) private readonly audioAssetsStore: AudioAssetsStore
   ) {
     super();

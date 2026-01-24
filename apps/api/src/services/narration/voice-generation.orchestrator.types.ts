@@ -52,18 +52,3 @@ export interface VoiceGenerationResult {
   totalDurationSeconds: number;
 }
 
-/**
- * Voice Generation Orchestrator Interface
- */
-export interface IVoiceGenerationOrchestrator {
-  /**
-   * Generate voice audio for all voice segments in a script
-   *
-   * Features:
-   * - Content-based caching (checks audio_assets table)
-   * - Concurrency control via p-limit
-   * - Progress reporting
-   * - Partial success support (failed segments are logged but don't fail the batch)
-   */
-  generateAll(input: VoiceGenerationInput): Promise<VoiceGenerationResult>;
-}

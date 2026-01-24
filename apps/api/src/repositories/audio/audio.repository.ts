@@ -257,7 +257,7 @@ export class AudioRepository implements IAudioRepository, ISoundEffectsRepositor
     try {
       // Lazy load VoiceRegistry to avoid circular dependency at import time
       const { getInstance, IocService } = await import('../../ioc');
-      const voiceRegistry = getInstance<import('../../services/narration/voice-registry.service.types').IVoiceRegistryService>(IocService.VOICE_REGISTRY);
+      const voiceRegistry = getInstance<import('../../services/narration/voice-registry.service').VoiceRegistryService>(IocService.VOICE_REGISTRY);
       return voiceRegistry.isValidVoice(voiceId);
     } catch {
       // If VoiceRegistry is not available (e.g., no voices synced yet),

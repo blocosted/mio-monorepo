@@ -17,9 +17,9 @@ import type { AudioIntensity, SfxEnvironment, SfxLibraryCategory } from '@mio/sh
 import { AppError, ErrorCodes } from '@mio/shared';
 
 import type { ISoundEffectsRepository, SfxCategory } from '../../repositories/audio/audio-repository.types';
-import type { ICacheService } from '../cache/cache.service.types';
+import type { CacheService } from '../cache/cache.service';
 import type { SfxStore } from './sfx.service.store';
-import type { BatchGenerateSfxInput, BatchGenerateSfxResult, GenerateSfxInput, GenerateSfxResult, ISfxService } from './sfx.service.types';
+import type { BatchGenerateSfxInput, BatchGenerateSfxResult, GenerateSfxInput, GenerateSfxResult } from './sfx.service.types';
 import { IocRepository, IocService, IocStore } from '../../ioc/ioc.types';
 import { getInstance } from '../../ioc/ioc.config';
 import { AbstractService } from '../service.abstract';
@@ -131,7 +131,7 @@ function inferIntensity(text: string): AudioIntensity {
  * - Category-based configuration
  */
 @injectable()
-export class SfxService extends AbstractService implements ISfxService {
+export class SfxService extends AbstractService {
   private readonly localLimit: ReturnType<typeof pLimit>;
   private cacheHits = 0;
   private cacheMisses = 0;
@@ -140,7 +140,7 @@ export class SfxService extends AbstractService implements ISfxService {
 
   constructor(
     @inject(IocStore.SOUND_EFFECTS_STORE) private readonly sfxStore: SfxStore,
-    @inject(IocService.CACHE) private readonly cache: ICacheService
+    @inject(IocService.CACHE) private readonly cache: CacheService
   ) {
     super();
     this.localLimit = pLimit(SFX_CONCURRENCY_CONFIG.maxLocalConcurrency);

@@ -97,30 +97,3 @@ export interface BatchGenerateSfxResult {
   totalDurationSeconds: number;
 }
 
-/**
- * Sound Effects Service Interface
- */
-export interface ISfxService {
-  /**
-   * Generate a sound effect from text description
-   *
-   * Uses caching with deterministic keys based on all input parameters.
-   *
-   * @param input - Generation parameters
-   * @returns Audio buffer with duration and format metadata
-   */
-  generateSfx(input: GenerateSfxInput): Promise<GenerateSfxResult>;
-
-  /**
-   * Generate multiple sound effects with controlled concurrency
-   *
-   * @param input - Batch generation parameters
-   * @returns Results for all segments
-   */
-  generateBatch(input: BatchGenerateSfxInput): Promise<BatchGenerateSfxResult>;
-
-  /**
-   * Get cache statistics for sound effects
-   */
-  getCacheStats(): Promise<{ hits: number; misses: number; size: number }>;
-}

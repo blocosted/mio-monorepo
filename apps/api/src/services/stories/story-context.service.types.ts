@@ -61,18 +61,3 @@ export interface StoryContext {
   language: Language;
 }
 
-/**
- * Story Context Service Interface
- */
-export interface IStoryContextService {
-  /**
-   * Load complete context for a story including profile data
-   * @throws Error if story or profile not found
-   */
-  loadContext(storyId: string): Promise<StoryContext>;
-
-  /**
-   * Build enrichment profile from child profile data
-   */
-  buildEnrichmentProfile(childProfile: ChildProfileData): EnrichmentProfile;
-}

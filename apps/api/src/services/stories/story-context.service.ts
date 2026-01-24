@@ -13,7 +13,7 @@ import { HeroGender, Language } from '@mio/shared/types';
 
 import type { ProfilesStore } from '../profiles/profiles.service.store';
 import type { StoriesStore } from './stories.service.store';
-import type { ChildProfileData, EnrichmentProfile, IStoryContextService, StoryContext, StoryData } from './story-context.service.types';
+import type { ChildProfileData, EnrichmentProfile, StoryContext, StoryData } from './story-context.service.types';
 import { IocStore } from '../../ioc/ioc.types';
 import { AbstractService } from '../service.abstract';
 
@@ -24,7 +24,7 @@ import { AbstractService } from '../service.abstract';
  * Ensures consistent data access patterns across all workflow steps.
  */
 @injectable()
-export class StoryContextService extends AbstractService implements IStoryContextService {
+export class StoryContextService extends AbstractService {
   constructor(
     @inject(IocStore.STORIES_STORE) private readonly storiesStore: StoriesStore,
     @inject(IocStore.PROFILES_STORE) private readonly profilesStore: ProfilesStore

@@ -24,15 +24,14 @@ import type { AmbianceEnvironment, AudioMood, TimeOfDay, WeatherCondition } from
 import { AppError, DiagnoseSeverity, ErrorCodes } from '@mio/shared';
 
 import type { ISoundEffectsRepository } from '../../repositories/audio/audio-repository.types';
-import type { IStorageService } from '../storage';
+import type { StorageService } from '../storage';
 import type {
   AmbianceGenerateInput,
   AmbianceGenerateResult,
   AmbianceSegmentInput,
-  AmbianceSegmentResult,
-  IAmbianceGeneratorService
+  AmbianceSegmentResult
 } from './ambiance-generator.service.types';
-import type { IAmbianceLibraryService } from './ambiance-library.service.types';
+import type { AmbianceLibraryService } from './ambiance-library.service';
 import { IocConnection, IocRepository, IocService } from '../../ioc/ioc.types';
 import { getInstance } from '../../ioc/ioc.config';
 
@@ -131,7 +130,7 @@ function inferMood(description: string): AudioMood | undefined {
  * 5. Adjusting volume levels
  */
 @injectable()
-export class AmbianceGeneratorService implements IAmbianceGeneratorService {
+export class AmbianceGeneratorService {
   private libraryHits = 0;
   private libraryMisses = 0;
 
@@ -143,10 +142,10 @@ export class AmbianceGeneratorService implements IAmbianceGeneratorService {
   /**
    * Lazily get AmbianceLibrary service
    */
-  private _ambianceLibrary: IAmbianceLibraryService | null = null;
-  private get ambianceLibrary(): IAmbianceLibraryService {
+  private _ambianceLibrary: AmbianceLibraryService | null = null;
+  private get ambianceLibrary(): AmbianceLibraryService {
     if (!this._ambianceLibrary) {
-      this._ambianceLibrary = getInstance<IAmbianceLibraryService>(IocService.AMBIANCE_LIBRARY);
+      this._ambianceLibrary = getInstance<AmbianceLibraryService>(IocService.AMBIANCE_LIBRARY);
     }
     return this._ambianceLibrary;
   }
@@ -154,10 +153,10 @@ export class AmbianceGeneratorService implements IAmbianceGeneratorService {
   /**
    * Lazily get Storage service
    */
-  private _storage: IStorageService | null = null;
-  private get storage(): IStorageService {
+  private _storage: StorageService | null = null;
+  private get storage(): StorageService {
     if (!this._storage) {
-      this._storage = getInstance<IStorageService>(IocService.STORAGE);
+      this._storage = getInstance<StorageService>(IocService.STORAGE);
     }
     return this._storage;
   }

@@ -13,12 +13,10 @@ export type {
   BatchGenerateSfxResult,
   GenerateSfxInput,
   GenerateSfxResult,
-  ISfxService,
   SfxAudioFormat
 } from './sfx.service.types';
 export type {
   FindSfxParams as SfxLibraryFindParams,
-  ISfxLibraryService,
   SfxLookupResult as SfxLibraryLookupResult,
   StoredSfx as SfxLibraryStoredSfx,
   StoreSfxParams as SfxLibraryStoreParams

@@ -12,7 +12,7 @@ import { inject, injectable } from 'inversify';
 import type { IRedisClient } from '@mio/shared/server/connections/redis';
 import { AppError, DiagnoseSeverity, ErrorCodes } from '@mio/shared';
 
-import type { CacheSetOptions, ICacheService } from './cache.service.types';
+import type { CacheSetOptions } from './cache.service.types';
 import { IocConnection } from '../../ioc/ioc.types';
 
 /** Default TTL: 1 hour */
@@ -24,7 +24,7 @@ const DEFAULT_TTL_SECONDS = 3600;
  * Provides caching operations using Upstash Redis.
  */
 @injectable()
-export class CacheService implements ICacheService {
+export class CacheService {
   constructor(@inject(IocConnection.REDIS) private readonly redis: IRedisClient) {}
 
   /**

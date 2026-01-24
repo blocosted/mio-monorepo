@@ -65,22 +65,3 @@ export interface MusicLookupResult {
   fromCache: boolean;
 }
 
-/**
- * Music Library Service Interface
- */
-export interface IMusicLibraryService {
-  /**
-   * Find Music in library
-   */
-  findMusic(params: FindMusicParams): Promise<MusicLookupResult>;
-
-  /**
-   * Store new Music in library
-   */
-  storeMusic(params: StoreMusicParams): Promise<StoredMusic>;
-
-  /**
-   * Increment Music usage counter
-   */
-  incrementMusicUsage(id: string): Promise<void>;
-}

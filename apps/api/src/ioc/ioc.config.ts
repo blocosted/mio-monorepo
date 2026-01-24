@@ -26,30 +26,21 @@ import { AnthropicRepository, type ILLMRepository, OpenAIRepository } from '../r
 import {
   AmbianceGeneratorService,
   AmbianceLibraryService,
-  AmbianceLibraryStore,
-  type IAmbianceGeneratorService,
-  type IAmbianceLibraryService
+  AmbianceLibraryStore
 } from '../services/ambiance';
 // Audio Generation Services
-import { AudioGenerationOrchestrator, type IAudioGenerationOrchestrator } from '../services/audio';
+import { AudioGenerationOrchestrator } from '../services/audio';
 // Audio Mixing Services
-import { FFmpegMixerService, type IFFmpegMixerService, type IStoryMixingOrchestrator, StoryMixingOrchestrator } from '../services/audio-mixing';
+import { FFmpegMixerService, StoryMixingOrchestrator } from '../services/audio-mixing';
 import {
   AudioCacheService,
   CacheService,
-  type IAudioCacheService,
-  type ICacheService,
-  type IJobProgressService,
-  type ISfxCacheService,
   JobProgressService,
   SfxCacheService
 } from '../services/cache';
 // LLM Services
-import { EnrichmentService, type IEnrichmentService, type IScriptGenerationService, ScriptGenerationService } from '../services/llm';
+import { EnrichmentService, ScriptGenerationService } from '../services/llm';
 import {
-  type IMusicGeneratorService,
-  type IMusicLibraryService,
-  type IMusicStrategyService,
   MusicGeneratorService,
   MusicLibraryService,
   MusicLibraryStore,
@@ -57,10 +48,6 @@ import {
 } from '../services/music';
 // Narration Services
 import {
-  type ITTSService,
-  type IVoiceAssignmentService,
-  type IVoiceGenerationOrchestrator,
-  type IVoiceRegistryService,
   TTSService,
   TTSStore,
   VoiceAssignmentService,
@@ -68,25 +55,21 @@ import {
   VoiceRegistryService,
   VoiceRegistryStore
 } from '../services/narration';
-import { type IProfilesService, type IProfilesStore, ProfilesService, ProfilesStore } from '../services/profiles';
+import { ProfilesService, ProfilesStore } from '../services/profiles';
 // Sound Design Services
-import { type ISfxLibraryService, type ISfxService, SfxLibraryService, SfxLibraryStore, SfxService, SfxStore } from '../services/sound-design';
+import { SfxLibraryService, SfxLibraryStore, SfxService, SfxStore } from '../services/sound-design';
 // Services
-import { type IStorageService, StorageService } from '../services/storage';
+import { StorageService } from '../services/storage';
 import {
   AudioAssetsStore,
   GenerationJobsStore,
-  type IStoriesService,
-  type IStoriesStore,
-  type IStoryContextService,
-  type IStoryFinalizationService,
   StoriesService,
   StoriesStore,
   StoryContextService,
   StoryFinalizationService,
   StorySegmentsStore
 } from '../services/stories';
-import { type IWorkflowOrchestratorService, WorkflowOrchestratorService } from '../services/workflows';
+import { WorkflowOrchestratorService } from '../services/workflows';
 import { IocConnection, IocRepository, IocService, IocStore } from './ioc.types';
 
 // Create container instance
@@ -203,37 +186,7 @@ export type {
   // Repositories
   ILLMRepository,
   IAudioRepository as IVoicesRepository,
-  ISoundEffectsRepository,
-  // Services
-  IStorageService,
-  ICacheService,
-  IAudioCacheService,
-  ISfxCacheService,
-  IJobProgressService,
-  IProfilesService,
-  IProfilesStore,
-  IStoriesService,
-  IStoriesStore,
-  IEnrichmentService,
-  IScriptGenerationService,
-  ITTSService,
-  IVoiceRegistryService,
-  IFFmpegMixerService,
-  ISfxService,
-  ISfxLibraryService,
-  IMusicLibraryService,
-  IMusicGeneratorService,
-  IMusicStrategyService,
-  IAmbianceLibraryService,
-  IAmbianceGeneratorService,
-  IWorkflowOrchestratorService,
-  // Story generation orchestration services
-  IStoryContextService,
-  IVoiceAssignmentService,
-  IVoiceGenerationOrchestrator,
-  IAudioGenerationOrchestrator,
-  IStoryMixingOrchestrator,
-  IStoryFinalizationService
+  ISoundEffectsRepository
 };
 export type { RedisClient, DatabaseConnection, Logger };
 

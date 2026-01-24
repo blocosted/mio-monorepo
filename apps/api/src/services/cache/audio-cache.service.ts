@@ -9,8 +9,8 @@ import 'reflect-metadata';
 
 import { inject, injectable } from 'inversify';
 
-import type { AudioCacheKeyParams, CachedAudio, CacheVoiceSettings, IAudioCacheService } from './audio-cache.service.types';
-import type { ICacheService } from './cache.service.types';
+import type { AudioCacheKeyParams, CachedAudio, CacheVoiceSettings } from './audio-cache.service.types';
+import type { CacheService } from './cache.service';
 import { IocService } from '../../ioc/ioc.types';
 
 /** 30 days in seconds */
@@ -58,8 +58,8 @@ function generateDeterministicHash(params: AudioCacheKeyParams): string {
  * Uses deterministic hashing of all TTS parameters for cache keys.
  */
 @injectable()
-export class AudioCacheService implements IAudioCacheService {
-  constructor(@inject(IocService.CACHE) private readonly cache: ICacheService) {}
+export class AudioCacheService {
+  constructor(@inject(IocService.CACHE) private readonly cache: CacheService) {}
 
   /**
    * Generate deterministic cache key from all TTS parameters

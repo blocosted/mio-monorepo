@@ -13,14 +13,13 @@ import { inject, injectable } from 'inversify';
 
 import { AudioAssetType } from '@mio/shared/types';
 
-import type { IJobProgressService } from '../cache';
+import type { JobProgressService } from '../cache';
 import type { AudioAssetsStore } from './audio-assets.store';
 import type { GenerationJobsStore } from './generation-jobs.store';
 import type { StoriesStore } from './stories.service.store';
 import type {
   FinalizeStoryInput,
   FinalizeStoryResult,
-  IStoryFinalizationService,
   UploadFinalAudioInput,
   UploadFinalAudioResult
 } from './story-finalization.service.types';
@@ -39,12 +38,12 @@ const S3_PATHS = {
  * Coordinates final upload and database updates after story generation.
  */
 @injectable()
-export class StoryFinalizationService extends AbstractService implements IStoryFinalizationService {
+export class StoryFinalizationService extends AbstractService {
   constructor(
     @inject(IocStore.STORIES_STORE) private readonly storiesStore: StoriesStore,
     @inject(IocStore.GENERATION_JOBS_STORE) private readonly jobsStore: GenerationJobsStore,
     @inject(IocStore.AUDIO_ASSETS_STORE) private readonly audioAssetsStore: AudioAssetsStore,
-    @inject(IocService.JOB_PROGRESS) private readonly jobProgress: IJobProgressService
+    @inject(IocService.JOB_PROGRESS) private readonly jobProgress: JobProgressService
   ) {
     super();
   }

@@ -11,14 +11,14 @@ import { inject, injectable } from 'inversify';
 import type { Logger } from '@mio/shared/server/logger';
 
 import type { ILLMRepository } from '../../repositories/llm';
-import type { EnrichStoryInput, EnrichStoryResult, IEnrichmentService, LLMCompletionOptions } from './enrichment.service.types';
+import type { EnrichStoryInput, EnrichStoryResult, LLMCompletionOptions } from './enrichment.service.types';
 import { IocConnection, IocRepository } from '../../ioc/ioc.types';
 import { parseEnrichedConcept } from './llm.service.parser';
 import { getVocabularyLevel } from './llm.service.types';
 import { buildEnrichmentSystemPrompt, buildEnrichmentUserPrompt } from './prompts/enrichment.prompts';
 
 @injectable()
-export class EnrichmentService implements IEnrichmentService {
+export class EnrichmentService {
   constructor(
     @inject(IocRepository.LLM_REPOSITORY)
     private readonly repository: ILLMRepository,

@@ -16,11 +16,10 @@ import { inject, injectable } from 'inversify';
 import type { Logger } from '@mio/shared/server/logger';
 import { AppError, DiagnoseSeverity, ErrorCodes } from '@mio/shared';
 
-import type { IStorageService } from '../storage';
+import type { StorageService } from '../storage';
 import type {
   AmbianceTrackInput,
   FFmpegVerifyResult,
-  IFFmpegMixerService,
   MixStoryInput,
   MixStoryResult,
   MusicTrackInput,
@@ -54,10 +53,10 @@ import {
  * - MP3 export with standard settings
  */
 @injectable()
-export class FFmpegMixerService implements IFFmpegMixerService {
+export class FFmpegMixerService {
   constructor(
     @inject(IocConnection.LOGGER) private readonly logger: Logger,
-    @inject(IocService.STORAGE) private readonly storage: IStorageService
+    @inject(IocService.STORAGE) private readonly storage: StorageService
   ) {}
 
   /**

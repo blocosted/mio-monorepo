@@ -9,8 +9,8 @@ import { randomUUID } from 'node:crypto';
 import type { DatabaseConnection } from '@mio/shared/server/connections/db';
 import { RedisClient } from '@mio/shared/server/connections/redis';
 
-import type { ICacheService } from '../services/cache';
-import type { IStorageService } from '../services/storage';
+import type { CacheService } from '../services/cache';
+import type { StorageService } from '../services/storage';
 import { DEFAULT_TEST_CONFIG } from './test-utils';
 import { expect, mock } from 'bun:test';
 import { treaty } from '@elysiajs/eden';
@@ -63,8 +63,8 @@ export function createMockCacheService(): MockCacheService {
 /**
  * Cast mock cache service to interface
  */
-export function asCacheService(mockService: MockCacheService): ICacheService {
-  return mockService as unknown as ICacheService;
+export function asCacheService(mockService: MockCacheService): CacheService {
+  return mockService as unknown as CacheService;
 }
 
 /**
@@ -101,8 +101,8 @@ export function createMockStorageService(): MockStorageService {
 /**
  * Cast mock storage service to interface
  */
-export function asStorageService(mockService: MockStorageService): IStorageService {
-  return mockService as unknown as IStorageService;
+export function asStorageService(mockService: MockStorageService): StorageService {
+  return mockService as unknown as StorageService;
 }
 
 /**

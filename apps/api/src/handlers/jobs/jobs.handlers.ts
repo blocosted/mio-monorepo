@@ -3,9 +3,9 @@ import { Elysia } from 'elysia';
 import { JobIdParamsSchema } from '@mio/shared/clients/mio/jobs';
 import { JobStatus } from '@mio/shared/types';
 
-import type { IJobProgressService } from '../../services/cache';
+import type { JobProgressService } from '../../services/cache';
 import type { GenerationJobsStore } from '../../services/stories/generation-jobs.store';
-import type { IWorkflowOrchestratorService } from '../../services/workflows';
+import type { WorkflowOrchestratorService } from '../../services/workflows';
 import { IocService, IocStore } from '../../ioc/ioc.types';
 import { getInstance } from '../../ioc/ioc.config';
 
@@ -14,7 +14,7 @@ export const jobsHandlers = new Elysia({ prefix: '/jobs', tags: ['jobs'] })
   .get(
     '/:id',
     async ({ params, set }) => {
-      const jobProgress = getInstance<IJobProgressService>(IocService.JOB_PROGRESS);
+      const jobProgress = getInstance<JobProgressService>(IocService.JOB_PROGRESS);
       const jobsStore = getInstance<GenerationJobsStore>(IocStore.GENERATION_JOBS_STORE);
 
       // Get job from DB
@@ -49,7 +49,7 @@ export const jobsHandlers = new Elysia({ prefix: '/jobs', tags: ['jobs'] })
   .get(
     '/:id/stream',
     async function* ({ params, set }) {
-      const jobProgress = getInstance<IJobProgressService>(IocService.JOB_PROGRESS);
+      const jobProgress = getInstance<JobProgressService>(IocService.JOB_PROGRESS);
       const jobsStore = getInstance<GenerationJobsStore>(IocStore.GENERATION_JOBS_STORE);
 
       // Verify job exists
@@ -114,8 +114,8 @@ export const jobsHandlers = new Elysia({ prefix: '/jobs', tags: ['jobs'] })
     '/:id',
     async ({ params, set }) => {
       const jobsStore = getInstance<GenerationJobsStore>(IocStore.GENERATION_JOBS_STORE);
-      const orchestrator = getInstance<IWorkflowOrchestratorService>(IocService.WORKFLOW_ORCHESTRATOR);
-      const jobProgress = getInstance<IJobProgressService>(IocService.JOB_PROGRESS);
+      const orchestrator = getInstance<WorkflowOrchestratorService>(IocService.WORKFLOW_ORCHESTRATOR);
+      const jobProgress = getInstance<JobProgressService>(IocService.JOB_PROGRESS);
 
       const job = await jobsStore.findById(params.id);
       if (!job) {

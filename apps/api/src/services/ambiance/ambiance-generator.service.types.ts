@@ -81,23 +81,3 @@ export interface AmbianceSegmentResult {
   outputFile?: string;
 }
 
-/**
- * Ambiance Generator Service Interface
- */
-export interface IAmbianceGeneratorService {
-  /**
-   * Generate an ambient sound track
-   *
-   * @param input - Generation parameters
-   * @returns Generated ambient audio
-   */
-  generate(input: AmbianceGenerateInput): Promise<AmbianceGenerateResult>;
-
-  /**
-   * Generate ambient sound for a script segment
-   *
-   * @param segment - Segment from script
-   * @returns Generation result
-   */
-  generateForSegment(segment: AmbianceSegmentInput): Promise<AmbianceSegmentResult>;
-}

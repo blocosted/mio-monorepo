@@ -76,37 +76,3 @@ export interface AudioGenerationResult {
   totalDurationSeconds: number;
 }
 
-/**
- * Audio Generation Orchestrator Interface
- */
-export interface IAudioGenerationOrchestrator {
-  /**
-   * Generate SFX audio for all SFX segments in a script
-   *
-   * Features:
-   * - Content-based caching using description hash
-   * - Stores assets in audio_assets table
-   * - Partial success support
-   */
-  generateSfx(input: SfxGenerationInput): Promise<AudioGenerationResult>;
-
-  /**
-   * Generate Music audio for all music segments in a script
-   *
-   * Features:
-   * - Mood-based caching
-   * - Looping support for longer durations
-   * - Stores assets in audio_assets table
-   */
-  generateMusic(input: MusicGenerationInput): Promise<AudioGenerationResult>;
-
-  /**
-   * Generate Ambiance audio for all ambiance segments in a script
-   *
-   * Features:
-   * - Description-based caching
-   * - Looping support for longer durations
-   * - Stores assets in audio_assets table
-   */
-  generateAmbiance(input: AmbianceGenerationInput): Promise<AudioGenerationResult>;
-}

@@ -15,8 +15,9 @@ import { inject, injectable } from 'inversify';
 import type { StoryScript, TimelineSegment } from '@mio/shared/types';
 
 import type { AudioAssetsStore } from '../stories/audio-assets.store';
-import type { AudioFile, IFFmpegMixerService, MixStoryInput } from './ffmpeg-mixer.service.types';
-import type { IStoryMixingOrchestrator, LoadedAudioAsset, StoryMixingInput, StoryMixingResult } from './story-mixing.orchestrator.types';
+import type { AudioFile, MixStoryInput } from './ffmpeg-mixer.service.types';
+import type { FFmpegMixerService } from './ffmpeg-mixer.service';
+import type { LoadedAudioAsset, StoryMixingInput, StoryMixingResult } from './story-mixing.orchestrator.types';
 import { IocService, IocStore } from '../../ioc/ioc.types';
 import { AbstractService } from '../service.abstract';
 
@@ -37,9 +38,9 @@ const DEFAULT_VOLUMES = {
  * Coordinates loading assets from DB, building mixer input, and uploading results.
  */
 @injectable()
-export class StoryMixingOrchestrator extends AbstractService implements IStoryMixingOrchestrator {
+export class StoryMixingOrchestrator extends AbstractService {
   constructor(
-    @inject(IocService.FFMPEG_MIXER) private readonly mixerService: IFFmpegMixerService,
+    @inject(IocService.FFMPEG_MIXER) private readonly mixerService: FFmpegMixerService,
     @inject(IocStore.AUDIO_ASSETS_STORE) private readonly audioAssetsStore: AudioAssetsStore
   ) {
     super();

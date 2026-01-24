@@ -23,18 +23,18 @@
 import type { Logger } from '@mio/shared/server/logger/Logger';
 
 import type { ILLMRepository } from '../../repositories/llm/llm-repository.types';
-import type { IAudioGenerationOrchestrator } from '../../services/audio/audio-generation.orchestrator.types';
-import type { IStoryMixingOrchestrator } from '../../services/audio-mixing/story-mixing.orchestrator.types';
+import type { AudioGenerationOrchestrator } from '../../services/audio/audio-generation.orchestrator';
+import type { StoryMixingOrchestrator } from '../../services/audio-mixing/story-mixing.orchestrator';
 // LLM Services
-import type { IEnrichmentService } from '../../services/llm/enrichment.service.types';
-import type { IScriptGenerationService } from '../../services/llm/script-generation.service.types';
-import type { IVoiceAssignmentService } from '../../services/narration/voice-assignment.service.types';
-import type { IVoiceGenerationOrchestrator } from '../../services/narration/voice-generation.orchestrator.types';
+import type { EnrichmentService } from '../../services/llm/enrichment.service';
+import type { ScriptGenerationService } from '../../services/llm/script-generation.service';
+import type { VoiceAssignmentService } from '../../services/narration/voice-assignment.service';
+import type { VoiceGenerationOrchestrator } from '../../services/narration/voice-generation.orchestrator';
 // Stores
 import type { StoriesStore } from '../../services/stories/stories.store';
 // Orchestration Services
-import type { IStoryContextService } from '../../services/stories/story-context.service.types';
-import type { IStoryFinalizationService } from '../../services/stories/story-finalization.service.types';
+import type { StoryContextService } from '../../services/stories/story-context.service';
+import type { StoryFinalizationService } from '../../services/stories/story-finalization.service';
 import { IocConnection, IocRepository, IocService, IocStore } from '../../ioc/ioc.types';
 import { getInstance } from '../../ioc/ioc.config';
 import { getStepConfig } from './story-generation.workflow.constants';
@@ -60,8 +60,8 @@ export async function enrichmentStep(context: StoryGenerationWorkflowContext): P
       }
 
       // Load services
-      const storyContext = getInstance<IStoryContextService>(IocService.STORY_CONTEXT);
-      const enrichmentService = getInstance<IEnrichmentService>(IocService.ENRICHMENT);
+      const storyContext = getInstance<StoryContextService>(IocService.STORY_CONTEXT);
+      const enrichmentService = getInstance<EnrichmentService>(IocService.ENRICHMENT);
       const storiesStore = getInstance<StoriesStore>(IocStore.STORIES_STORE);
 
       await helper.updateProgress(context.jobId, config.startProgress, config.name);
@@ -115,8 +115,8 @@ export async function scriptGenerationStep(context: StoryGenerationWorkflowConte
         throw new Error('Job cancelled by user');
       }
 
-      const storyContext = getInstance<IStoryContextService>(IocService.STORY_CONTEXT);
-      const scriptService = getInstance<IScriptGenerationService>(IocService.SCRIPT_GENERATION);
+      const storyContext = getInstance<StoryContextService>(IocService.STORY_CONTEXT);
+      const scriptService = getInstance<ScriptGenerationService>(IocService.SCRIPT_GENERATION);
       const llmRepository = getInstance<ILLMRepository>(IocRepository.LLM_REPOSITORY);
       const storiesStore = getInstance<StoriesStore>(IocStore.STORIES_STORE);
 
@@ -173,8 +173,8 @@ export async function voiceAssignmentStep(context: StoryGenerationWorkflowContex
         throw new Error('Job cancelled by user');
       }
 
-      const storyContext = getInstance<IStoryContextService>(IocService.STORY_CONTEXT);
-      const voiceAssignment = getInstance<IVoiceAssignmentService>(IocService.VOICE_ASSIGNMENT);
+      const storyContext = getInstance<StoryContextService>(IocService.STORY_CONTEXT);
+      const voiceAssignment = getInstance<VoiceAssignmentService>(IocService.VOICE_ASSIGNMENT);
       const storiesStore = getInstance<StoriesStore>(IocStore.STORIES_STORE);
 
       await helper.updateProgress(context.jobId, config.startProgress, config.name);
@@ -231,7 +231,7 @@ export async function voiceGenerationStep(context: StoryGenerationWorkflowContex
         throw new Error('Job cancelled by user');
       }
 
-      const voiceOrchestrator = getInstance<IVoiceGenerationOrchestrator>(IocService.VOICE_GENERATION_ORCHESTRATOR);
+      const voiceOrchestrator = getInstance<VoiceGenerationOrchestrator>(IocService.VOICE_GENERATION_ORCHESTRATOR);
 
       await helper.updateProgress(context.jobId, config.startProgress, config.name);
 
@@ -279,7 +279,7 @@ export async function sfxGenerationStep(context: StoryGenerationWorkflowContext)
         throw new Error('Job cancelled by user');
       }
 
-      const audioOrchestrator = getInstance<IAudioGenerationOrchestrator>(IocService.AUDIO_GENERATION_ORCHESTRATOR);
+      const audioOrchestrator = getInstance<AudioGenerationOrchestrator>(IocService.AUDIO_GENERATION_ORCHESTRATOR);
 
       await helper.updateProgress(context.jobId, config.startProgress, config.name);
 
@@ -327,7 +327,7 @@ export async function musicGenerationStep(context: StoryGenerationWorkflowContex
         throw new Error('Job cancelled by user');
       }
 
-      const audioOrchestrator = getInstance<IAudioGenerationOrchestrator>(IocService.AUDIO_GENERATION_ORCHESTRATOR);
+      const audioOrchestrator = getInstance<AudioGenerationOrchestrator>(IocService.AUDIO_GENERATION_ORCHESTRATOR);
 
       await helper.updateProgress(context.jobId, config.startProgress, config.name);
 
@@ -375,7 +375,7 @@ export async function ambianceGenerationStep(context: StoryGenerationWorkflowCon
         throw new Error('Job cancelled by user');
       }
 
-      const audioOrchestrator = getInstance<IAudioGenerationOrchestrator>(IocService.AUDIO_GENERATION_ORCHESTRATOR);
+      const audioOrchestrator = getInstance<AudioGenerationOrchestrator>(IocService.AUDIO_GENERATION_ORCHESTRATOR);
 
       await helper.updateProgress(context.jobId, config.startProgress, config.name);
 
@@ -423,7 +423,7 @@ export async function mixingStep(context: StoryGenerationWorkflowContext): Promi
         throw new Error('Job cancelled by user');
       }
 
-      const mixingOrchestrator = getInstance<IStoryMixingOrchestrator>(IocService.STORY_MIXING_ORCHESTRATOR);
+      const mixingOrchestrator = getInstance<StoryMixingOrchestrator>(IocService.STORY_MIXING_ORCHESTRATOR);
 
       await helper.updateProgress(context.jobId, config.startProgress, config.name);
 
@@ -476,7 +476,7 @@ export async function uploadStep(context: StoryGenerationWorkflowContext): Promi
         throw new Error('Job cancelled by user');
       }
 
-      const finalizationService = getInstance<IStoryFinalizationService>(IocService.STORY_FINALIZATION);
+      const finalizationService = getInstance<StoryFinalizationService>(IocService.STORY_FINALIZATION);
 
       await helper.updateProgress(context.jobId, config.startProgress, config.name);
 
@@ -524,7 +524,7 @@ export async function finalizationStep(context: StoryGenerationWorkflowContext):
         throw new Error('Job cancelled by user');
       }
 
-      const finalizationService = getInstance<IStoryFinalizationService>(IocService.STORY_FINALIZATION);
+      const finalizationService = getInstance<StoryFinalizationService>(IocService.STORY_FINALIZATION);
 
       await helper.updateProgress(context.jobId, config.startProgress, config.name);
 

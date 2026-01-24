@@ -14,8 +14,9 @@ import { inject, injectable } from 'inversify';
 import type { DatabaseConnection } from '@mio/shared/server/connections/db';
 import type { RedisClient } from '@mio/shared/server/connections/redis';
 
-import type { AudioCacheKeyParams, CachedAudio, IAudioCacheService } from '../cache/audio-cache.service.types';
-import type { IStorageService } from '../storage';
+import type { AudioCacheKeyParams, CachedAudio } from '../cache/audio-cache.service.types';
+import type { AudioCacheService } from '../cache/audio-cache.service';
+import type { StorageService } from '../storage';
 import { IocConnection, IocService } from '../../ioc';
 
 /**
@@ -35,8 +36,8 @@ export class TTSStore {
   constructor(
     @inject(IocConnection.DATABASE) protected readonly db: DatabaseConnection,
     @inject(IocConnection.REDIS) protected readonly redis: RedisClient,
-    @inject(IocService.AUDIO_CACHE) private readonly audioCache: IAudioCacheService,
-    @inject(IocService.STORAGE) private readonly storage: IStorageService
+    @inject(IocService.AUDIO_CACHE) private readonly audioCache: AudioCacheService,
+    @inject(IocService.STORAGE) private readonly storage: StorageService
   ) { }
 
   /**

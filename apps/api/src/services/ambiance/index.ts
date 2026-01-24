@@ -7,13 +7,11 @@ export type {
   AmbianceGenerateInput,
   AmbianceGenerateResult,
   AmbianceSegmentInput,
-  AmbianceSegmentResult,
-  IAmbianceGeneratorService
+  AmbianceSegmentResult
 } from './ambiance-generator.service.types';
 export type {
   AmbianceLookupResult as AmbianceLibraryLookupResult,
   FindAmbianceParams as AmbianceLibraryFindParams,
-  IAmbianceLibraryService,
   StoreAmbianceParams as AmbianceLibraryStoreParams,
   StoredAmbiance as AmbianceLibraryStoredAmbiance
 } from './ambiance-library.service.types';

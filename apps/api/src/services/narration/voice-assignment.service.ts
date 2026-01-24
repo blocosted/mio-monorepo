@@ -13,13 +13,12 @@ import { type CharacterVoiceMap, type Language, type StoryScript, VoiceAge, Voic
 
 import type {
   CharacterVoiceAssignment,
-  IVoiceAssignmentService,
   VoiceAssignmentInput,
   VoiceAssignmentResult,
   VoiceCandidate,
   VoiceSelection
 } from './voice-assignment.service.types';
-import type { IVoiceRegistryService } from './voice-registry.service.types';
+import type { VoiceRegistryService } from './voice-registry.service';
 import { IocService } from '../../ioc/ioc.types';
 import { AbstractService } from '../service.abstract';
 
@@ -134,8 +133,8 @@ const OLD_KEYWORDS = [
  * Uses the voice registry to access available voices.
  */
 @injectable()
-export class VoiceAssignmentService extends AbstractService implements IVoiceAssignmentService {
-  constructor(@inject(IocService.VOICE_REGISTRY) private readonly voiceRegistry: IVoiceRegistryService) {
+export class VoiceAssignmentService extends AbstractService {
+  constructor(@inject(IocService.VOICE_REGISTRY) private readonly voiceRegistry: VoiceRegistryService) {
     super();
   }
 

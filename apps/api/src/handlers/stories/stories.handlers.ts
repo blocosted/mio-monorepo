@@ -10,8 +10,8 @@ import {
 
 import { AppError, ErrorCodes } from '@mio/shared';
 
-import type { IStoriesService } from '../../services/stories';
-import type { IWorkflowOrchestratorService } from '../../services/workflows/workflow-orchestrator.service.types';
+import type { StoriesService } from '../../services/stories';
+import type { WorkflowOrchestratorService } from '../../services/workflows';
 import { IocService, getInstance } from '../../ioc';
 import { mapCreateStoryBodyToInput, mapStoryToResponse } from './stories.handlers.map';
 
@@ -20,7 +20,7 @@ export const storiesHandlers = new Elysia({ prefix: '/stories', tags: ['stories'
   .post(
     '/',
     async ({ body, set }) => {
-      const service = getInstance<IStoriesService>(IocService.STORIES);
+      const service = getInstance<StoriesService>(IocService.STORIES);
       const input = mapCreateStoryBodyToInput(body);
       const story = await service.create(input);
 
@@ -36,7 +36,7 @@ export const storiesHandlers = new Elysia({ prefix: '/stories', tags: ['stories'
   .get(
     '/:id',
     async ({ params }) => {
-      const service = getInstance<IStoriesService>(IocService.STORIES);
+      const service = getInstance<StoriesService>(IocService.STORIES);
       const story = await service.findById(params.id);
 
       if (!story) {
@@ -54,7 +54,7 @@ export const storiesHandlers = new Elysia({ prefix: '/stories', tags: ['stories'
   .get(
     '/profile/:profileId',
     async ({ params }) => {
-      const service = getInstance<IStoriesService>(IocService.STORIES);
+      const service = getInstance<StoriesService>(IocService.STORIES);
       const stories = await service.findByProfileId(params.profileId);
 
       return stories.map(mapStoryToResponse);
@@ -68,7 +68,7 @@ export const storiesHandlers = new Elysia({ prefix: '/stories', tags: ['stories'
   .post(
     '/:id/enrich',
     async ({ params }) => {
-      const service = getInstance<IStoriesService>(IocService.STORIES);
+      const service = getInstance<StoriesService>(IocService.STORIES);
       return service.enrichStory(params.id);
     },
     {
@@ -81,8 +81,8 @@ export const storiesHandlers = new Elysia({ prefix: '/stories', tags: ['stories'
   .post(
     '/:id/generate',
     async ({ params, body, set }) => {
-      const storiesService = getInstance<IStoriesService>(IocService.STORIES);
-      const orchestrator = getInstance<IWorkflowOrchestratorService>(IocService.WORKFLOW_ORCHESTRATOR);
+      const storiesService = getInstance<StoriesService>(IocService.STORIES);
+      const orchestrator = getInstance<WorkflowOrchestratorService>(IocService.WORKFLOW_ORCHESTRATOR);
 
       // Verify story exists
       const story = await storiesService.findById(params.id);
@@ -121,7 +121,7 @@ export const storiesHandlers = new Elysia({ prefix: '/stories', tags: ['stories'
   .delete(
     '/:id',
     async ({ params, set }) => {
-      const service = getInstance<IStoriesService>(IocService.STORIES);
+      const service = getInstance<StoriesService>(IocService.STORIES);
       const deleted = await service.delete(params.id);
 
       if (!deleted) {

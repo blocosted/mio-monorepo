@@ -55,33 +55,3 @@ export interface LoadedAudioAsset {
   cacheKey?: string | null;
 }
 
-/**
- * Story Mixing Orchestrator Interface
- */
-export interface IStoryMixingOrchestrator {
-  /**
-   * Mix a story by loading assets and invoking the FFmpeg mixer
-   *
-   * Handles:
-   * - Loading audio assets from database
-   * - Building MixStoryInput from script and assets
-   * - Invoking FFmpegMixerService
-   * - Uploading result to S3 temp location
-   */
-  mixStory(input: StoryMixingInput): Promise<StoryMixingResult>;
-
-  /**
-   * Build the MixStoryInput from script and loaded assets
-   *
-   * Useful for testing or custom mixing scenarios.
-   */
-  buildMixInput(
-    storyId: string,
-    script: StoryScript,
-    voiceAssets: LoadedAudioAsset[],
-    sfxAssets: LoadedAudioAsset[],
-    musicAssets: LoadedAudioAsset[],
-    ambianceAssets: LoadedAudioAsset[],
-    volumeSettings?: StoryMixingInput['volumeSettings']
-  ): MixStoryInput;
-}

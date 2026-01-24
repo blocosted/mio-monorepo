@@ -17,9 +17,9 @@ import type { ElevenLabsVoiceSettings, Emotion } from '@mio/shared/types';
 import { AppError, ErrorCodes } from '@mio/shared';
 
 import type { IAudioRepository } from '../../repositories/audio/audio-repository.types';
-import type { ICacheService } from '../cache/cache.service.types';
+import type { CacheService } from '../cache/cache.service';
 import type { TTSStore } from './tts.service.store';
-import type { BatchGenerateSpeechInput, BatchGenerateSpeechResult, GenerateSpeechInput, GenerateSpeechResult, ITTSService } from './tts.service.types';
+import type { BatchGenerateSpeechInput, BatchGenerateSpeechResult, GenerateSpeechInput, GenerateSpeechResult } from './tts.service.types';
 import { IocRepository, IocService, IocStore } from '../../ioc/ioc.types';
 import { getInstance } from '../../ioc/ioc.config';
 import { AbstractService } from '../service.abstract';
@@ -44,12 +44,12 @@ import {
  * - Emotion-based voice customization
  */
 @injectable()
-export class TTSService extends AbstractService implements ITTSService {
+export class TTSService extends AbstractService {
   private readonly localLimit: ReturnType<typeof pLimit>;
 
   constructor(
     @inject(IocStore.TTS_STORE) private readonly ttsStore: TTSStore,
-    @inject(IocService.CACHE) private readonly cache: ICacheService
+    @inject(IocService.CACHE) private readonly cache: CacheService
   ) {
     super();
     this.localLimit = pLimit(CONCURRENCY_CONFIG.maxLocalConcurrency);

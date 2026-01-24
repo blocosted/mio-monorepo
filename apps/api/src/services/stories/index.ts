@@ -5,22 +5,18 @@
 export type {
   CreateStoryInput,
   CreateStoryRowInput,
-  IStoriesService,
-  IStoriesStore,
   Story,
   StoryRow
 } from './stories.service.types';
 export type {
   ChildProfileData,
   EnrichmentProfile,
-  IStoryContextService,
   StoryContext,
   StoryData
 } from './story-context.service.types';
 export type {
   FinalizeStoryInput,
   FinalizeStoryResult,
-  IStoryFinalizationService,
   UploadFinalAudioInput,
   UploadFinalAudioResult
 } from './story-finalization.service.types';

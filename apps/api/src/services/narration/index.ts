@@ -5,7 +5,6 @@
  */
 
 export type {
-  ITimelineSyncService,
   SyncedStoryScript,
   SyncMetadata,
   TimelineSyncOptions,
@@ -20,26 +19,22 @@ export type {
   BatchSegmentResult,
   CharacterArchetype,
   GenerateSpeechInput,
-  GenerateSpeechResult,
-  ITTSService
+  GenerateSpeechResult
 } from './tts.service.types';
 export type {
   CharacterVoiceAssignment,
-  IVoiceAssignmentService,
   VoiceAssignmentInput,
   VoiceAssignmentResult,
   VoiceCandidate,
   VoiceSelection
 } from './voice-assignment.service.types';
 export type {
-  IVoiceGenerationOrchestrator,
   VoiceGenerationInput,
   VoiceGenerationResult,
   VoiceSegmentGenerationResult
 } from './voice-generation.orchestrator.types';
 export type {
   ApiVoice,
-  IVoiceRegistryService,
   ParsedVoice,
   StoredVoice,
   SyncOptions,

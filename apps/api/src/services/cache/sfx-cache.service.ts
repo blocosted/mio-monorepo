@@ -9,8 +9,8 @@ import 'reflect-metadata';
 
 import { inject, injectable } from 'inversify';
 
-import type { ICacheService } from './cache.service.types';
-import type { CachedSfx, ISfxCacheService, SfxCacheKeyParams } from './sfx-cache.service.types';
+import type { CacheService } from './cache.service';
+import type { CachedSfx, SfxCacheKeyParams } from './sfx-cache.service.types';
 import { IocService } from '../../ioc/ioc.types';
 
 /** 30 days in seconds */
@@ -44,8 +44,8 @@ function generateDeterministicHash(params: SfxCacheKeyParams): string {
  * Uses deterministic hashing of all SFX parameters for cache keys.
  */
 @injectable()
-export class SfxCacheService implements ISfxCacheService {
-  constructor(@inject(IocService.CACHE) private readonly cache: ICacheService) {}
+export class SfxCacheService {
+  constructor(@inject(IocService.CACHE) private readonly cache: CacheService) {}
 
   /**
    * Generate deterministic cache key from all SFX parameters

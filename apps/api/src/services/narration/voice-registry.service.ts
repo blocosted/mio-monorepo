@@ -20,7 +20,7 @@ import { environment } from '@mio/shared/constants/environment.constants';
 import { type VoiceAge, VoiceAgeValues, type VoiceGender, VoiceGenderValues, VoiceUseCase, VoiceUseCaseValues } from '@mio/shared/types';
 
 import type { IAudioRepository } from '../../repositories/audio/audio-repository.types';
-import type { ApiVoice, IVoiceRegistryService, ParsedVoice, StoredVoice, SyncOptions, SyncResult, VoiceFilterOptions } from './voice-registry.service.types';
+import type { ApiVoice, ParsedVoice, StoredVoice, SyncOptions, SyncResult, VoiceFilterOptions } from './voice-registry.service.types';
 import { IocConnection, IocRepository } from '../../ioc/ioc.types';
 import { getInstance } from '../../ioc/ioc.config';
 
@@ -171,7 +171,7 @@ function mapRowToStoredVoice(row: typeof elevenLabsVoices.$inferSelect): StoredV
  * repeated ElevenLabs API calls for `listVoices()`.
  */
 @injectable()
-export class VoiceRegistryService implements IVoiceRegistryService {
+export class VoiceRegistryService {
   constructor(
     @inject(IocConnection.DATABASE)
     private readonly db: DatabaseConnection,

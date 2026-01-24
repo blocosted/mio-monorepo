@@ -17,22 +17,3 @@ export interface TriggerWorkflowResult {
   jobId: string;
 }
 
-/**
- * Workflow Orchestrator Service Interface
- */
-export interface IWorkflowOrchestratorService {
-  /**
-   * Trigger the story generation workflow
-   *
-   * @param input - Workflow input context
-   * @returns Workflow run ID and job ID
-   */
-  triggerStoryGeneration(input: StoryGenerationWorkflowContext): Promise<TriggerWorkflowResult>;
-
-  /**
-   * Cancel a running workflow
-   *
-   * @param workflowRunId - QStash workflow run ID
-   */
-  cancelWorkflow(workflowRunId: string): Promise<void>;
-}

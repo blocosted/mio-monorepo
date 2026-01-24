@@ -4,7 +4,6 @@
 
 // Types
 export type {
-  IMusicGeneratorService,
   MoodPromptMapping,
   MusicGenerateInput,
   MusicGenerateResult,
@@ -13,7 +12,6 @@ export type {
 } from './music-generator.service.types';
 export type {
   FindMusicParams as MusicLibraryFindParams,
-  IMusicLibraryService,
   MusicLookupResult as MusicLibraryLookupResult,
   StoredMusic as MusicLibraryStoredMusic,
   StoreMusicParams as MusicLibraryStoreParams
@@ -27,7 +25,6 @@ export type {
   StoreMusicParams
 } from './music-library.store';
 export type {
-  IMusicStrategyService,
   MusicCue,
   MusicCueReason,
   MusicMood,

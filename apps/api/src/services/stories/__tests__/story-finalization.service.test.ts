@@ -8,8 +8,8 @@
 import type { Logger } from '@mio/shared/server/logger';
 import { AudioAssetType } from '@mio/shared/types';
 
-import type { IJobProgressService } from '../../cache';
-import type { IStorageService } from '../../storage';
+import type { JobProgressService } from '../../cache';
+import type { StorageService } from '../../storage';
 import type { AudioAssetsStore } from '../audio-assets.store';
 import type { GenerationJobsStore } from '../generation-jobs.store';
 import type { StoriesStore } from '../stories.service.store';
@@ -21,15 +21,15 @@ import { beforeEach, describe, expect, it, mock } from 'bun:test';
  */
 class TestableStoryFinalizationService extends StoryFinalizationService {
   private _mockLogger: Partial<Logger>;
-  private _mockStorage: Partial<IStorageService>;
+  private _mockStorage: Partial<StorageService>;
 
   constructor(
     storiesStore: StoriesStore,
     jobsStore: GenerationJobsStore,
     audioAssetsStore: AudioAssetsStore,
-    jobProgress: IJobProgressService,
+    jobProgress: JobProgressService,
     mockLogger: Partial<Logger>,
-    mockStorage: Partial<IStorageService>
+    mockStorage: Partial<StorageService>
   ) {
     super(storiesStore, jobsStore, audioAssetsStore, jobProgress);
     this._mockLogger = mockLogger;
@@ -40,8 +40,8 @@ class TestableStoryFinalizationService extends StoryFinalizationService {
     return this._mockLogger as Logger;
   }
 
-  protected override get storageService(): IStorageService {
-    return this._mockStorage as IStorageService;
+  protected override get storageService(): StorageService {
+    return this._mockStorage as StorageService;
   }
 }
 
@@ -50,9 +50,9 @@ describe('StoryFinalizationService', () => {
   let mockStoriesStore: Partial<StoriesStore>;
   let mockJobsStore: Partial<GenerationJobsStore>;
   let mockAudioAssetsStore: Partial<AudioAssetsStore>;
-  let mockJobProgress: Partial<IJobProgressService>;
+  let mockJobProgress: Partial<JobProgressService>;
   let mockLogger: Partial<Logger>;
-  let mockStorage: Partial<IStorageService>;
+  let mockStorage: Partial<StorageService>;
 
   const storyId = 'story-123';
   const jobId = 'job-456';
@@ -119,7 +119,7 @@ describe('StoryFinalizationService', () => {
       mockStoriesStore as StoriesStore,
       mockJobsStore as GenerationJobsStore,
       mockAudioAssetsStore as AudioAssetsStore,
-      mockJobProgress as IJobProgressService,
+      mockJobProgress as JobProgressService,
       mockLogger,
       mockStorage
     );

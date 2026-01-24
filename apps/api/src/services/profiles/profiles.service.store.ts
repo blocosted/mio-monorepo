@@ -12,11 +12,11 @@ import { inject, injectable } from 'inversify';
 import type { DatabaseConnection } from '@mio/shared/server/connections/db';
 import { childProfiles } from '@mio/db/schema';
 
-import type { CreateChildProfileInput, IProfilesStore, ProfileRow, UpdateChildProfileInput } from './profiles.service.types';
+import type { CreateChildProfileInput, ProfileRow, UpdateChildProfileInput } from './profiles.service.types';
 import { IocConnection } from '../../ioc/ioc.types';
 
 @injectable()
-export class ProfilesStore implements IProfilesStore {
+export class ProfilesStore {
   constructor(
     @inject(IocConnection.DATABASE)
     private readonly db: DatabaseConnection

@@ -10,12 +10,12 @@ import type { Logger } from '@mio/shared/server/logger/Logger';
 import { environment } from '@mio/shared/constants/environment.constants';
 
 import type { StoryGenerationWorkflowContext } from '../../workflows/story-generation/story-generation.workflow.types';
-import type { IWorkflowOrchestratorService, TriggerWorkflowResult } from './workflow-orchestrator.service.types';
+import type { TriggerWorkflowResult } from './workflow-orchestrator.service.types';
 import { IocConnection } from '../../ioc/ioc.types';
 import { getWorkflowClient } from '../../workflows/workflow.client';
 
 @injectable()
-export class WorkflowOrchestratorService implements IWorkflowOrchestratorService {
+export class WorkflowOrchestratorService {
   private readonly logger: Logger;
   private readonly workflowBaseUrl: string;
 

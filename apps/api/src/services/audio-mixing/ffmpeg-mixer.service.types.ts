@@ -129,27 +129,3 @@ export interface FFmpegVerifyResult {
   };
 }
 
-/**
- * FFmpeg Mixer Service Interface
- */
-export interface IFFmpegMixerService {
-  /**
-   * Mix all audio tracks into a final story audio file
-   */
-  mixStory(input: MixStoryInput): Promise<MixStoryResult>;
-
-  /**
-   * Generate a silence audio file of specified duration
-   */
-  generateSilence(durationSeconds: number, outputPath: string): Promise<string>;
-
-  /**
-   * Verify FFmpeg is installed and has required codecs
-   */
-  verifyFFmpegInstalled(): Promise<FFmpegVerifyResult>;
-
-  /**
-   * Clean up temporary work directory
-   */
-  cleanupWorkdir(workdirPath: string): Promise<void>;
-}

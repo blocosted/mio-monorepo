@@ -8,9 +8,10 @@ import type { Logger } from '@mio/shared/server/logger';
 import type { AudioTrack, ScriptMetadata, StoryScript, TimelineSegment } from '@mio/shared/types';
 import { AudioAssetType, Emotion, Language, VocabularyLevel } from '@mio/shared/types';
 
-import type { IStorageService } from '../../storage';
+import type { StorageService } from '../../storage';
 import type { AudioAssetRow, AudioAssetsStore } from '../../stories/audio-assets.store';
-import type { IFFmpegMixerService, MixStoryResult } from '../ffmpeg-mixer.service.types';
+import type { MixStoryResult } from '../ffmpeg-mixer.service.types';
+import type { FFmpegMixerService } from '../ffmpeg-mixer.service';
 import { StoryMixingOrchestrator } from '../story-mixing.orchestrator';
 import { beforeEach, describe, expect, it, mock } from 'bun:test';
 
@@ -19,9 +20,9 @@ import { beforeEach, describe, expect, it, mock } from 'bun:test';
  */
 class TestableStoryMixingOrchestrator extends StoryMixingOrchestrator {
   private _mockLogger: Partial<Logger>;
-  private _mockStorage: Partial<IStorageService>;
+  private _mockStorage: Partial<StorageService>;
 
-  constructor(mixerService: IFFmpegMixerService, audioAssetsStore: AudioAssetsStore, mockLogger: Partial<Logger>, mockStorage: Partial<IStorageService>) {
+  constructor(mixerService: FFmpegMixerService, audioAssetsStore: AudioAssetsStore, mockLogger: Partial<Logger>, mockStorage: Partial<StorageService>) {
     super(mixerService, audioAssetsStore);
     this._mockLogger = mockLogger;
     this._mockStorage = mockStorage;
@@ -31,17 +32,17 @@ class TestableStoryMixingOrchestrator extends StoryMixingOrchestrator {
     return this._mockLogger as Logger;
   }
 
-  protected override get storageService(): IStorageService {
-    return this._mockStorage as IStorageService;
+  protected override get storageService(): StorageService {
+    return this._mockStorage as StorageService;
   }
 }
 
 describe('StoryMixingOrchestrator', () => {
   let orchestrator: TestableStoryMixingOrchestrator;
-  let mockMixerService: Partial<IFFmpegMixerService>;
+  let mockMixerService: Partial<FFmpegMixerService>;
   let mockAudioAssetsStore: Partial<AudioAssetsStore>;
   let mockLogger: Partial<Logger>;
-  let mockStorage: Partial<IStorageService>;
+  let mockStorage: Partial<StorageService>;
 
   const storyId = 'story-123';
 
@@ -180,7 +181,7 @@ describe('StoryMixingOrchestrator', () => {
     };
 
     orchestrator = new TestableStoryMixingOrchestrator(
-      mockMixerService as IFFmpegMixerService,
+      mockMixerService as FFmpegMixerService,
       mockAudioAssetsStore as AudioAssetsStore,
       mockLogger,
       mockStorage

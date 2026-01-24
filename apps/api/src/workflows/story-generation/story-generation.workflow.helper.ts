@@ -8,7 +8,7 @@
 import type { Logger } from '@mio/shared/server/logger/Logger';
 import { JobStatus, JobStep } from '@mio/shared/types';
 
-import type { IJobProgressService } from '../../services/cache/job-progress.service.types';
+import type { JobProgressService } from '../../services/cache/job-progress.service';
 import type { GenerationJobsStore } from '../../services/stories/generation-jobs.store';
 import { IocConnection, IocService, IocStore } from '../../ioc/ioc.types';
 import { getInstance } from '../../ioc/ioc.config';
@@ -36,12 +36,12 @@ export interface WorkflowStepOptions {
 
 export class WorkflowStepHelper {
   private readonly logger: Logger;
-  private readonly jobProgress: IJobProgressService;
+  private readonly jobProgress: JobProgressService;
   private readonly jobsStore: GenerationJobsStore;
 
   constructor() {
     this.logger = getInstance<Logger>(IocConnection.LOGGER);
-    this.jobProgress = getInstance<IJobProgressService>(IocService.JOB_PROGRESS);
+    this.jobProgress = getInstance<JobProgressService>(IocService.JOB_PROGRESS);
     this.jobsStore = getInstance<GenerationJobsStore>(IocStore.GENERATION_JOBS_STORE);
   }
 

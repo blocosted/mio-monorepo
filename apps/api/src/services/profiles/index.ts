@@ -12,8 +12,6 @@ export type {
   ChildPreferences,
   ChildProfile,
   CreateChildProfileInput,
-  IProfilesService,
-  IProfilesStore,
   ProfileRow,
   UpdateChildProfileInput
 } from './profiles.service.types';

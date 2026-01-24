@@ -9,7 +9,7 @@
 import type { Logger } from '@mio/shared/server/logger';
 import type { StoryScript, TimelineSegment } from '@mio/shared/types';
 
-import type { ITimelineSyncService, SyncedStoryScript, TimelineSyncOptions, TTSSegmentResult, VoiceSegmentTiming } from './timeline-sync.service.types';
+import type { SyncedStoryScript, TimelineSyncOptions, TTSSegmentResult, VoiceSegmentTiming } from './timeline-sync.service.types';
 
 /** Default pause between voice segments (seconds) */
 const DEFAULT_PAUSE_BETWEEN_SEGMENTS = 0.5;
@@ -20,7 +20,7 @@ const DEFAULT_PAUSE_BETWEEN_SEGMENTS = 0.5;
  * This service is designed to be used standalone (without IoC) in CLI scripts,
  * so it doesn't use @injectable decorator.
  */
-export class TimelineSyncService implements ITimelineSyncService {
+export class TimelineSyncService {
   constructor(private readonly logger?: Logger) {}
 
   /**

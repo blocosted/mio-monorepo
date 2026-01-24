@@ -17,9 +17,10 @@ import type { RedisClient } from '@mio/shared/server/connections/redis';
 import type { AudioIntensity, SfxEnvironment, SfxLibraryCategory } from '@mio/shared/types';
 
 import type { SfxCategory } from '../../repositories/audio/audio-repository.types';
-import type { ISfxCacheService, SfxCacheKeyParams } from '../cache/sfx-cache.service.types';
-import type { IStorageService } from '../storage';
-import type { ISfxLibraryService } from './sfx-library.service.types';
+import type { SfxCacheKeyParams } from '../cache/sfx-cache.service.types';
+import type { SfxCacheService } from '../cache/sfx-cache.service';
+import type { StorageService } from '../storage';
+import type { SfxLibraryService } from './sfx-library.service';
 import { IocConnection, IocService } from '../../ioc/ioc.types';
 
 /**
@@ -76,9 +77,9 @@ export class SfxStore {
   constructor(
     @inject(IocConnection.DATABASE) protected readonly db: DatabaseConnection,
     @inject(IocConnection.REDIS) protected readonly redis: RedisClient,
-    @inject(IocService.SFX_CACHE) private readonly sfxCache: ISfxCacheService,
-    @inject(IocService.STORAGE) private readonly storage: IStorageService,
-    @inject(IocService.SFX_LIBRARY) private readonly sfxLibrary: ISfxLibraryService
+    @inject(IocService.SFX_CACHE) private readonly sfxCache: SfxCacheService,
+    @inject(IocService.STORAGE) private readonly storage: StorageService,
+    @inject(IocService.SFX_LIBRARY) private readonly sfxLibrary: SfxLibraryService
   ) {}
 
   /**

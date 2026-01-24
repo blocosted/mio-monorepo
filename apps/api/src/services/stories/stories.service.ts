@@ -11,22 +11,23 @@ import { inject, injectable } from 'inversify';
 import { AppError, ErrorCodes } from '@mio/shared';
 import { JobStatus } from '@mio/shared/types';
 
-import type { IEnrichmentService } from '../llm';
-import type { IProfilesStore } from '../profiles';
-import type { IStorageService } from '../storage';
+import type { EnrichmentService } from '../llm';
+import type { ProfilesStore } from '../profiles';
+import type { StorageService } from '../storage';
 import type { AudioAssetsStore } from './audio-assets.store';
 import type { GenerationJobRow, GenerationJobsStore } from './generation-jobs.store';
-import type { CreateStoryInput, EnrichedConcept, IStoriesService, IStoriesStore, Story } from './stories.service.types';
+import type { CreateStoryInput, EnrichedConcept, Story } from './stories.service.types';
+import type { StoriesStore } from './stories.service.store';
 import { getInstance, IocService, IocStore } from '../../ioc';
 import { mapRowToStory } from './stories.service.map';
 
 @injectable()
-export class StoriesService implements IStoriesService {
+export class StoriesService {
   constructor(
     @inject(IocStore.STORIES_STORE)
-    private readonly store: IStoriesStore,
+    private readonly store: StoriesStore,
     @inject(IocStore.PROFILES_STORE)
-    private readonly profilesStore: IProfilesStore,
+    private readonly profilesStore: ProfilesStore,
     @inject(IocStore.GENERATION_JOBS_STORE)
     private readonly jobsStore: GenerationJobsStore,
     @inject(IocStore.AUDIO_ASSETS_STORE)
@@ -36,15 +37,15 @@ export class StoriesService implements IStoriesService {
   /**
    * Get the enrichment service lazily (avoids API key requirement at startup)
    */
-  private getEnrichmentService(): IEnrichmentService {
-    return getInstance<IEnrichmentService>(IocService.ENRICHMENT);
+  private getEnrichmentService(): EnrichmentService {
+    return getInstance<EnrichmentService>(IocService.ENRICHMENT);
   }
 
   /**
    * Get the storage service lazily
    */
-  private getStorageService(): IStorageService {
-    return getInstance<IStorageService>(IocService.STORAGE);
+  private getStorageService(): StorageService {
+    return getInstance<StorageService>(IocService.STORAGE);
   }
 
   /**

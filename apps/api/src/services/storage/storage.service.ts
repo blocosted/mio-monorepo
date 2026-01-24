@@ -13,7 +13,7 @@ import type { IStorageClient } from '@mio/shared/server/connections/storage';
 import { AppError, DiagnoseSeverity, ErrorCodes } from '@mio/shared';
 import { environment } from '@mio/shared/constants/environment.constants';
 
-import type { IStorageService, UploadOptions, UploadResult } from './storage.service.types';
+import type { UploadOptions, UploadResult } from './storage.service.types';
 import { BUCKETS, IocConnection } from '../../ioc/ioc.types';
 
 /**
@@ -23,7 +23,7 @@ import { BUCKETS, IocConnection } from '../../ioc/ioc.types';
  * using Supabase Storage as the backend.
  */
 @injectable()
-export class StorageService implements IStorageService {
+export class StorageService {
   constructor(@inject(IocConnection.STORAGE) private readonly client: IStorageClient) {}
 
   /**

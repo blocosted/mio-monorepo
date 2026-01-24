@@ -10,8 +10,8 @@ import { inject, injectable } from 'inversify';
 
 import type { RedisClient } from '@mio/shared/server/connections/redis';
 
-import type { ICacheService } from './cache.service.types';
-import type { IJobProgressService, JobProgress } from './job-progress.service.types';
+import type { CacheService } from './cache.service';
+import type { JobProgress } from './job-progress.service.types';
 import { IocConnection, IocService } from '../../ioc/ioc.types';
 
 /** 1 hour in seconds */
@@ -26,9 +26,9 @@ const JOB_PROGRESS_PREFIX = 'job:progress';
  * Tracks job progress for SSE/polling endpoints.
  */
 @injectable()
-export class JobProgressService implements IJobProgressService {
+export class JobProgressService {
   constructor(
-    @inject(IocService.CACHE) private readonly cache: ICacheService,
+    @inject(IocService.CACHE) private readonly cache: CacheService,
     @inject(IocConnection.REDIS) private readonly redis: RedisClient
   ) {}
 

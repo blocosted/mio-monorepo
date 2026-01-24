@@ -54,33 +54,3 @@ export interface FinalizeStoryResult {
   success: boolean;
 }
 
-/**
- * Story Finalization Service Interface
- */
-export interface IStoryFinalizationService {
-  /**
-   * Upload final audio from temp to permanent location
-   *
-   * - Downloads from temp S3 location
-   * - Uploads to final S3 location
-   * - Creates audio asset record
-   * - Deletes temp file
-   */
-  uploadFinalAudio(input: UploadFinalAudioInput): Promise<UploadFinalAudioResult>;
-
-  /**
-   * Finalize a story in the database
-   *
-   * - Updates story status to ready
-   * - Updates job status to completed
-   * - Updates Redis cache
-   */
-  finalizeStory(input: FinalizeStoryInput): Promise<FinalizeStoryResult>;
-
-  /**
-   * Complete finalization (upload + DB update)
-   *
-   * Combines uploadFinalAudio and finalizeStory into a single operation.
-   */
-  complete(input: { storyId: string; jobId: string; tempMixedAudioUrl: string; durationSeconds: number }): Promise<FinalizeStoryResult>;
-}

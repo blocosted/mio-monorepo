@@ -70,22 +70,3 @@ export interface AmbianceLookupResult {
   fromCache: boolean;
 }
 
-/**
- * Ambiance Library Service Interface
- */
-export interface IAmbianceLibraryService {
-  /**
-   * Find Ambiance in library
-   */
-  findAmbiance(params: FindAmbianceParams): Promise<AmbianceLookupResult>;
-
-  /**
-   * Store new Ambiance in library
-   */
-  storeAmbiance(params: StoreAmbianceParams): Promise<StoredAmbiance>;
-
-  /**
-   * Increment Ambiance usage counter
-   */
-  incrementAmbianceUsage(id: string): Promise<void>;
-}
