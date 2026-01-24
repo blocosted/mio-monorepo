@@ -1,11 +1,13 @@
 import { Elysia } from 'elysia';
 
 import { JobIdParamsSchema } from '@mio/shared/clients/mio/jobs';
-import { IocService, IocStore, getInstance } from '../../ioc';
+import { JobStatus } from '@mio/shared/types';
+
 import type { IJobProgressService } from '../../services/cache';
 import type { GenerationJobsStore } from '../../services/stories/generation-jobs.store';
 import type { IWorkflowOrchestratorService } from '../../services/workflows';
-import { JobStatus } from '@mio/shared/types';
+import { IocService, IocStore } from '../../ioc/ioc.types';
+import { getInstance } from '../../ioc/ioc.config';
 
 export const jobsHandlers = new Elysia({ prefix: '/jobs', tags: ['jobs'] })
   // Get job status
@@ -35,11 +37,11 @@ export const jobsHandlers = new Elysia({ prefix: '/jobs', tags: ['jobs'] })
         result: job.result,
         error: job.error,
         createdAt: job.createdAt,
-        updatedAt: job.updatedAt,
+        updatedAt: job.updatedAt
       };
     },
     {
-      params: JobIdParamsSchema,
+      params: JobIdParamsSchema
     }
   )
 
@@ -63,7 +65,7 @@ export const jobsHandlers = new Elysia({ prefix: '/jobs', tags: ['jobs'] })
       if (initialProgress) {
         yield {
           event: 'progress',
-          data: JSON.stringify(initialProgress),
+          data: JSON.stringify(initialProgress)
         };
       }
 
@@ -74,7 +76,7 @@ export const jobsHandlers = new Elysia({ prefix: '/jobs', tags: ['jobs'] })
       let lastUpdatedAt = initialProgress?.updatedAt ?? 0;
 
       while (!done && lastProgress < 100) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
 
         const progress = await jobProgress.get(params.id);
         if (progress && progress.updatedAt !== lastUpdatedAt) {
@@ -83,7 +85,7 @@ export const jobsHandlers = new Elysia({ prefix: '/jobs', tags: ['jobs'] })
 
           yield {
             event: 'progress',
-            data: JSON.stringify(progress),
+            data: JSON.stringify(progress)
           };
 
           if (progress.status === 'completed' || progress.status === 'failed') {
@@ -96,14 +98,14 @@ export const jobsHandlers = new Elysia({ prefix: '/jobs', tags: ['jobs'] })
         if (currentJob && currentJob.status === JobStatus.Cancelled) {
           yield {
             event: 'cancelled',
-            data: JSON.stringify({ jobId: params.id, message: 'Job was cancelled' }),
+            data: JSON.stringify({ jobId: params.id, message: 'Job was cancelled' })
           };
           done = true;
         }
       }
     },
     {
-      params: JobIdParamsSchema,
+      params: JobIdParamsSchema
     }
   )
 
@@ -142,7 +144,7 @@ export const jobsHandlers = new Elysia({ prefix: '/jobs', tags: ['jobs'] })
           console.warn('Failed to cancel workflow in QStash', {
             jobId: params.id,
             workflowRunId: job.workflowRunId,
-            error: err instanceof Error ? err.message : String(err),
+            error: err instanceof Error ? err.message : String(err)
           });
         }
       }
@@ -150,10 +152,10 @@ export const jobsHandlers = new Elysia({ prefix: '/jobs', tags: ['jobs'] })
       set.status = 202;
       return {
         message: 'Job cancellation requested',
-        jobId: params.id,
+        jobId: params.id
       };
     },
     {
-      params: JobIdParamsSchema,
+      params: JobIdParamsSchema
     }
   );

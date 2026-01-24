@@ -4,10 +4,9 @@
 
 export {
   buildEnrichmentSystemPrompt,
-  buildEnrichmentUserPrompt,
+  buildEnrichmentUserPrompt
 } from './enrichment.prompts';
-
 export {
   buildScriptGenerationSystemPrompt,
-  buildScriptGenerationUserPrompt,
+  buildScriptGenerationUserPrompt
 } from './scriptGeneration.prompts';

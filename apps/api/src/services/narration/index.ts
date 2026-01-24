@@ -1,54 +1,67 @@
 /**
  * Narration Services Module
  *
- * Voice-over and narration services (TTS, voice registry, timeline sync).
+ * Voice-over and narration services (TTS, voice registry, voice assignment, timeline sync).
  */
 
-// Stores
-export { VoiceRegistryStore } from './voice-registry.store';
-export { TTSStore } from './tts.service.store';
 export type {
-    VoiceRow,
-    UpsertVoiceInput,
-} from './voice-registry.store';
-
-// Services
-export { TTSService } from './tts.service';
-export { VoiceRegistryService } from './voice-registry.service';
-export { TimelineSyncService } from './timeline-sync.service';
-
+  ITimelineSyncService,
+  SyncedStoryScript,
+  SyncMetadata,
+  TimelineSyncOptions,
+  TTSSegmentResult,
+  VoiceSegmentTiming
+} from './timeline-sync.service.types';
 // Types
 export type {
-    ITTSService,
-    GenerateSpeechInput,
-    GenerateSpeechResult,
-    BatchGenerateSpeechInput,
-    BatchSegment,
-    BatchSegmentResult,
-    AudioFormat,
-    CharacterArchetype,
+  AudioFormat,
+  BatchGenerateSpeechInput,
+  BatchSegment,
+  BatchSegmentResult,
+  CharacterArchetype,
+  GenerateSpeechInput,
+  GenerateSpeechResult,
+  ITTSService
 } from './tts.service.types';
 export type {
-    IVoiceRegistryService,
-    StoredVoice,
-    ApiVoice,
-    ParsedVoice,
-    VoiceFilterOptions,
-    SyncResult,
-    SyncOptions,
+  CharacterVoiceAssignment,
+  IVoiceAssignmentService,
+  VoiceAssignmentInput,
+  VoiceAssignmentResult,
+  VoiceCandidate,
+  VoiceSelection
+} from './voice-assignment.service.types';
+export type {
+  IVoiceGenerationOrchestrator,
+  VoiceGenerationInput,
+  VoiceGenerationResult,
+  VoiceSegmentGenerationResult
+} from './voice-generation.orchestrator.types';
+export type {
+  ApiVoice,
+  IVoiceRegistryService,
+  ParsedVoice,
+  StoredVoice,
+  SyncOptions,
+  SyncResult,
+  VoiceFilterOptions
 } from './voice-registry.service.types';
 export type {
-    ITimelineSyncService,
-    TTSSegmentResult,
-    VoiceSegmentTiming,
-    SyncMetadata,
-    SyncedStoryScript,
-    TimelineSyncOptions,
-} from './timeline-sync.service.types';
-
+  UpsertVoiceInput,
+  VoiceRow
+} from './voice-registry.store';
+export { TimelineSyncService } from './timeline-sync.service';
+// Services
+export { TTSService } from './tts.service';
 // Constants
 export {
-    EMOTION_AUDIO_TAGS,
-    EMOTION_VOICE_SETTINGS,
-    DEFAULT_VOICE_SETTINGS,
+  DEFAULT_VOICE_SETTINGS,
+  EMOTION_AUDIO_TAGS,
+  EMOTION_VOICE_SETTINGS
 } from './tts.service.constants';
+export { TTSStore } from './tts.service.store';
+export { VoiceAssignmentService } from './voice-assignment.service';
+export { VoiceGenerationOrchestrator } from './voice-generation.orchestrator';
+export { VoiceRegistryService } from './voice-registry.service';
+// Stores
+export { VoiceRegistryStore } from './voice-registry.store';

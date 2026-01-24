@@ -4,20 +4,19 @@
  * Tests for duration calculation, validation, and script generation.
  */
 
-import { describe, it, expect, beforeEach, mock } from 'bun:test';
-
+import type { ScriptGenerationConstraints, StoryScript } from '@mio/shared/types';
 import { Emotion, VocabularyLevel } from '@mio/shared/types';
 
-import { ScriptGenerationService } from '../script-generation.service';
 import type { ScriptValidationResult } from '../index';
-import type { StoryScript, ScriptGenerationConstraints } from '@mio/shared/types';
+import { ScriptGenerationService } from '../script-generation.service';
+import { beforeEach, describe, expect, it, mock } from 'bun:test';
 
 // Mock logger
-const mockLogger = {
+const _mockLogger = {
   info: mock(() => undefined),
   warn: mock(() => undefined),
   error: mock(() => undefined),
-  debug: mock(() => undefined),
+  debug: mock(() => undefined)
 };
 
 describe('ScriptGenerationService', () => {
@@ -33,9 +32,9 @@ describe('ScriptGenerationService', () => {
 
       expect(budget.totalSeconds).toBe(300);
       expect(budget.voiceSeconds).toBe(216); // 72% of 300
-      expect(budget.sfxSeconds).toBe(36);    // 12% of 300
-      expect(budget.musicSeconds).toBe(18);  // 6% of 300
-      expect(budget.pauseSeconds).toBe(30);  // 10% of 300
+      expect(budget.sfxSeconds).toBe(36); // 12% of 300
+      expect(budget.musicSeconds).toBe(18); // 6% of 300
+      expect(budget.pauseSeconds).toBe(30); // 10% of 300
       expect(budget.targetWordCount).toBe(432); // 216 * 2.0 (120 WPM = 2 WPS)
     });
 
@@ -62,11 +61,11 @@ describe('ScriptGenerationService', () => {
     it('distributes words across 3 acts correctly', () => {
       const structure = service.calculateNarrativeStructure(500);
 
-      expect(structure.act1.wordBudget).toBe(100);  // 20%
+      expect(structure.act1.wordBudget).toBe(100); // 20%
       expect(structure.act1.percentage).toBe(20);
-      expect(structure.act2.wordBudget).toBe(300);  // 60%
+      expect(structure.act2.wordBudget).toBe(300); // 60%
       expect(structure.act2.percentage).toBe(60);
-      expect(structure.act3.wordBudget).toBe(100);  // 20%
+      expect(structure.act3.wordBudget).toBe(100); // 20%
       expect(structure.act3.percentage).toBe(20);
     });
 
@@ -115,7 +114,7 @@ describe('ScriptGenerationService', () => {
       expect(constraints.minDialogueSegments).toBe(4);
       expect(constraints.minSfxSegments).toBe(3);
       expect(constraints.maxConsecutiveSameType).toBe(4);
-      expect(constraints.wordCountInflation).toBe(0.80); // OpenAI needs high inflation
+      expect(constraints.wordCountInflation).toBe(0.8); // OpenAI needs high inflation
     });
 
     it('uses no inflation for Anthropic', () => {
@@ -189,11 +188,9 @@ describe('ScriptGenerationService', () => {
         language: 'fr',
         wordCount: 432,
         voiceSegmentCount: 9,
-        sfxSegmentCount: 3,
+        sfxSegmentCount: 3
       },
-      characters: [
-        { characterName: 'Hero', voiceDescription: 'Young and brave' },
-      ],
+      characters: [{ characterName: 'Hero', voiceDescription: 'Young and brave' }],
       tracks: [
         {
           id: 'voice-main',
@@ -209,8 +206,8 @@ describe('ScriptGenerationService', () => {
               content: {
                 type: 'narration' as const,
                 text: generateText(48),
-                emotion: Emotion.Neutral,
-              },
+                emotion: Emotion.Neutral
+              }
             })),
             // 4 dialogue segments with 48 words each = 192 words
             // Total: 432 words (matches target for 5 min at 2.0 WPS)
@@ -223,10 +220,10 @@ describe('ScriptGenerationService', () => {
                 type: 'dialogue' as const,
                 text: generateText(48),
                 characterName: 'Hero',
-                emotion: Emotion.Happy,
-              },
-            })),
-          ],
+                emotion: Emotion.Happy
+              }
+            }))
+          ]
         },
         {
           id: 'sfx-main',
@@ -239,9 +236,9 @@ describe('ScriptGenerationService', () => {
             duration: 3,
             content: {
               type: 'sfx' as const,
-              description: 'Test sound effect',
-            },
-          })),
+              description: 'Test sound effect'
+            }
+          }))
         },
         {
           id: 'music-main',
@@ -250,14 +247,13 @@ describe('ScriptGenerationService', () => {
           segments: [
             { id: 'music-1', trackId: 'music-main', startTime: 0, duration: 100, content: { type: 'music' as const, mood: 'mysterious' } },
             { id: 'music-2', trackId: 'music-main', startTime: 100, duration: 100, content: { type: 'music' as const, mood: 'adventurous' } },
-            { id: 'music-3', trackId: 'music-main', startTime: 200, duration: 100, content: { type: 'music' as const, mood: 'calm' } },
-          ],
-        },
-      ],
+            { id: 'music-3', trackId: 'music-main', startTime: 200, duration: 100, content: { type: 'music' as const, mood: 'calm' } }
+          ]
+        }
+      ]
     });
 
-    const createConstraints = (): ScriptGenerationConstraints =>
-      service.buildConstraints(5);
+    const createConstraints = (): ScriptGenerationConstraints => service.buildConstraints(5);
 
     it('validates a correct script', () => {
       const script = createValidScript();
@@ -293,9 +289,7 @@ describe('ScriptGenerationService', () => {
       const script = createValidScript();
       // Remove narration segments
       const voiceTrack = script.tracks.find((t) => t.type === 'voice')!;
-      voiceTrack.segments = voiceTrack.segments.filter(
-        (s) => (s.content as any).type !== 'narration'
-      );
+      voiceTrack.segments = voiceTrack.segments.filter((s) => (s.content as any).type !== 'narration');
       const constraints = createConstraints();
 
       const result = service.validateScript(script, constraints);
@@ -308,9 +302,7 @@ describe('ScriptGenerationService', () => {
       const script = createValidScript();
       // Remove dialogue segments
       const voiceTrack = script.tracks.find((t) => t.type === 'voice')!;
-      voiceTrack.segments = voiceTrack.segments.filter(
-        (s) => (s.content as any).type !== 'dialogue'
-      );
+      voiceTrack.segments = voiceTrack.segments.filter((s) => (s.content as any).type !== 'dialogue');
       const constraints = createConstraints();
 
       const result = service.validateScript(script, constraints);
@@ -363,7 +355,7 @@ describe('ScriptGenerationService', () => {
         wordCount: 200,
         estimatedDuration: 100,
         errors: ['Word count too low: 200 words'],
-        warnings: ['Few sound effects'],
+        warnings: ['Few sound effects']
       };
 
       const feedback = service.buildFeedbackFromValidation(validation);
@@ -387,10 +379,10 @@ describe('ScriptGenerationService', () => {
           language: 'fr',
           wordCount: 500,
           voiceSegmentCount: 10,
-          sfxSegmentCount: 5,
+          sfxSegmentCount: 5
         },
         characters: [{ characterName: 'Hero', voiceDescription: 'Brave' }],
-        tracks: [],
+        tracks: []
       });
 
       const script = service.parseScriptResponse(json);

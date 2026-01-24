@@ -1,0 +1,128 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.1.2/schema.json",
+  "formatter": {
+    "enabled": true,
+    "formatWithErrors": false,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineEnding": "lf",
+    "lineWidth": 160,
+    "attributePosition": "auto"
+  },
+  "files": {
+    "maxSize": 5242880,
+    "includes": ["**", "!**/*.css", "!.next", "!dist", "!coverage", "!node_modules", "!**/volumes", "!**/volume", "!.nx", "!**/*.min.js", "!**/data"]
+  },
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "css": {
+    "formatter": {
+      "enabled": false
+    },
+    "linter": {
+      "enabled": false
+    }
+  },
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": {
+          "level": "on",
+          "options": {
+            "groups": [
+              {
+                "type": true,
+                "source": ":NODE:"
+              },
+              ":NODE:",
+              ":BLANK_LINE:",
+              {
+                "type": true,
+                "source": [":PACKAGE:", "!@mio/**"]
+              },
+              [":PACKAGE:", "!@mio/**"],
+              ":BLANK_LINE:",
+              {
+                "type": true,
+                "source": ":PACKAGE:"
+              },
+              ":PACKAGE:",
+              ":BLANK_LINE:",
+              {
+                "type": true,
+                "source": ":PATH:"
+              },
+              ":PATH:"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": false,
+      "a11y": {
+        "recommended": false
+      },
+      "nursery": {
+        "recommended": false,
+        "noFloatingPromises": "on",
+        "useSortedClasses": "off"
+      },
+      "complexity": {
+        "recommended": true,
+        "useLiteralKeys": "off",
+        "noBannedTypes": "off"
+      },
+      "correctness": {
+        "recommended": true,
+        "noUndeclaredVariables": "error",
+        "noUnusedPrivateClassMembers": "off"
+      },
+      "security": {
+        "recommended": true
+      },
+      "style": {
+        "recommended": true,
+        "useBlockStatements": "off",
+        "useCollapsedElseIf": "error",
+        "useShorthandAssign": "error",
+        "noNonNullAssertion": "off"
+      },
+      "suspicious": {
+        "recommended": true,
+        "noEmptyBlockStatements": "off",
+        "noConsole": {
+          "level": "error",
+          "options": {
+            "allow": ["info", "warn", "error", "table"]
+          }
+        },
+        "noImplicitAnyLet": "off",
+        "noExplicitAny": "off"
+      }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "jsxQuoteStyle": "double",
+      "quoteProperties": "asNeeded",
+      "trailingCommas": "none",
+      "semicolons": "always",
+      "arrowParentheses": "always",
+      "bracketSpacing": true,
+      "bracketSameLine": false,
+      "quoteStyle": "single",
+      "attributePosition": "auto"
+    },
+    "parser": {
+      "unsafeParameterDecoratorsEnabled": true
+    },
+    "globals": ["it", "describe", "beforeEach", "beforeAll", "afterEach", "afterAll", "expect", "test", "Bun"]
+  }
+}

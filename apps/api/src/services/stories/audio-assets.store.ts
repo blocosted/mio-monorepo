@@ -6,13 +6,15 @@
  */
 
 import 'reflect-metadata';
-import { injectable, inject } from 'inversify';
-import { eq, and } from 'drizzle-orm';
 
-import { audioAssets } from '@mio/db/schema';
+import { and, eq } from 'drizzle-orm';
+import { inject, injectable } from 'inversify';
+
 import type { DatabaseConnection } from '@mio/shared/server/connections/db';
-import { IocConnection } from '../../ioc';
+import { audioAssets } from '@mio/db/schema';
 import { AudioAssetType } from '@mio/shared/types';
+
+import { IocConnection } from '../../ioc/ioc.types';
 
 /**
  * Audio asset row from database
@@ -23,12 +25,12 @@ export type AudioAssetRow = typeof audioAssets.$inferSelect;
  * Input for creating an audio asset
  */
 export interface CreateAudioAssetInput {
-    storyId?: string;
-    segmentId?: string;
-    type: AudioAssetType;
-    url: string;
-    duration: number;
-    cacheKey?: string;
+  storyId?: string;
+  segmentId?: string;
+  type: AudioAssetType;
+  url: string;
+  duration: number;
+  cacheKey?: string;
 }
 
 /**
@@ -38,153 +40,123 @@ export interface CreateAudioAssetInput {
  */
 @injectable()
 export class AudioAssetsStore {
-    constructor(
-        @inject(IocConnection.DATABASE)
-        private readonly db: DatabaseConnection,
-    ) {}
+  constructor(
+    @inject(IocConnection.DATABASE)
+    private readonly db: DatabaseConnection
+  ) {}
 
-    /**
-     * Create a new audio asset
-     */
-    async create(input: CreateAudioAssetInput): Promise<AudioAssetRow> {
-        const [asset] = await this.db
-            .insert(audioAssets)
-            .values({
-                storyId: input.storyId,
-                segmentId: input.segmentId,
-                type: input.type,
-                url: input.url,
-                duration: input.duration,
-                cacheKey: input.cacheKey,
-            })
-            .returning();
+  /**
+   * Create a new audio asset
+   */
+  async create(input: CreateAudioAssetInput): Promise<AudioAssetRow> {
+    const [asset] = await this.db
+      .insert(audioAssets)
+      .values({
+        storyId: input.storyId,
+        segmentId: input.segmentId,
+        type: input.type,
+        url: input.url,
+        duration: input.duration,
+        cacheKey: input.cacheKey
+      })
+      .returning();
 
-        if (!asset) {
-            throw new Error('Failed to create audio asset');
-        }
-
-        return asset;
+    if (!asset) {
+      throw new Error('Failed to create audio asset');
     }
 
-    /**
-     * Find an audio asset by ID
-     */
-    async findById(id: string): Promise<AudioAssetRow | null> {
-        const [asset] = await this.db
-            .select()
-            .from(audioAssets)
-            .where(eq(audioAssets.id, id))
-            .limit(1);
+    return asset;
+  }
 
-        return asset || null;
-    }
+  /**
+   * Find an audio asset by ID
+   */
+  async findById(id: string): Promise<AudioAssetRow | null> {
+    const [asset] = await this.db.select().from(audioAssets).where(eq(audioAssets.id, id)).limit(1);
 
-    /**
-     * Find all audio assets for a story
-     */
-    async findByStoryId(storyId: string): Promise<AudioAssetRow[]> {
-        return this.db
-            .select()
-            .from(audioAssets)
-            .where(eq(audioAssets.storyId, storyId));
-    }
+    return asset || null;
+  }
 
-    /**
-     * Find audio assets by segment ID
-     */
-    async findBySegmentId(segmentId: string): Promise<AudioAssetRow[]> {
-        return this.db
-            .select()
-            .from(audioAssets)
-            .where(eq(audioAssets.segmentId, segmentId));
-    }
+  /**
+   * Find all audio assets for a story
+   */
+  async findByStoryId(storyId: string): Promise<AudioAssetRow[]> {
+    return this.db.select().from(audioAssets).where(eq(audioAssets.storyId, storyId));
+  }
 
-    /**
-     * Find audio asset by cache key
-     */
-    async findByCacheKey(cacheKey: string): Promise<AudioAssetRow | null> {
-        const [asset] = await this.db
-            .select()
-            .from(audioAssets)
-            .where(eq(audioAssets.cacheKey, cacheKey))
-            .limit(1);
+  /**
+   * Find audio assets by segment ID
+   */
+  async findBySegmentId(segmentId: string): Promise<AudioAssetRow[]> {
+    return this.db.select().from(audioAssets).where(eq(audioAssets.segmentId, segmentId));
+  }
 
-        return asset || null;
-    }
+  /**
+   * Find audio asset by cache key
+   */
+  async findByCacheKey(cacheKey: string): Promise<AudioAssetRow | null> {
+    const [asset] = await this.db.select().from(audioAssets).where(eq(audioAssets.cacheKey, cacheKey)).limit(1);
 
-    /**
-     * Find audio assets by story and type
-     */
-    async findByStoryIdAndType(storyId: string, type: AudioAssetType): Promise<AudioAssetRow[]> {
-        return this.db
-            .select()
-            .from(audioAssets)
-            .where(
-                and(
-                    eq(audioAssets.storyId, storyId),
-                    eq(audioAssets.type, type)
-                )
-            );
-    }
+    return asset || null;
+  }
 
-    /**
-     * Find final mix asset for a story
-     */
-    async findFinalMixByStoryId(storyId: string): Promise<AudioAssetRow | null> {
-        const [asset] = await this.db
-            .select()
-            .from(audioAssets)
-            .where(
-                and(
-                    eq(audioAssets.storyId, storyId),
-                    eq(audioAssets.type, AudioAssetType.FinalMix)
-                )
-            )
-            .limit(1);
+  /**
+   * Find audio assets by story and type
+   */
+  async findByStoryIdAndType(storyId: string, type: AudioAssetType): Promise<AudioAssetRow[]> {
+    return this.db
+      .select()
+      .from(audioAssets)
+      .where(and(eq(audioAssets.storyId, storyId), eq(audioAssets.type, type)));
+  }
 
-        return asset || null;
-    }
+  /**
+   * Find final mix asset for a story
+   */
+  async findFinalMixByStoryId(storyId: string): Promise<AudioAssetRow | null> {
+    const [asset] = await this.db
+      .select()
+      .from(audioAssets)
+      .where(and(eq(audioAssets.storyId, storyId), eq(audioAssets.type, AudioAssetType.FinalMix)))
+      .limit(1);
 
-    /**
-     * Delete an audio asset
-     */
-    async delete(id: string): Promise<void> {
-        await this.db
-            .delete(audioAssets)
-            .where(eq(audioAssets.id, id));
-    }
+    return asset || null;
+  }
 
-    /**
-     * Delete all audio assets for a story
-     */
-    async deleteByStoryId(storyId: string): Promise<void> {
-        await this.db
-            .delete(audioAssets)
-            .where(eq(audioAssets.storyId, storyId));
-    }
+  /**
+   * Delete an audio asset
+   */
+  async delete(id: string): Promise<void> {
+    await this.db.delete(audioAssets).where(eq(audioAssets.id, id));
+  }
 
-    /**
-     * Delete all audio assets for a segment
-     */
-    async deleteBySegmentId(segmentId: string): Promise<void> {
-        await this.db
-            .delete(audioAssets)
-            .where(eq(audioAssets.segmentId, segmentId));
-    }
+  /**
+   * Delete all audio assets for a story
+   */
+  async deleteByStoryId(storyId: string): Promise<void> {
+    await this.db.delete(audioAssets).where(eq(audioAssets.storyId, storyId));
+  }
 
-    /**
-     * Count audio assets for a story
-     */
-    async countByStoryId(storyId: string): Promise<number> {
-        const assets = await this.findByStoryId(storyId);
-        return assets.length;
-    }
+  /**
+   * Delete all audio assets for a segment
+   */
+  async deleteBySegmentId(segmentId: string): Promise<void> {
+    await this.db.delete(audioAssets).where(eq(audioAssets.segmentId, segmentId));
+  }
 
-    /**
-     * Count audio assets by type for a story
-     */
-    async countByStoryIdAndType(storyId: string, type: AudioAssetType): Promise<number> {
-        const assets = await this.findByStoryIdAndType(storyId, type);
-        return assets.length;
-    }
+  /**
+   * Count audio assets for a story
+   */
+  async countByStoryId(storyId: string): Promise<number> {
+    const assets = await this.findByStoryId(storyId);
+    return assets.length;
+  }
+
+  /**
+   * Count audio assets by type for a story
+   */
+  async countByStoryIdAndType(storyId: string, type: AudioAssetType): Promise<number> {
+    const assets = await this.findByStoryIdAndType(storyId, type);
+    return assets.length;
+  }
 }

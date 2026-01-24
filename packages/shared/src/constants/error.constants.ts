@@ -63,7 +63,7 @@ export enum ErrorCodes {
   SFXGenerationFailed = 'SFXGenerationFailed',
   SFXRateLimited = 'SFXRateLimited',
   SFXTimeout = 'SFXTimeout',
-  SFXInvalidInput = 'SFXInvalidInput',
+  SFXInvalidInput = 'SFXInvalidInput'
 }
 
 const errorDefinitions: {
@@ -187,7 +187,7 @@ const errorDefinitions: {
     code: 'SFX_INVALID_INPUT',
     message: 'Invalid input for sound effect generation',
     statusCode: HttpStatusCode.BadRequest
-  },
+  }
 } as const;
 
 export class AppError extends Error {

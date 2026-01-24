@@ -1,99 +1,113 @@
 {
-    "name": "scripts",
-    "$schema": "../../node_modules/nx/schemas/project-schema.json",
-    "projectType": "library",
-    "sourceRoot": "packages/scripts/src",
-    "targets": {
-        "s3": {
-            "executor": "nx:run-commands",
-            "options": {
-                "command": "bun run packages/scripts/src/s3/cli.ts",
-                "cwd": "."
-            }
-        },
-        "llm": {
-            "executor": "nx:run-commands",
-            "options": {
-                "command": "bun run packages/scripts/src/llm/cli.ts",
-                "cwd": "."
-            }
-        },
-        "tts": {
-            "executor": "nx:run-commands",
-            "options": {
-                "command": "bun run packages/scripts/src/tts/cli.ts",
-                "cwd": "."
-            }
-        },
-        "mix": {
-            "executor": "nx:run-commands",
-            "options": {
-                "command": "bun run packages/scripts/src/mix/cli.ts",
-                "cwd": "."
-            }
-        },
-        "sfx": {
-            "executor": "nx:run-commands",
-            "options": {
-                "command": "bun run packages/scripts/src/sfx/cli.ts",
-                "cwd": "."
-            }
-        },
-        "ambiance": {
-            "executor": "nx:run-commands",
-            "options": {
-                "command": "bun run packages/scripts/src/ambiance/cli.ts",
-                "cwd": "."
-            }
-        },
-        "music": {
-            "executor": "nx:run-commands",
-            "options": {
-                "command": "bun run packages/scripts/src/music/cli.ts",
-                "cwd": "."
-            }
-        },
-        "pipeline": {
-            "executor": "nx:run-commands",
-            "options": {
-                "command": "bun run packages/scripts/src/pipeline/cli.ts",
-                "cwd": "."
-            }
-        },
-        "library": {
-            "executor": "nx:run-commands",
-            "options": {
-                "command": "bun run packages/scripts/src/library/cli.ts",
-                "cwd": "."
-            }
-        },
-        "s3:setup": {
-            "executor": "nx:run-commands",
-            "options": {
-                "command": "bun run packages/scripts/src/s3/cli.ts setup",
-                "cwd": "."
-            }
-        },
-        "s3:list": {
-            "executor": "nx:run-commands",
-            "options": {
-                "command": "bun run packages/scripts/src/s3/cli.ts list",
-                "cwd": "."
-            }
-        },
-        "lint": {
-            "executor": "nx:run-commands",
-            "options": {
-                "command": "eslint packages/scripts/src/",
-                "cwd": "."
-            }
-        },
-        "typecheck": {
-            "executor": "nx:run-commands",
-            "options": {
-                "command": "tsc --noEmit",
-                "cwd": "packages/scripts"
-            }
-        }
+  "name": "scripts",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "packages/scripts/src",
+  "targets": {
+    "s3": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun run packages/scripts/src/s3/cli.ts",
+        "cwd": "."
+      }
+    },
+    "llm": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun run packages/scripts/src/llm/cli.ts",
+        "cwd": "."
+      }
+    },
+    "tts": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun run packages/scripts/src/tts/cli.ts",
+        "cwd": "."
+      }
+    },
+    "mix": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun run packages/scripts/src/mix/cli.ts",
+        "cwd": "."
+      }
+    },
+    "sfx": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun run packages/scripts/src/sfx/cli.ts",
+        "cwd": "."
+      }
+    },
+    "ambiance": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun run packages/scripts/src/ambiance/cli.ts",
+        "cwd": "."
+      }
+    },
+    "music": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun run packages/scripts/src/music/cli.ts",
+        "cwd": "."
+      }
+    },
+    "pipeline": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun run packages/scripts/src/pipeline/cli.ts",
+        "cwd": "."
+      }
+    },
+    "library": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun run packages/scripts/src/library/cli.ts",
+        "cwd": "."
+      }
+    },
+    "s3:setup": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun run packages/scripts/src/s3/cli.ts setup",
+        "cwd": "."
+      }
+    },
+    "s3:list": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun run packages/scripts/src/s3/cli.ts list",
+        "cwd": "."
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc --noEmit",
+        "cwd": "packages/scripts"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "biome check packages/scripts/",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "lint:fix": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "biome check --write packages/scripts/",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "format": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "biome format --write packages/scripts/",
+        "cwd": "{workspaceRoot}"
+      }
     }
+  }
 }

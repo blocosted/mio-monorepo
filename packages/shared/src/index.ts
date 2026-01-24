@@ -7,8 +7,7 @@
  * Each layer (handlers/services/store) declares its own interfaces.
  */
 
-// Types (primitive/shared only)
-export * from './types';
-
 // Constants (includes errors and HTTP types)
 export * from './constants';
+// Types (primitive/shared only)
+export * from './types';

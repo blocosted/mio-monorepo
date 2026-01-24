@@ -2,45 +2,43 @@
  * Music Service Exports
  */
 
-// Stores
-export { MusicLibraryStore } from './music-library.store';
-export type {
-    StoredMusic,
-    FindMusicParams,
-    MusicQueryParams,
-    StoreMusicParams,
-    MusicLookupResult,
-    MusicLibraryStats,
-} from './music-library.store';
-
-// Services
-export { MusicGeneratorService } from './music-generator.service';
-export { MusicStrategyService } from './music-strategy.service';
-export { MusicLibraryService } from './music-library.service';
-
 // Types
 export type {
-    IMusicGeneratorService,
-    MusicGenerateInput,
-    MusicGenerateResult,
-    MusicSegmentInput,
-    MusicSegmentResult,
-    MoodPromptMapping,
+  IMusicGeneratorService,
+  MoodPromptMapping,
+  MusicGenerateInput,
+  MusicGenerateResult,
+  MusicSegmentInput,
+  MusicSegmentResult
 } from './music-generator.service.types';
 export type {
-    IMusicStrategyService,
-    MusicMood,
-    MusicCueReason,
-    MusicStrategy,
-    MusicCue,
-    MusicStrategyInput,
-    MusicStrategyOutput,
-    PunctualStrategyConfig,
-} from './music-strategy.service.types';
-export type {
-    IMusicLibraryService,
-    FindMusicParams as MusicLibraryFindParams,
-    StoreMusicParams as MusicLibraryStoreParams,
-    StoredMusic as MusicLibraryStoredMusic,
-    MusicLookupResult as MusicLibraryLookupResult,
+  FindMusicParams as MusicLibraryFindParams,
+  IMusicLibraryService,
+  MusicLookupResult as MusicLibraryLookupResult,
+  StoredMusic as MusicLibraryStoredMusic,
+  StoreMusicParams as MusicLibraryStoreParams
 } from './music-library.service.types';
+export type {
+  FindMusicParams,
+  MusicLibraryStats,
+  MusicLookupResult,
+  MusicQueryParams,
+  StoredMusic,
+  StoreMusicParams
+} from './music-library.store';
+export type {
+  IMusicStrategyService,
+  MusicCue,
+  MusicCueReason,
+  MusicMood,
+  MusicStrategy,
+  MusicStrategyInput,
+  MusicStrategyOutput,
+  PunctualStrategyConfig
+} from './music-strategy.service.types';
+// Services
+export { MusicGeneratorService } from './music-generator.service';
+export { MusicLibraryService } from './music-library.service';
+// Stores
+export { MusicLibraryStore } from './music-library.store';
+export { MusicStrategyService } from './music-strategy.service';

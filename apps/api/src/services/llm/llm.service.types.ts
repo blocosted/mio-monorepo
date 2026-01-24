@@ -5,7 +5,8 @@
  * Follows the architecture pattern: each layer owns its interfaces.
  */
 
-import { VocabularyLevel, Tone, Ambiance, type Gender, type Language } from '@mio/shared/types';
+import { Ambiance, type Gender, type Language, Tone, VocabularyLevel } from '@mio/shared/types';
+
 import type { EnrichedConcept } from '../stories/stories.service.types';
 
 /**
@@ -80,10 +81,7 @@ export interface ILLMService {
    * @param options - Optional completion settings
    * @returns Enriched story concept with vocabulary level
    */
-  enrichStory(
-    input: EnrichStoryInput,
-    options?: LLMCompletionOptions,
-  ): Promise<EnrichStoryResult>;
+  enrichStory(input: EnrichStoryInput, options?: LLMCompletionOptions): Promise<EnrichStoryResult>;
 }
 
 /**
@@ -99,7 +97,7 @@ export const AGE_TO_VOCABULARY: Record<number, VocabularyLevel> = {
   9: VocabularyLevel.Medium,
   10: VocabularyLevel.Advanced,
   11: VocabularyLevel.Advanced,
-  12: VocabularyLevel.Advanced,
+  12: VocabularyLevel.Advanced
 };
 
 /**
@@ -115,15 +113,7 @@ export function getVocabularyLevel(age: number): VocabularyLevel {
 /**
  * Available tones for mapping
  */
-export const AVAILABLE_TONES: Tone[] = [
-  Tone.Adventurous,
-  Tone.Funny,
-  Tone.Mysterious,
-  Tone.Heartwarming,
-  Tone.Exciting,
-  Tone.Calm,
-  Tone.Educational,
-];
+export const AVAILABLE_TONES: Tone[] = [Tone.Adventurous, Tone.Funny, Tone.Mysterious, Tone.Heartwarming, Tone.Exciting, Tone.Calm, Tone.Educational];
 
 /**
  * Available ambiances for mapping
@@ -136,5 +126,5 @@ export const AVAILABLE_AMBIANCES: Ambiance[] = [
   Ambiance.City,
   Ambiance.MagicalRealm,
   Ambiance.Underwater,
-  Ambiance.Mountain,
+  Ambiance.Mountain
 ];

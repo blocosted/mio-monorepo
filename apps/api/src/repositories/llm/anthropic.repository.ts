@@ -6,21 +6,17 @@
  */
 
 import 'reflect-metadata';
-import { injectable, inject } from 'inversify';
-import Anthropic from '@anthropic-ai/sdk';
-import type { Model } from '@anthropic-ai/sdk/resources';
 
+import type { Model } from '@anthropic-ai/sdk/resources';
+import Anthropic from '@anthropic-ai/sdk';
+import { inject, injectable } from 'inversify';
+
+import type { Logger } from '@mio/shared/server/logger';
 import { AppError, ErrorCodes } from '@mio/shared';
 import { environment } from '@mio/shared/constants/environment.constants';
-import { Logger } from '@mio/shared/server/logger';
 
-import { IocConnection } from '../../ioc';
-import type {
-  ILLMRepository,
-  LLMRepositoryType,
-  LLMCompletionOptions,
-  LLMRawResponse,
-} from './llm-repository.types';
+import type { ILLMRepository, LLMCompletionOptions, LLMRawResponse, LLMRepositoryType } from './llm-repository.types';
+import { IocConnection } from '../../ioc/ioc.types';
 
 /** Default configuration */
 const DEFAULT_MODEL: Model = 'claude-sonnet-4-20250514';
@@ -39,7 +35,7 @@ export class AnthropicRepository implements ILLMRepository {
 
   constructor(
     @inject(IocConnection.LOGGER)
-    private readonly logger: Logger,
+    private readonly logger: Logger
   ) {
     const apiKey = environment.ANTHROPIC_API_KEY;
     if (!apiKey) {
@@ -48,7 +44,7 @@ export class AnthropicRepository implements ILLMRepository {
 
     this.client = new Anthropic({
       apiKey,
-      timeout: DEFAULT_TIMEOUT,
+      timeout: DEFAULT_TIMEOUT
     });
   }
 
@@ -56,11 +52,7 @@ export class AnthropicRepository implements ILLMRepository {
     return !!environment.ANTHROPIC_API_KEY;
   }
 
-  async completeWithRetry(
-    systemPrompt: string,
-    userPrompt: string,
-    options?: LLMCompletionOptions,
-  ): Promise<LLMRawResponse> {
+  async completeWithRetry(systemPrompt: string, userPrompt: string, options?: LLMCompletionOptions): Promise<LLMRawResponse> {
     const model = options?.model ?? DEFAULT_MODEL;
     const maxTokens = options?.maxTokens ?? DEFAULT_MAX_TOKENS;
     const temperature = options?.temperature ?? DEFAULT_TEMPERATURE;
@@ -75,16 +67,14 @@ export class AnthropicRepository implements ILLMRepository {
           max_tokens: maxTokens,
           temperature,
           system: systemPrompt,
-          messages: [
-            { role: 'user', content: userPrompt },
-          ],
+          messages: [{ role: 'user', content: userPrompt }]
         });
 
         // Extract text content from the response
         const textBlock = message.content.find((block) => block.type === 'text');
         if (!textBlock || textBlock.type !== 'text') {
           throw new AppError(ErrorCodes.InternalError, {
-            name: 'LLMEmptyResponse',
+            name: 'LLMEmptyResponse'
           });
         }
 
@@ -95,7 +85,7 @@ export class AnthropicRepository implements ILLMRepository {
           content,
           promptTokens: message.usage.input_tokens,
           completionTokens: message.usage.output_tokens,
-          model: message.model,
+          model: message.model
         };
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
@@ -103,7 +93,7 @@ export class AnthropicRepository implements ILLMRepository {
         if (this.isRateLimitError(error)) {
           this.logger.warn('Anthropic rate limit, retrying', {
             attempt,
-            retryDelay,
+            retryDelay
           });
 
           if (attempt < MAX_RETRIES) {
@@ -117,7 +107,7 @@ export class AnthropicRepository implements ILLMRepository {
           this.logger.error('Anthropic timeout', { attempt });
           throw new AppError(ErrorCodes.InternalError, {
             name: 'LLMTimeout',
-            error: lastError,
+            error: lastError
           });
         }
 
@@ -128,7 +118,7 @@ export class AnthropicRepository implements ILLMRepository {
     this.logger.error('Anthropic request failed', { error: lastError?.message });
     throw new AppError(ErrorCodes.InternalError, {
       name: 'LLMRequestFailed',
-      error: lastError ?? undefined,
+      error: lastError ?? undefined
     });
   }
 
@@ -139,7 +129,7 @@ export class AnthropicRepository implements ILLMRepository {
   private extractJson(text: string): string {
     // Try to find JSON in code blocks first
     const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (codeBlockMatch && codeBlockMatch[1]) {
+    if (codeBlockMatch?.[1]) {
       return codeBlockMatch[1].trim();
     }
 

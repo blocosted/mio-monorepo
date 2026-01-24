@@ -5,26 +5,19 @@
  */
 
 import 'reflect-metadata';
-import { injectable, inject } from 'inversify';
+
+import { inject, injectable } from 'inversify';
 import OpenAI from 'openai';
 
+import type { Logger } from '@mio/shared/server/logger';
 import { AppError, ErrorCodes } from '@mio/shared';
 import { environment } from '@mio/shared/constants/environment.constants';
-import { Logger } from '@mio/shared/server/logger';
 
-import { IocConnection } from '../../ioc';
-import type {
-  ILLMService,
-  EnrichStoryInput,
-  EnrichStoryResult,
-  LLMCompletionOptions,
-} from './llm.service.types';
-import { getVocabularyLevel } from './llm.service.types';
-import {
-  buildEnrichmentSystemPrompt,
-  buildEnrichmentUserPrompt,
-} from './prompts/enrichment.prompts';
+import type { EnrichStoryInput, EnrichStoryResult, ILLMService, LLMCompletionOptions } from './llm.service.types';
+import { IocConnection } from '../../ioc/ioc.types';
 import { parseEnrichedConcept } from './llm.service.parser';
+import { getVocabularyLevel } from './llm.service.types';
+import { buildEnrichmentSystemPrompt, buildEnrichmentUserPrompt } from './prompts/enrichment.prompts';
 
 /** Default configuration */
 const DEFAULT_MODEL = 'gpt-4o';
@@ -42,7 +35,7 @@ export class OpenAILLMService implements ILLMService {
 
   constructor(
     @inject(IocConnection.LOGGER)
-    private readonly logger: Logger,
+    private readonly logger: Logger
   ) {
     const apiKey = environment.OPENAI_API_KEY;
     if (!apiKey) {
@@ -51,17 +44,14 @@ export class OpenAILLMService implements ILLMService {
 
     this.client = new OpenAI({
       apiKey,
-      timeout: DEFAULT_TIMEOUT,
+      timeout: DEFAULT_TIMEOUT
     });
   }
 
   /**
    * Enrich a story prompt into a full concept
    */
-  async enrichStory(
-    input: EnrichStoryInput,
-    options?: LLMCompletionOptions,
-  ): Promise<EnrichStoryResult> {
+  async enrichStory(input: EnrichStoryInput, options?: LLMCompletionOptions): Promise<EnrichStoryResult> {
     const { story, profile } = input;
     const vocabularyLevel = getVocabularyLevel(profile.age);
 
@@ -72,14 +62,10 @@ export class OpenAILLMService implements ILLMService {
       storyId: story.id,
       childName: profile.firstName,
       childAge: profile.age,
-      vocabularyLevel,
+      vocabularyLevel
     });
 
-    const response = await this.completeWithRetry(
-      systemPrompt,
-      userPrompt,
-      options,
-    );
+    const response = await this.completeWithRetry(systemPrompt, userPrompt, options);
 
     const enrichedConcept = parseEnrichedConcept(response);
 
@@ -87,23 +73,19 @@ export class OpenAILLMService implements ILLMService {
       storyId: story.id,
       title: enrichedConcept.title,
       tone: enrichedConcept.tone,
-      themes: enrichedConcept.themes,
+      themes: enrichedConcept.themes
     });
 
     return {
       enrichedConcept,
-      vocabularyLevel,
+      vocabularyLevel
     };
   }
 
   /**
    * Make a completion request with retry logic for rate limits
    */
-  private async completeWithRetry(
-    systemPrompt: string,
-    userPrompt: string,
-    options?: LLMCompletionOptions,
-  ): Promise<string> {
+  private async completeWithRetry(systemPrompt: string, userPrompt: string, options?: LLMCompletionOptions): Promise<string> {
     const model = options?.model ?? DEFAULT_MODEL;
     const maxTokens = options?.maxTokens ?? DEFAULT_MAX_TOKENS;
     const temperature = options?.temperature ?? DEFAULT_TEMPERATURE;
@@ -119,15 +101,15 @@ export class OpenAILLMService implements ILLMService {
           temperature,
           messages: [
             { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt },
+            { role: 'user', content: userPrompt }
           ],
-          response_format: { type: 'json_object' },
+          response_format: { type: 'json_object' }
         });
 
         const content = completion.choices[0]?.message?.content;
         if (!content) {
           throw new AppError(ErrorCodes.InternalError, {
-            name: 'LLMEmptyResponse',
+            name: 'LLMEmptyResponse'
           });
         }
 
@@ -139,7 +121,7 @@ export class OpenAILLMService implements ILLMService {
           this.logger.warn('Rate limit hit, retrying', {
             attempt,
             maxRetries: MAX_RETRIES,
-            retryDelay,
+            retryDelay
           });
 
           if (attempt < MAX_RETRIES) {
@@ -153,7 +135,7 @@ export class OpenAILLMService implements ILLMService {
           this.logger.error('LLM request timeout', { attempt });
           throw new AppError(ErrorCodes.InternalError, {
             name: 'LLMTimeout',
-            error: lastError,
+            error: lastError
           });
         }
 
@@ -163,12 +145,12 @@ export class OpenAILLMService implements ILLMService {
     }
 
     this.logger.error('LLM request failed after retries', {
-      error: lastError?.message,
+      error: lastError?.message
     });
 
     throw new AppError(ErrorCodes.InternalError, {
       name: 'LLMRequestFailed',
-      error: lastError ?? undefined,
+      error: lastError ?? undefined
     });
   }
 

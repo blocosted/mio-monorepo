@@ -63,11 +63,7 @@ export interface ILLMRepository {
    * @param options - Completion options (model, temperature, etc.)
    * @returns Raw LLM response containing text content
    */
-  completeWithRetry(
-    systemPrompt: string,
-    userPrompt: string,
-    options?: LLMCompletionOptions,
-  ): Promise<LLMRawResponse>;
+  completeWithRetry(systemPrompt: string, userPrompt: string, options?: LLMCompletionOptions): Promise<LLMRawResponse>;
 
   /**
    * Check if repository is available and configured

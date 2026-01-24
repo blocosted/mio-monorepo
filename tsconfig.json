@@ -1,8 +1,6 @@
 {
   "compilerOptions": {
-    "lib": [
-      "ESNext"
-    ],
+    "lib": ["ESNext"],
     "target": "ESNext",
     "module": "Preserve",
     "moduleDetection": "force",
@@ -24,36 +22,16 @@
     "noPropertyAccessFromIndexSignature": false,
     "baseUrl": ".",
     "paths": {
-      "@mio/api": [
-        "apps/api/src/api.server.ts"
-      ],
-      "@mio/api/*": [
-        "apps/api/src/*"
-      ],
-      "@mio/shared": [
-        "packages/shared/src/index.ts"
-      ],
-      "@mio/shared/*": [
-        "packages/shared/src/*"
-      ],
-      "@mio/helpers": [
-        "packages/helpers/index.ts"
-      ],
-      "@mio/helpers/*": [
-        "packages/helpers/*"
-      ],
-      "@mio/db": [
-        "packages/db/src/index.ts"
-      ],
-      "@mio/db/*": [
-        "packages/db/src/*"
-      ],
-      "@mio/test-utils": [
-        "packages/test-utils/src/index.ts"
-      ],
-      "@mio/test-utils/*": [
-        "packages/test-utils/src/*"
-      ]
+      "@mio/api": ["apps/api/src/api.server.ts"],
+      "@mio/api/*": ["apps/api/src/*"],
+      "@mio/shared": ["packages/shared/src/index.ts"],
+      "@mio/shared/*": ["packages/shared/src/*"],
+      "@mio/helpers": ["packages/helpers/index.ts"],
+      "@mio/helpers/*": ["packages/helpers/*"],
+      "@mio/db": ["packages/db/src/index.ts"],
+      "@mio/db/*": ["packages/db/src/*"],
+      "@mio/test-utils": ["packages/test-utils/src/index.ts"],
+      "@mio/test-utils/*": ["packages/test-utils/src/*"]
     }
   }
 }

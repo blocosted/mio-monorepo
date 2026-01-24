@@ -4,20 +4,33 @@
   "projectType": "library",
   "sourceRoot": "packages/helpers",
   "targets": {
-    "lint": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "eslint packages/helpers/",
-        "cwd": "."
-      }
-    },
     "typecheck": {
       "executor": "nx:run-commands",
       "options": {
         "command": "tsc --noEmit",
         "cwd": "packages/helpers"
       }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "biome check packages/helpers/",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "lint:fix": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "biome check --write packages/helpers/",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "format": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "biome format --write packages/helpers/",
+        "cwd": "{workspaceRoot}"
+      }
     }
   }
 }
-

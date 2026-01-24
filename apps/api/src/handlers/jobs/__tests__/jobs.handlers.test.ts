@@ -2,14 +2,15 @@
  * Jobs Handlers Integration Tests
  */
 
-import { describe, it, expect, beforeAll } from 'bun:test';
-
-import { createMioApiClient } from '@mio/api/tests/test-utils';
-import { MioApiClient } from '@mio/shared/clients/mio';
-import { getInstance, IocConnection, IocStore } from '@mio/api/ioc';
-import type { DatabaseConnection } from '@mio/shared/server/connections/db';
 import type { GenerationJobsStore } from '@mio/api/services/stories/generation-jobs.store';
+import type { MioApiClient } from '@mio/shared/clients/mio';
+import type { DatabaseConnection } from '@mio/shared/server/connections/db';
+import { IocConnection, IocStore } from '@mio/api/ioc/ioc.types';
+import { getInstance } from '@mio/api/ioc/ioc.config';
+import { createMioApiClient } from '@mio/api/tests/test-utils';
 import { Gender } from '@mio/shared/types';
+
+import { beforeAll, describe, expect, it } from 'bun:test';
 
 describe('jobsHandlers', () => {
   let mio: MioApiClient;
@@ -27,7 +28,7 @@ describe('jobsHandlers', () => {
     const res = await mio.api.jobs({ id }).get();
 
     expect(res.status).toBe(404);
-    expect(res.error?.value).toEqual({ error: 'Job not found' });
+    expect((res.error?.value as { error: string })?.error).toBe('Job not found');
   });
 
   it('gets job status for existing job', async () => {
@@ -40,28 +41,28 @@ describe('jobsHandlers', () => {
         firstName: 'Test',
         age: 7,
         gender: Gender.Neutral,
-        preferences: {},
+        preferences: {}
       })
       .returning({ id: childProfiles.id });
 
     const [story] = await db
       .insert(stories)
       .values({
-        childProfileId: profile.id,
+        childProfileId: profile!.id,
         initialPrompt: 'Test prompt',
-        status: 'draft',
+        status: 'draft'
       })
       .returning({ id: stories.id });
 
     // Create a job
-    const job = await jobsStore.create({ storyId: story.id });
+    const job = await jobsStore.create({ storyId: story!.id });
 
     // Get job status
     const res = await mio.api.jobs({ id: job.id }).get();
 
     expect(res.status).toBe(200);
     expect(res.data?.id).toBe(job.id);
-    expect(res.data?.storyId).toBe(story.id);
+    expect(res.data?.storyId).toBe(story!.id);
     expect(res.data?.status).toBe('pending');
   });
 
@@ -75,21 +76,21 @@ describe('jobsHandlers', () => {
         firstName: 'Test',
         age: 7,
         gender: Gender.Neutral,
-        preferences: {},
+        preferences: {}
       })
       .returning({ id: childProfiles.id });
 
     const [story] = await db
       .insert(stories)
       .values({
-        childProfileId: profile.id,
+        childProfileId: profile!.id,
         initialPrompt: 'Test prompt',
-        status: 'draft',
+        status: 'draft'
       })
       .returning({ id: stories.id });
 
     // Create a job
-    const job = await jobsStore.create({ storyId: story.id });
+    const job = await jobsStore.create({ storyId: story!.id });
 
     // Cancel the job
     const res = await mio.api.jobs({ id: job.id }).delete();
@@ -108,7 +109,6 @@ describe('jobsHandlers', () => {
     const res = await mio.api.jobs({ id }).delete();
 
     expect(res.status).toBe(404);
-    expect(res.error?.value).toEqual({ error: 'Job not found' });
+    expect((res.error?.value as { error: string })?.error).toBe('Job not found');
   });
 });
-

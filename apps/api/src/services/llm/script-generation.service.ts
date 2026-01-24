@@ -10,31 +10,23 @@
  */
 
 import 'reflect-metadata';
+
 import { injectable } from 'inversify';
 
+import type { DurationBudget, NarrativeStructure, ScriptGenerationConstraints, StoryScript, VoiceSegmentContent } from '@mio/shared/types';
 import { AppError, ErrorCodes } from '@mio/shared';
-import type {
-  StoryScript,
-  DurationBudget,
-  NarrativeStructure,
-  ScriptGenerationConstraints,
-  VoiceSegmentContent,
-} from '@mio/shared/types';
 
-import { AbstractService } from '../service.abstract';
 import type { ILLMRepository } from '../../repositories/llm/llm-repository.types';
-import { getVocabularyLevel } from './llm.service.types';
 import type {
   IScriptGenerationService,
-  ScriptValidationResult,
+  ScriptGenerationContext,
   ScriptGenerationInput,
   ScriptGenerationResult,
-  ScriptGenerationContext,
+  ScriptValidationResult
 } from './script-generation.service.types';
-import {
-  buildScriptGenerationSystemPrompt,
-  buildScriptGenerationUserPrompt,
-} from './prompts/scriptGeneration.prompts';
+import { AbstractService } from '../service.abstract';
+import { getVocabularyLevel } from './llm.service.types';
+import { buildScriptGenerationSystemPrompt, buildScriptGenerationUserPrompt } from './prompts/scriptGeneration.prompts';
 
 /**
  * Constants for duration calculation
@@ -50,10 +42,10 @@ const WORDS_PER_SECOND = WORDS_PER_MINUTE / 60; // 2.0
  * Default duration allocation percentages
  */
 const DURATION_ALLOCATION = {
-  voice: 0.72,      // 72% for narration/dialogue
-  sfx: 0.12,        // 12% for sound effects
-  music: 0.06,      // 6% for music transitions
-  pauses: 0.10,     // 10% for natural pauses
+  voice: 0.72, // 72% for narration/dialogue
+  sfx: 0.12, // 12% for sound effects
+  music: 0.06, // 6% for music transitions
+  pauses: 0.1 // 10% for natural pauses
 };
 
 /**
@@ -62,7 +54,7 @@ const DURATION_ALLOCATION = {
 const NARRATIVE_STRUCTURE = {
   act1: { percentage: 20, description: 'Introduce characters, setting, and initial situation' },
   act2: { percentage: 60, description: 'Main conflict, challenges, character development' },
-  act3: { percentage: 20, description: 'Climax, resolution, and satisfying conclusion' },
+  act3: { percentage: 20, description: 'Climax, resolution, and satisfying conclusion' }
 };
 
 /**
@@ -72,24 +64,27 @@ const NARRATIVE_STRUCTURE = {
  * We validate primarily on word count, not segment count.
  */
 const SEGMENT_REQUIREMENTS = {
-  short: { // ≤5 min
+  short: {
+    // ≤5 min
     minNarration: 5,
     minDialogue: 4,
     minSfx: 3,
-    maxConsecutive: 4,
+    maxConsecutive: 4
   },
-  medium: { // 5-10 min
+  medium: {
+    // 5-10 min
     minNarration: 10,
     minDialogue: 8,
     minSfx: 5,
-    maxConsecutive: 4,
+    maxConsecutive: 4
   },
-  long: { // >10 min
+  long: {
+    // >10 min
     minNarration: 18,
     minDialogue: 14,
     minSfx: 8,
-    maxConsecutive: 5,
-  },
+    maxConsecutive: 5
+  }
 };
 
 @injectable()
@@ -115,7 +110,7 @@ export class ScriptGenerationService extends AbstractService implements IScriptG
       sfxSeconds,
       musicSeconds,
       pauseSeconds,
-      targetWordCount,
+      targetWordCount
     };
   }
 
@@ -127,18 +122,18 @@ export class ScriptGenerationService extends AbstractService implements IScriptG
       act1: {
         wordBudget: Math.round(targetWordCount * (NARRATIVE_STRUCTURE.act1.percentage / 100)),
         percentage: NARRATIVE_STRUCTURE.act1.percentage,
-        description: NARRATIVE_STRUCTURE.act1.description,
+        description: NARRATIVE_STRUCTURE.act1.description
       },
       act2: {
         wordBudget: Math.round(targetWordCount * (NARRATIVE_STRUCTURE.act2.percentage / 100)),
         percentage: NARRATIVE_STRUCTURE.act2.percentage,
-        description: NARRATIVE_STRUCTURE.act2.description,
+        description: NARRATIVE_STRUCTURE.act2.description
       },
       act3: {
         wordBudget: Math.round(targetWordCount * (NARRATIVE_STRUCTURE.act3.percentage / 100)),
         percentage: NARRATIVE_STRUCTURE.act3.percentage,
-        description: NARRATIVE_STRUCTURE.act3.description,
-      },
+        description: NARRATIVE_STRUCTURE.act3.description
+      }
     };
   }
 
@@ -157,10 +152,7 @@ export class ScriptGenerationService extends AbstractService implements IScriptG
    * @param targetMinutes - Target story duration in minutes
    * @param providerType - LLM provider type (affects word count inflation)
    */
-  buildConstraints(
-    targetMinutes: number,
-    providerType: 'openai' | 'anthropic' = 'openai',
-  ): ScriptGenerationConstraints {
+  buildConstraints(targetMinutes: number, providerType: 'openai' | 'anthropic' = 'openai'): ScriptGenerationConstraints {
     const durationBudget = this.calculateDurationBudget(targetMinutes);
     const narrativeStructure = this.calculateNarrativeStructure(durationBudget.targetWordCount);
     const requirements = this.getSegmentRequirements(targetMinutes);
@@ -168,7 +160,7 @@ export class ScriptGenerationService extends AbstractService implements IScriptG
     // Word count inflation varies by provider:
     // - Claude tends to overshoot (generates ~115-130% of asked) → no inflation
     // - OpenAI tends to undershoot (generates ~55% of asked) → high inflation
-    const wordCountInflation = providerType === 'anthropic' ? 0.0 : 0.80;
+    const wordCountInflation = providerType === 'anthropic' ? 0.0 : 0.8;
 
     return {
       durationBudget,
@@ -177,7 +169,7 @@ export class ScriptGenerationService extends AbstractService implements IScriptG
       minDialogueSegments: requirements.minDialogue,
       minSfxSegments: requirements.minSfx,
       maxConsecutiveSameType: requirements.maxConsecutive,
-      wordCountInflation,
+      wordCountInflation
     };
   }
 
@@ -226,10 +218,7 @@ export class ScriptGenerationService extends AbstractService implements IScriptG
   /**
    * Validate a generated script
    */
-  validateScript(
-    script: StoryScript,
-    constraints: ScriptGenerationConstraints,
-  ): ScriptValidationResult {
+  validateScript(script: StoryScript, constraints: ScriptGenerationConstraints): ScriptValidationResult {
     const errors: string[] = [];
     const warnings: string[] = [];
 
@@ -266,31 +255,23 @@ export class ScriptGenerationService extends AbstractService implements IScriptG
     if (wordCount < minWords) {
       errors.push(
         `Word count too low: ${wordCount} words (minimum: ${minWords}, target: ${targetWordCount}). ` +
-        `Add ${minWords - wordCount} more words of narrative content.`
+          `Add ${minWords - wordCount} more words of narrative content.`
       );
     } else if (wordCount > maxWords) {
-      warnings.push(
-        `Word count slightly high: ${wordCount} words (maximum: ${maxWords}). Consider trimming.`
-      );
+      warnings.push(`Word count slightly high: ${wordCount} words (maximum: ${maxWords}). Consider trimming.`);
     }
 
     // Validate segment counts
     if (narrationCount < constraints.minNarrationSegments) {
-      errors.push(
-        `Not enough narration: ${narrationCount} segments (minimum: ${constraints.minNarrationSegments})`
-      );
+      errors.push(`Not enough narration: ${narrationCount} segments (minimum: ${constraints.minNarrationSegments})`);
     }
 
     if (dialogueCount < constraints.minDialogueSegments) {
-      errors.push(
-        `Not enough dialogue: ${dialogueCount} segments (minimum: ${constraints.minDialogueSegments})`
-      );
+      errors.push(`Not enough dialogue: ${dialogueCount} segments (minimum: ${constraints.minDialogueSegments})`);
     }
 
     if (sfxCount < constraints.minSfxSegments) {
-      warnings.push(
-        `Few sound effects: ${sfxCount} segments (recommended: ${constraints.minSfxSegments}+)`
-      );
+      warnings.push(`Few sound effects: ${sfxCount} segments (recommended: ${constraints.minSfxSegments}+)`);
     }
 
     if (musicCount < 3) {
@@ -307,9 +288,7 @@ export class ScriptGenerationService extends AbstractService implements IScriptG
         const expectedStart = prev ? prev.startTime + prev.duration : 0;
 
         if (curr && curr.startTime < expectedStart - 0.1) {
-          errors.push(
-            `Timeline overlap: segment ${curr.id} starts at ${curr.startTime}s but previous segment ends at ${expectedStart}s`
-          );
+          errors.push(`Timeline overlap: segment ${curr.id} starts at ${curr.startTime}s but previous segment ends at ${expectedStart}s`);
         }
       }
     }
@@ -323,7 +302,7 @@ export class ScriptGenerationService extends AbstractService implements IScriptG
       wordCount,
       estimatedDuration,
       errors,
-      warnings,
+      warnings
     };
   }
 
@@ -384,14 +363,14 @@ export class ScriptGenerationService extends AbstractService implements IScriptG
     } catch (error) {
       this.logger.error(`JSON parsing failed: ${error instanceof Error ? error.message : String(error)}`);
       throw new AppError(ErrorCodes.ValidationError, {
-        name: 'LLMInvalidJSON',
+        name: 'LLMInvalidJSON'
       });
     }
 
     if (!parsed || typeof parsed !== 'object') {
       this.logger.error('Parsed response is not an object');
       throw new AppError(ErrorCodes.ValidationError, {
-        name: 'LLMResponseNotObject',
+        name: 'LLMResponseNotObject'
       });
     }
 
@@ -402,21 +381,21 @@ export class ScriptGenerationService extends AbstractService implements IScriptG
     if (!obj.metadata || typeof obj.metadata !== 'object') {
       this.logger.error('Missing or invalid metadata field');
       throw new AppError(ErrorCodes.ValidationError, {
-        name: 'LLMMissingMetadata',
+        name: 'LLMMissingMetadata'
       });
     }
 
     if (!obj.tracks || !Array.isArray(obj.tracks)) {
       this.logger.error(`Missing or invalid tracks field. Has tracks: ${!!obj.tracks}, Is array: ${Array.isArray(obj.tracks)}`);
       throw new AppError(ErrorCodes.ValidationError, {
-        name: 'LLMMissingTracks',
+        name: 'LLMMissingTracks'
       });
     }
 
     if (!obj.characters || !Array.isArray(obj.characters)) {
       this.logger.error('Missing or invalid characters field');
       throw new AppError(ErrorCodes.ValidationError, {
-        name: 'LLMMissingCharacters',
+        name: 'LLMMissingCharacters'
       });
     }
 
@@ -425,24 +404,21 @@ export class ScriptGenerationService extends AbstractService implements IScriptG
       version: 2,
       metadata: obj.metadata as StoryScript['metadata'],
       characters: obj.characters as StoryScript['characters'],
-      tracks: obj.tracks as StoryScript['tracks'],
+      tracks: obj.tracks as StoryScript['tracks']
     };
   }
 
   /**
    * Generate script with validation and retry
    */
-  async generateScript(
-    input: ScriptGenerationInput,
-    provider: ILLMRepository,
-  ): Promise<ScriptGenerationResult> {
+  async generateScript(input: ScriptGenerationInput, provider: ILLMRepository): Promise<ScriptGenerationResult> {
     const targetMinutes = input.targetDurationMinutes ?? 5;
     const providerType = provider.repositoryType === 'anthropic' ? 'anthropic' : 'openai';
     const constraints = this.buildConstraints(targetMinutes, providerType);
     const vocabularyLevel = getVocabularyLevel(input.profile.age);
 
     this.logger.info(
-      `Generating script: ${input.enrichedConcept.title}, target=${targetMinutes}min (${constraints.durationBudget.targetWordCount} words), vocabulary=${vocabularyLevel}`,
+      `Generating script: ${input.enrichedConcept.title}, target=${targetMinutes}min (${constraints.durationBudget.targetWordCount} words), vocabulary=${vocabularyLevel}`
     );
 
     let lastValidation: ScriptValidationResult | null = null;
@@ -459,7 +435,7 @@ export class ScriptGenerationService extends AbstractService implements IScriptG
         vocabularyLevel,
         constraints,
         answers: input.answers,
-        previousAttemptFeedback: previousFeedback,
+        previousAttemptFeedback: previousFeedback
       };
 
       try {
@@ -469,29 +445,24 @@ export class ScriptGenerationService extends AbstractService implements IScriptG
             firstName: context.childName,
             age: context.childAge,
             gender: 'neutral',
-            language: context.language,
+            language: context.language
           },
           context.enrichedConcept,
           context.vocabularyLevel,
-          context.constraints,
+          context.constraints
         );
 
-        const userPrompt = buildScriptGenerationUserPrompt(
-          context.enrichedConcept,
-          context.answers,
-          context.previousAttemptFeedback,
-        );
+        const userPrompt = buildScriptGenerationUserPrompt(context.enrichedConcept, context.answers, context.previousAttemptFeedback);
 
         // Call repository with increased token limit for complete script generation
         // Scripts can be large (2000+ tokens for a 2-minute story with all segments)
         const response = await provider.completeWithRetry(systemPrompt, userPrompt, {
-          maxTokens: 8000,
+          maxTokens: 8000
         });
 
         // Log raw response for debugging (first 2000 chars to see full structure)
-        const logContent = response.content.length > 2000
-          ? `${response.content.substring(0, 2000)}... [truncated ${response.content.length - 2000} chars]`
-          : response.content;
+        const logContent =
+          response.content.length > 2000 ? `${response.content.substring(0, 2000)}... [truncated ${response.content.length - 2000} chars]` : response.content;
         this.logger.info(`Raw LLM response (attempt ${attempt}): ${logContent}`);
 
         const script = this.parseScriptResponse(response.content);
@@ -500,7 +471,7 @@ export class ScriptGenerationService extends AbstractService implements IScriptG
         lastValidation = validation;
 
         this.logger.info(
-          `Script validation attempt ${attempt}: isValid=${validation.isValid}, wordCount=${validation.wordCount}/${constraints.durationBudget.targetWordCount}, errors=${validation.errors.length}`,
+          `Script validation attempt ${attempt}: isValid=${validation.isValid}, wordCount=${validation.wordCount}/${constraints.durationBudget.targetWordCount}, errors=${validation.errors.length}`
         );
         if (validation.errors.length > 0) {
           this.logger.warn(`Validation errors: ${validation.errors.join(' | ')}`);
@@ -517,7 +488,7 @@ export class ScriptGenerationService extends AbstractService implements IScriptG
           return {
             script,
             validation,
-            attempts: attempt,
+            attempts: attempt
           };
         }
 
@@ -531,7 +502,7 @@ export class ScriptGenerationService extends AbstractService implements IScriptG
           errorName,
           errorMessage,
           attempt,
-          maxAttempts: this.maxAttempts,
+          maxAttempts: this.maxAttempts
         });
 
         if (attempt === this.maxAttempts) {
@@ -541,21 +512,19 @@ export class ScriptGenerationService extends AbstractService implements IScriptG
     }
 
     // If we get here, all attempts failed validation
-    const errorDetails = lastValidation
-      ? `Validation errors: ${lastValidation.errors.join('; ')}`
-      : 'Unknown validation failure';
+    const errorDetails = lastValidation ? `Validation errors: ${lastValidation.errors.join('; ')}` : 'Unknown validation failure';
 
     this.logger.error('Script validation failed after all attempts', {
       attempts: this.maxAttempts,
       lastValidation,
-      errorDetails,
+      errorDetails
     });
     throw new AppError(ErrorCodes.InternalError, {
       name: 'ScriptValidationFailed',
       errors: lastValidation?.errors,
       warnings: lastValidation?.warnings,
       wordCount: lastValidation?.wordCount,
-      estimatedDuration: lastValidation?.estimatedDuration,
+      estimatedDuration: lastValidation?.estimatedDuration
     } as Record<string, unknown>);
   }
 }

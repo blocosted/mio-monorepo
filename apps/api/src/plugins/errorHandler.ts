@@ -1,8 +1,10 @@
-import { Elysia, ValidationError } from 'elysia';
-import { AppError, ErrorCodes, errorFromCode } from '@mio/shared';
-import { getInstance } from '../ioc';
-import { IocConnection } from '../ioc/ioc.types';
+import { type Elysia, ValidationError } from 'elysia';
+
 import type { Logger } from '@mio/shared/server/logger';
+import { AppError, ErrorCodes, errorFromCode } from '@mio/shared';
+
+import { getInstance } from '../ioc/ioc.config';
+import { IocConnection } from '../ioc/ioc.types';
 
 /**
  * Centralized error handler plugin for Elysia
@@ -16,7 +18,7 @@ export const errorHandler = (app: Elysia) =>
         error: error.message,
         code: error.code,
         name: error.name,
-        diagnoses: error.diagnoses,
+        diagnoses: error.diagnoses
       };
     }
 
@@ -28,7 +30,7 @@ export const errorHandler = (app: Elysia) =>
         error: validationError.message,
         code: validationError.code,
         name: validationError.name,
-        details: error.message,
+        details: error.message
       };
     }
 
@@ -50,7 +52,7 @@ export const errorHandler = (app: Elysia) =>
     return {
       error: internalError.message,
       code: internalError.code,
-      name: internalError.name,
+      name: internalError.name
     };
   });
 

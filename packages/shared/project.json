@@ -1,22 +1,36 @@
 {
-    "name": "shared",
-    "$schema": "../../node_modules/nx/schemas/project-schema.json",
-    "projectType": "library",
-    "sourceRoot": "packages/shared/src",
-    "targets": {
-        "lint": {
-            "executor": "nx:run-commands",
-            "options": {
-                "command": "eslint packages/shared/src/",
-                "cwd": "."
-            }
-        },
-        "typecheck": {
-            "executor": "nx:run-commands",
-            "options": {
-                "command": "tsc --noEmit",
-                "cwd": "packages/shared"
-            }
-        }
+  "name": "shared",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "packages/shared/src",
+  "targets": {
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc --noEmit",
+        "cwd": "packages/shared"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "biome check packages/shared/",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "lint:fix": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "biome check --write packages/shared/",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "format": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "biome format --write packages/shared/",
+        "cwd": "{workspaceRoot}"
+      }
     }
+  }
 }

@@ -10,31 +10,29 @@ import type { StoryGenerationWorkflowContext } from '../../workflows/story-gener
  * Result of triggering a workflow
  */
 export interface TriggerWorkflowResult {
-    /** Workflow run ID from QStash */
-    workflowRunId: string;
+  /** Workflow run ID from QStash */
+  workflowRunId: string;
 
-    /** Job ID for progress tracking */
-    jobId: string;
+  /** Job ID for progress tracking */
+  jobId: string;
 }
 
 /**
  * Workflow Orchestrator Service Interface
  */
 export interface IWorkflowOrchestratorService {
-    /**
-     * Trigger the story generation workflow
-     *
-     * @param input - Workflow input context
-     * @returns Workflow run ID and job ID
-     */
-    triggerStoryGeneration(
-        input: StoryGenerationWorkflowContext
-    ): Promise<TriggerWorkflowResult>;
+  /**
+   * Trigger the story generation workflow
+   *
+   * @param input - Workflow input context
+   * @returns Workflow run ID and job ID
+   */
+  triggerStoryGeneration(input: StoryGenerationWorkflowContext): Promise<TriggerWorkflowResult>;
 
-    /**
-     * Cancel a running workflow
-     *
-     * @param workflowRunId - QStash workflow run ID
-     */
-    cancelWorkflow(workflowRunId: string): Promise<void>;
+  /**
+   * Cancel a running workflow
+   *
+   * @param workflowRunId - QStash workflow run ID
+   */
+  cancelWorkflow(workflowRunId: string): Promise<void>;
 }

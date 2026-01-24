@@ -2,33 +2,31 @@
  * Ambiance Service Exports
  */
 
-// Stores
-export { AmbianceLibraryStore } from './ambiance-library.store';
+// Types
 export type {
-    StoredAmbiance,
-    FindAmbianceParams,
-    AmbianceQueryParams,
-    StoreAmbianceParams,
-    AmbianceLookupResult,
-    AmbianceLibraryStats,
+  AmbianceGenerateInput,
+  AmbianceGenerateResult,
+  AmbianceSegmentInput,
+  AmbianceSegmentResult,
+  IAmbianceGeneratorService
+} from './ambiance-generator.service.types';
+export type {
+  AmbianceLookupResult as AmbianceLibraryLookupResult,
+  FindAmbianceParams as AmbianceLibraryFindParams,
+  IAmbianceLibraryService,
+  StoreAmbianceParams as AmbianceLibraryStoreParams,
+  StoredAmbiance as AmbianceLibraryStoredAmbiance
+} from './ambiance-library.service.types';
+export type {
+  AmbianceLibraryStats,
+  AmbianceLookupResult,
+  AmbianceQueryParams,
+  FindAmbianceParams,
+  StoreAmbianceParams,
+  StoredAmbiance
 } from './ambiance-library.store';
-
 // Services
 export { AmbianceGeneratorService } from './ambiance-generator.service';
 export { AmbianceLibraryService } from './ambiance-library.service';
-
-// Types
-export type {
-    IAmbianceGeneratorService,
-    AmbianceGenerateInput,
-    AmbianceGenerateResult,
-    AmbianceSegmentInput,
-    AmbianceSegmentResult,
-} from './ambiance-generator.service.types';
-export type {
-    IAmbianceLibraryService,
-    FindAmbianceParams as AmbianceLibraryFindParams,
-    StoreAmbianceParams as AmbianceLibraryStoreParams,
-    StoredAmbiance as AmbianceLibraryStoredAmbiance,
-    AmbianceLookupResult as AmbianceLibraryLookupResult,
-} from './ambiance-library.service.types';
+// Stores
+export { AmbianceLibraryStore } from './ambiance-library.store';

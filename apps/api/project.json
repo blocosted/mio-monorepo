@@ -25,6 +25,34 @@
         "command": "bun test",
         "cwd": "apps/api"
       }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc --noEmit",
+        "cwd": "apps/api"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "biome check apps/api/",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "lint:fix": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "biome check --write apps/api/",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "format": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "biome format --write apps/api/",
+        "cwd": "{workspaceRoot}"
+      }
     }
   }
 }

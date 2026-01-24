@@ -10,14 +10,14 @@ const nextConfig = {
   experimental: {
     // Enable server actions
     serverActions: {
-      bodySizeLimit: '2mb',
-    },
+      bodySizeLimit: '2mb'
+    }
   },
 
   // Environment variables exposed to the browser
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
-  },
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+  }
 };
 
 export default nextConfig;

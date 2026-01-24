@@ -5,29 +5,16 @@
  */
 
 import { existsSync } from 'node:fs';
+
 import { config as loadDotenv } from 'dotenv';
 
+import { AnthropicRepository, OpenAIRepository } from '@mio/api/repositories/llm';
+import { type EnrichmentProfile, getVocabularyLevel, type ILLMRepository, type LLMCompletionOptions, parseEnrichedConcept } from '@mio/api/services/llm';
+import { buildEnrichmentSystemPrompt, buildEnrichmentUserPrompt } from '@mio/api/services/llm/prompts/enrichment.prompts';
 import { loadEnvironmentFromProcessEnv } from '@mio/shared/constants/environment.constants';
 import { Logger } from '@mio/shared/server/logger';
 
-import {
-  createRunDir,
-  readJsonFile,
-  writeJsonFile,
-} from '../_local-run-store/run-store';
-
-import { OpenAIRepository, AnthropicRepository } from '@mio/api/repositories/llm';
-import {
-  parseEnrichedConcept,
-  type EnrichmentProfile,
-  type LLMCompletionOptions,
-  type ILLMRepository,
-  getVocabularyLevel,
-} from '@mio/api/services/llm';
-import {
-  buildEnrichmentSystemPrompt,
-  buildEnrichmentUserPrompt,
-} from '@mio/api/services/llm/prompts/enrichment.prompts';
+import { createRunDir, readJsonFile, writeJsonFile } from '../_local-run-store/run-store';
 
 type ProfileName = 'emilie' | 'leo' | 'sam';
 
@@ -40,7 +27,7 @@ const TEST_PROFILES: Record<ProfileName, EnrichmentProfile> = {
     avoidThemes: ['spiders', 'blood'],
     includeChildAsCharacter: true,
     preferredHeroGender: 'same',
-    language: 'fr',
+    language: 'fr'
   },
   leo: {
     firstName: 'Leo',
@@ -50,7 +37,7 @@ const TEST_PROFILES: Record<ProfileName, EnrichmentProfile> = {
     avoidThemes: ['monsters'],
     includeChildAsCharacter: false,
     preferredHeroGender: 'any',
-    language: 'fr',
+    language: 'fr'
   },
   sam: {
     firstName: 'Sam',
@@ -60,8 +47,8 @@ const TEST_PROFILES: Record<ProfileName, EnrichmentProfile> = {
     avoidThemes: ['nightmares'],
     includeChildAsCharacter: true,
     preferredHeroGender: 'any',
-    language: 'en',
-  },
+    language: 'en'
+  }
 };
 
 function loadEnv(envFile?: string): void {
@@ -107,30 +94,17 @@ export async function runEnrichStoryCommand(args: {
     repository = new OpenAIRepository(logger);
   }
 
-  const storedInput: EnrichStoryStoredInput | null = args.inputFile
-    ? readJsonFile<EnrichStoryStoredInput>(args.inputFile)
-    : null;
+  const storedInput: EnrichStoryStoredInput | null = args.inputFile ? readJsonFile<EnrichStoryStoredInput>(args.inputFile) : null;
 
   const selected: Array<[ProfileName, EnrichmentProfile]> = storedInput
-    ? ([['inputFile' as unknown as ProfileName, storedInput.profile]] as Array<
-        [ProfileName, EnrichmentProfile]
-      >)
+    ? ([['inputFile' as unknown as ProfileName, storedInput.profile]] as Array<[ProfileName, EnrichmentProfile]>)
     : args.all
-      ? (Object.entries(TEST_PROFILES) as Array<
-          [ProfileName, EnrichmentProfile]
-        >)
-      : ([
-          [
-            args.profile as ProfileName,
-            TEST_PROFILES[args.profile as ProfileName],
-          ],
-        ] as Array<[ProfileName, EnrichmentProfile]>);
+      ? (Object.entries(TEST_PROFILES) as Array<[ProfileName, EnrichmentProfile]>)
+      : ([[args.profile as ProfileName, TEST_PROFILES[args.profile as ProfileName]]] as Array<[ProfileName, EnrichmentProfile]>);
 
   for (const [name, profile] of selected) {
     if (!profile) {
-      throw new Error(
-        `Unknown profile "${args.profile}". Expected one of: ${Object.keys(TEST_PROFILES).join(', ')}`,
-      );
+      throw new Error(`Unknown profile "${args.profile}". Expected one of: ${Object.keys(TEST_PROFILES).join(', ')}`);
     }
 
     const storyId = storedInput?.story?.id ?? crypto.randomUUID();
@@ -145,7 +119,7 @@ export async function runEnrichStoryCommand(args: {
           rootDir: args.storeDir,
           namespace: 'llm',
           command: 'enrich-story',
-          labelParts: [String(name), storyId],
+          labelParts: [String(name), storyId]
         })
       : null;
 
@@ -153,13 +127,13 @@ export async function runEnrichStoryCommand(args: {
       writeJsonFile(run.runDir, 'input.json', {
         story: { id: storyId, initialPrompt: prompt },
         profile,
-        options,
+        options
       } satisfies EnrichStoryStoredInput);
 
       writeJsonFile(run.runDir, 'prompts.json', {
         vocabularyLevel,
         systemPrompt,
-        userPrompt,
+        userPrompt
       });
 
       writeJsonFile(run.runDir, 'meta.json', {
@@ -167,20 +141,19 @@ export async function runEnrichStoryCommand(args: {
         profileName: name,
         provider: providerType,
         createdAt: new Date().toISOString(),
-        dryRun: args.dryRun,
+        dryRun: args.dryRun
       });
     }
 
     if (args.dryRun) {
-      const payload = {
+      const _payload = {
         profile: name,
         story: { id: storyId, initialPrompt: prompt },
         vocabularyLevel,
         systemPrompt,
         userPrompt,
-        artifactsDir: run?.runDir,
+        artifactsDir: run?.runDir
       };
-      console.log(JSON.stringify(payload, null, 2));
       continue;
     }
 
@@ -189,48 +162,30 @@ export async function runEnrichStoryCommand(args: {
       childName: profile.firstName,
       childAge: profile.age,
       vocabularyLevel,
-      provider: providerType,
+      provider: providerType
     });
 
     // Call repository with prompts
-    const response = await repository.completeWithRetry(
-      systemPrompt,
-      userPrompt,
-      options,
-    );
+    const response = await repository.completeWithRetry(systemPrompt, userPrompt, options);
 
     // Parse the enriched concept from the response
     const enrichedConcept = parseEnrichedConcept(response.content);
 
     const result = {
       enrichedConcept,
-      vocabularyLevel,
+      vocabularyLevel
     };
 
     logger.info('Story enrichment complete', {
       storyId,
-      title: enrichedConcept.title,
+      title: enrichedConcept.title
     });
 
     if (run) {
       writeJsonFile(run.runDir, 'output.json', {
         vocabularyLevel,
-        result,
+        result
       });
     }
-
-    console.log(
-      JSON.stringify(
-        {
-          profile: name,
-          story: { id: storyId, initialPrompt: prompt },
-          vocabularyLevel,
-          result,
-          artifactsDir: run?.runDir,
-        },
-        null,
-        2,
-      ),
-    );
   }
 }

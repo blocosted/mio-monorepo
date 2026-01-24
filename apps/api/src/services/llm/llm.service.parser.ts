@@ -5,7 +5,8 @@
  */
 
 import { AppError, ErrorCodes } from '@mio/shared';
-import { Tone, Ambiance } from '@mio/shared/types';
+import { Ambiance, Tone } from '@mio/shared/types';
+
 import type { EnrichedConcept } from '../stories/stories.service.types';
 
 /**
@@ -47,13 +48,13 @@ export function parseEnrichedConcept(jsonString: string): EnrichedConcept {
     parsed = JSON.parse(cleaned);
   } catch {
     throw new AppError(ErrorCodes.ValidationError, {
-      name: 'LLMInvalidJSON',
+      name: 'LLMInvalidJSON'
     });
   }
 
   if (!isObject(parsed)) {
     throw new AppError(ErrorCodes.ValidationError, {
-      name: 'LLMResponseNotObject',
+      name: 'LLMResponseNotObject'
     });
   }
 
@@ -75,7 +76,7 @@ export function parseEnrichedConcept(jsonString: string): EnrichedConcept {
     setting,
     tone,
     themes,
-    synopsis,
+    synopsis
   };
 }
 
@@ -93,7 +94,7 @@ function validateString(obj: Record<string, unknown>, field: string): string {
   const value = obj[field];
   if (typeof value !== 'string' || value.trim() === '') {
     throw new AppError(ErrorCodes.ValidationError, {
-      name: `LLMMissingField_${field}`,
+      name: `LLMMissingField_${field}`
     });
   }
   return value.trim();
@@ -102,10 +103,7 @@ function validateString(obj: Record<string, unknown>, field: string): string {
 /**
  * Validate an optional string field
  */
-function validateOptionalString(
-  obj: Record<string, unknown>,
-  field: string,
-): string | undefined {
+function validateOptionalString(obj: Record<string, unknown>, field: string): string | undefined {
   const value = obj[field];
   if (value === undefined || value === null) {
     return undefined;
@@ -119,29 +117,25 @@ function validateOptionalString(
 /**
  * Validate main character
  */
-function validateMainCharacter(
-  obj: Record<string, unknown>,
-): EnrichedConcept['mainCharacter'] {
+function validateMainCharacter(obj: Record<string, unknown>): EnrichedConcept['mainCharacter'] {
   const char = obj['mainCharacter'];
   if (!isObject(char)) {
     throw new AppError(ErrorCodes.ValidationError, {
-      name: 'LLMMissingField_mainCharacter',
+      name: 'LLMMissingField_mainCharacter'
     });
   }
 
   return {
     name: validateString(char, 'name'),
     description: validateString(char, 'description'),
-    voiceType: validateOptionalString(char, 'voiceType'),
+    voiceType: validateOptionalString(char, 'voiceType')
   };
 }
 
 /**
  * Validate secondary characters (optional array)
  */
-function validateSecondaryCharacters(
-  obj: Record<string, unknown>,
-): EnrichedConcept['secondaryCharacters'] {
+function validateSecondaryCharacters(obj: Record<string, unknown>): EnrichedConcept['secondaryCharacters'] {
   const chars = obj['secondaryCharacters'];
   if (!chars || !Array.isArray(chars)) {
     return undefined;
@@ -159,7 +153,7 @@ function validateSecondaryCharacters(
       result.push({
         name,
         description,
-        voiceType: validateOptionalString(char, 'voiceType'),
+        voiceType: validateOptionalString(char, 'voiceType')
       });
     }
   }
@@ -170,25 +164,21 @@ function validateSecondaryCharacters(
 /**
  * Validate setting
  */
-function validateSetting(
-  obj: Record<string, unknown>,
-): EnrichedConcept['setting'] {
+function validateSetting(obj: Record<string, unknown>): EnrichedConcept['setting'] {
   const setting = obj['setting'];
   if (!isObject(setting)) {
     throw new AppError(ErrorCodes.ValidationError, {
-      name: 'LLMMissingField_setting',
+      name: 'LLMMissingField_setting'
     });
   }
 
   const ambianceValue = validateString(setting, 'ambiance');
-  const ambiance = VALID_AMBIANCES.has(ambianceValue)
-    ? (ambianceValue as Ambiance)
-    : Ambiance.Forest; // Default fallback
+  const ambiance = VALID_AMBIANCES.has(ambianceValue) ? (ambianceValue as Ambiance) : Ambiance.Forest; // Default fallback
 
   return {
     location: validateString(setting, 'location'),
     era: validateString(setting, 'era'),
-    ambiance,
+    ambiance
   };
 }
 
@@ -211,7 +201,7 @@ function validateThemes(obj: Record<string, unknown>): string[] {
   const themes = obj['themes'];
   if (!Array.isArray(themes)) {
     throw new AppError(ErrorCodes.ValidationError, {
-      name: 'LLMMissingField_themes',
+      name: 'LLMMissingField_themes'
     });
   }
 
@@ -224,7 +214,7 @@ function validateThemes(obj: Record<string, unknown>): string[] {
 
   if (result.length === 0) {
     throw new AppError(ErrorCodes.ValidationError, {
-      name: 'LLMEmptyThemes',
+      name: 'LLMEmptyThemes'
     });
   }
 

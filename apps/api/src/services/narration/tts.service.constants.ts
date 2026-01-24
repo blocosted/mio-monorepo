@@ -5,8 +5,8 @@
  * Voice IDs are now managed dynamically from the database via VoiceRegistryService.
  */
 
-import { Emotion } from '@mio/shared/types';
 import type { ElevenLabsVoiceSettings } from '@mio/shared/types';
+import { Emotion } from '@mio/shared/types';
 
 /**
  * Audio tags for emotional expression (eleven_v3)
@@ -15,15 +15,15 @@ import type { ElevenLabsVoiceSettings } from '@mio/shared/types';
  * See: https://elevenlabs.io/docs/overview/capabilities/text-to-speech/best-practices
  */
 export const EMOTION_AUDIO_TAGS: Record<Emotion, string | null> = {
-    [Emotion.Neutral]: null,
-    [Emotion.Happy]: '[happy]',
-    [Emotion.Sad]: '[sad]',
-    [Emotion.Excited]: '[excited]',
-    [Emotion.Scared]: '[scared]',
-    [Emotion.Angry]: '[angry]',
-    [Emotion.Surprised]: '[gasp]',
-    [Emotion.Curious]: null,  // No specific tag, use intonation via punctuation
-    [Emotion.Calm]: '[softly]',
+  [Emotion.Neutral]: null,
+  [Emotion.Happy]: '[happy]',
+  [Emotion.Sad]: '[sad]',
+  [Emotion.Excited]: '[excited]',
+  [Emotion.Scared]: '[scared]',
+  [Emotion.Angry]: '[angry]',
+  [Emotion.Surprised]: '[gasp]',
+  [Emotion.Curious]: null, // No specific tag, use intonation via punctuation
+  [Emotion.Calm]: '[softly]'
 };
 
 /**
@@ -40,60 +40,60 @@ export const EMOTION_AUDIO_TAGS: Record<Emotion, string | null> = {
  * These settings provide secondary modulation.
  */
 export const EMOTION_VOICE_SETTINGS: Record<Emotion, ElevenLabsVoiceSettings> = {
-    [Emotion.Neutral]: {
-        stability: 0.5,    // Natural
-        similarityBoost: 0.75,
-        style: 0.0,
-        speed: 1.0,
-    },
-    [Emotion.Happy]: {
-        stability: 0,      // Creative - more expressive
-        similarityBoost: 0.7,
-        style: 0.5,
-        speed: 1.05,
-    },
-    [Emotion.Sad]: {
-        stability: 0.5,    // Natural - let the tag do the work
-        similarityBoost: 0.8,
-        style: 0.3,
-        speed: 0.9,        // Slower
-    },
-    [Emotion.Excited]: {
-        stability: 0,      // Creative - very expressive
-        similarityBoost: 0.65,
-        style: 0.6,
-        speed: 1.1,        // Faster
-    },
-    [Emotion.Scared]: {
-        stability: 0,      // Creative - unstable delivery
-        similarityBoost: 0.7,
-        style: 0.4,
-        speed: 1.05,
-    },
-    [Emotion.Angry]: {
-        stability: 0,      // Creative - intense
-        similarityBoost: 0.75,
-        style: 0.7,
-        speed: 1.0,
-    },
-    [Emotion.Surprised]: {
-        stability: 0,      // Creative - spontaneous
-        similarityBoost: 0.65,
-        style: 0.5,
-        speed: 1.08,
-    },
-    [Emotion.Curious]: {
-        stability: 0.5,    // Natural
-        similarityBoost: 0.75,
-        style: 0.25,
-        speed: 0.95,
-    },
-    [Emotion.Calm]: {
-        stability: 1,      // Robust - very stable
-        similarityBoost: 0.85,
-        style: 0.1,
-        speed: 0.9,
-    },
+  [Emotion.Neutral]: {
+    stability: 0.5, // Natural
+    similarityBoost: 0.75,
+    style: 0.0,
+    speed: 1.0
+  },
+  [Emotion.Happy]: {
+    stability: 0, // Creative - more expressive
+    similarityBoost: 0.7,
+    style: 0.5,
+    speed: 1.05
+  },
+  [Emotion.Sad]: {
+    stability: 0.5, // Natural - let the tag do the work
+    similarityBoost: 0.8,
+    style: 0.3,
+    speed: 0.9 // Slower
+  },
+  [Emotion.Excited]: {
+    stability: 0, // Creative - very expressive
+    similarityBoost: 0.65,
+    style: 0.6,
+    speed: 1.1 // Faster
+  },
+  [Emotion.Scared]: {
+    stability: 0, // Creative - unstable delivery
+    similarityBoost: 0.7,
+    style: 0.4,
+    speed: 1.05
+  },
+  [Emotion.Angry]: {
+    stability: 0, // Creative - intense
+    similarityBoost: 0.75,
+    style: 0.7,
+    speed: 1.0
+  },
+  [Emotion.Surprised]: {
+    stability: 0, // Creative - spontaneous
+    similarityBoost: 0.65,
+    style: 0.5,
+    speed: 1.08
+  },
+  [Emotion.Curious]: {
+    stability: 0.5, // Natural
+    similarityBoost: 0.75,
+    style: 0.25,
+    speed: 0.95
+  },
+  [Emotion.Calm]: {
+    stability: 1, // Robust - very stable
+    similarityBoost: 0.85,
+    style: 0.1,
+    speed: 0.9
+  }
 };
 
 /**
@@ -105,36 +105,36 @@ export const DEFAULT_VOICE_SETTINGS: ElevenLabsVoiceSettings = EMOTION_VOICE_SET
  * Rate limiting configuration
  */
 export const RATE_LIMIT_CONFIG = {
-    /** Redis key prefix for rate limiting */
-    keyPrefix: 'tts:ratelimit:requests',
-    /** Maximum requests per minute (ElevenLabs tier limit) */
-    maxRequestsPerMinute: 50,
-    /** Maximum wait time for rate limit slot (ms) */
-    maxWaitMs: 30000,
-    /** Initial backoff delay (ms) */
-    initialBackoffMs: 500,
-    /** Maximum backoff delay (ms) */
-    maxBackoffMs: 5000,
-    /** TTL for rate limit keys (seconds) */
-    keyTtlSeconds: 120,
+  /** Redis key prefix for rate limiting */
+  keyPrefix: 'tts:ratelimit:requests',
+  /** Maximum requests per minute (ElevenLabs tier limit) */
+  maxRequestsPerMinute: 50,
+  /** Maximum wait time for rate limit slot (ms) */
+  maxWaitMs: 30000,
+  /** Initial backoff delay (ms) */
+  initialBackoffMs: 500,
+  /** Maximum backoff delay (ms) */
+  maxBackoffMs: 5000,
+  /** TTL for rate limit keys (seconds) */
+  keyTtlSeconds: 120
 };
 
 /**
  * Local concurrency configuration
  */
 export const CONCURRENCY_CONFIG = {
-    /** Maximum concurrent requests per instance */
-    maxLocalConcurrency: 3,
+  /** Maximum concurrent requests per instance */
+  maxLocalConcurrency: 3
 };
 
 /**
  * Audio format configuration (FFmpeg compatible)
  */
 export const AUDIO_FORMAT = {
-    format: 'mp3' as const,
-    sampleRate: 44100 as const,
-    bitrate: 128 as const,
-    channels: 2 as const,
+  format: 'mp3' as const,
+  sampleRate: 44100 as const,
+  bitrate: 128 as const,
+  channels: 2 as const
 };
 
 /**

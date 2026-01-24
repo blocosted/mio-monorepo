@@ -8,5 +8,5 @@
  * - Error translation to AppError
  */
 
-export * from './llm';
 export * from './audio';
+export * from './llm';

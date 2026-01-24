@@ -5,76 +5,72 @@
  */
 
 import 'reflect-metadata';
-import { injectable, inject } from 'inversify';
+
+import { inject, injectable } from 'inversify';
 
 import { AppError, ErrorCodes } from '@mio/shared';
 import { JobStatus } from '@mio/shared/types';
 
-import { IocStore } from '../../ioc';
 import type { IProfilesStore } from '../profiles';
-import type {
-    CreateStoryInput,
-    IStoriesService,
-    IStoriesStore,
-    Story,
-} from './stories.service.types';
+import type { GenerationJobRow, GenerationJobsStore } from './generation-jobs.store';
+import type { CreateStoryInput, IStoriesService, IStoriesStore, Story } from './stories.service.types';
+import { IocStore } from '../../ioc/ioc.types';
 import { mapRowToStory } from './stories.service.map';
-import type { GenerationJobsStore, GenerationJobRow } from './generation-jobs.store';
 
 @injectable()
 export class StoriesService implements IStoriesService {
-    constructor(
-        @inject(IocStore.STORIES_STORE)
-        private readonly store: IStoriesStore,
-        @inject(IocStore.PROFILES_STORE)
-        private readonly profilesStore: IProfilesStore,
-        @inject(IocStore.GENERATION_JOBS_STORE)
-        private readonly jobsStore: GenerationJobsStore
-    ) {}
+  constructor(
+    @inject(IocStore.STORIES_STORE)
+    private readonly store: IStoriesStore,
+    @inject(IocStore.PROFILES_STORE)
+    private readonly profilesStore: IProfilesStore,
+    @inject(IocStore.GENERATION_JOBS_STORE)
+    private readonly jobsStore: GenerationJobsStore
+  ) {}
 
-    /**
-     * Create a new story from an initial prompt.
-     * Ensures the child profile exists before insertion.
-     */
-    async create(input: CreateStoryInput): Promise<Story> {
-        const profile = await this.profilesStore.findById(input.childProfileId);
-        if (!profile) {
-            throw new AppError(ErrorCodes.NotFound, { name: 'ChildProfileNotFound' });
-        }
-
-        const row = await this.store.insert({
-            childProfileId: input.childProfileId,
-            initialPrompt: input.prompt,
-        });
-
-        return mapRowToStory(row);
+  /**
+   * Create a new story from an initial prompt.
+   * Ensures the child profile exists before insertion.
+   */
+  async create(input: CreateStoryInput): Promise<Story> {
+    const profile = await this.profilesStore.findById(input.childProfileId);
+    if (!profile) {
+      throw new AppError(ErrorCodes.NotFound, { name: 'ChildProfileNotFound' });
     }
 
-    /**
-     * Find a story by ID
-     */
-    async findById(id: string): Promise<any> {
-        const story = await this.store.findById(id);
-        if (!story) {
-            return null;
-        }
-        return story;
-    }
+    const row = await this.store.insert({
+      childProfileId: input.childProfileId,
+      initialPrompt: input.prompt
+    });
 
-    /**
-     * Create a generation job for a story
-     */
-    async createGenerationJob(storyId: string): Promise<GenerationJobRow> {
-        return this.jobsStore.create({
-            storyId,
-            status: JobStatus.Pending,
-        });
-    }
+    return mapRowToStory(row);
+  }
 
-    /**
-     * Update workflow run ID for a job
-     */
-    async updateJobWorkflowRunId(jobId: string, workflowRunId: string): Promise<void> {
-        await this.jobsStore.updateWorkflowRunId(jobId, workflowRunId);
+  /**
+   * Find a story by ID
+   */
+  async findById(id: string): Promise<any> {
+    const story = await this.store.findById(id);
+    if (!story) {
+      return null;
     }
+    return story;
+  }
+
+  /**
+   * Create a generation job for a story
+   */
+  async createGenerationJob(storyId: string): Promise<GenerationJobRow> {
+    return this.jobsStore.create({
+      storyId,
+      status: JobStatus.Pending
+    });
+  }
+
+  /**
+   * Update workflow run ID for a job
+   */
+  async updateJobWorkflowRunId(jobId: string, workflowRunId: string): Promise<void> {
+    await this.jobsStore.updateWorkflowRunId(jobId, workflowRunId);
+  }
 }

@@ -6,18 +6,19 @@
  */
 
 import { serve } from '@upstash/workflow';
+
 import type { StoryGenerationWorkflowContext } from './story-generation.workflow.types';
 import {
-    enrichmentStep,
-    scriptGenerationStep,
-    voiceAssignmentStep,
-    voiceGenerationStep,
-    sfxGenerationStep,
-    musicGenerationStep,
-    ambianceGenerationStep,
-    mixingStep,
-    uploadStep,
-    finalizationStep,
+  ambianceGenerationStep,
+  enrichmentStep,
+  finalizationStep,
+  mixingStep,
+  musicGenerationStep,
+  scriptGenerationStep,
+  sfxGenerationStep,
+  uploadStep,
+  voiceAssignmentStep,
+  voiceGenerationStep
 } from './story-generation.workflow.steps';
 
 /**
@@ -37,60 +38,58 @@ import {
  * @param context - Workflow context containing job, story, and profile IDs
  * @returns Final workflow context with audio URL and duration
  */
-export const storyGenerationWorkflow = serve<StoryGenerationWorkflowContext>(
-    async (context) => {
-        // Step 1: Enrichment
-        const enrichedContext = await context.run('enrichment', async () => {
-            return enrichmentStep(context.requestPayload);
-        });
+export const storyGenerationWorkflow = serve<StoryGenerationWorkflowContext>(async (context) => {
+  // Step 1: Enrichment
+  const enrichedContext = await context.run('enrichment', async () => {
+    return enrichmentStep(context.requestPayload);
+  });
 
-        // Step 2: Script Generation
-        const scriptContext = await context.run('script-generation', async () => {
-            return scriptGenerationStep(enrichedContext);
-        });
+  // Step 2: Script Generation
+  const scriptContext = await context.run('script-generation', async () => {
+    return scriptGenerationStep(enrichedContext);
+  });
 
-        // Step 2.5: Voice Assignment (assign voiceIds from database)
-        const voiceAssignedContext = await context.run('voice-assignment', async () => {
-            return voiceAssignmentStep(scriptContext);
-        });
+  // Step 2.5: Voice Assignment (assign voiceIds from database)
+  const voiceAssignedContext = await context.run('voice-assignment', async () => {
+    return voiceAssignmentStep(scriptContext);
+  });
 
-        // Step 3: Voice Generation
-        const voiceContext = await context.run('voice-generation', async () => {
-            return voiceGenerationStep(voiceAssignedContext);
-        });
+  // Step 3: Voice Generation
+  const voiceContext = await context.run('voice-generation', async () => {
+    return voiceGenerationStep(voiceAssignedContext);
+  });
 
-        // Step 4: SFX Generation
-        const sfxContext = await context.run('sfx-generation', async () => {
-            return sfxGenerationStep(voiceContext);
-        });
+  // Step 4: SFX Generation
+  const sfxContext = await context.run('sfx-generation', async () => {
+    return sfxGenerationStep(voiceContext);
+  });
 
-        // Step 5: Music Generation
-        const musicContext = await context.run('music-generation', async () => {
-            return musicGenerationStep(sfxContext);
-        });
+  // Step 5: Music Generation
+  const musicContext = await context.run('music-generation', async () => {
+    return musicGenerationStep(sfxContext);
+  });
 
-        // Step 6: Ambiance Generation
-        const ambianceContext = await context.run('ambiance-generation', async () => {
-            return ambianceGenerationStep(musicContext);
-        });
+  // Step 6: Ambiance Generation
+  const ambianceContext = await context.run('ambiance-generation', async () => {
+    return ambianceGenerationStep(musicContext);
+  });
 
-        // Step 7: Audio Mixing
-        const mixedContext = await context.run('mixing', async () => {
-            return mixingStep(ambianceContext);
-        });
+  // Step 7: Audio Mixing
+  const mixedContext = await context.run('mixing', async () => {
+    return mixingStep(ambianceContext);
+  });
 
-        // Step 8: Upload Final
-        const uploadedContext = await context.run('upload', async () => {
-            return uploadStep(mixedContext);
-        });
+  // Step 8: Upload Final
+  const uploadedContext = await context.run('upload', async () => {
+    return uploadStep(mixedContext);
+  });
 
-        // Step 9: Finalization
-        const finalContext = await context.run('finalization', async () => {
-            return finalizationStep(uploadedContext);
-        });
+  // Step 9: Finalization
+  const finalContext = await context.run('finalization', async () => {
+    return finalizationStep(uploadedContext);
+  });
 
-        return finalContext;
-    }
-);
+  return finalContext;
+});
 
 export type StoryGenerationWorkflow = typeof storyGenerationWorkflow;

@@ -8,7 +8,7 @@
  * This file should be safe to import from client components.
  */
 export const publicEnvironment = {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001',
+  NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
 } as const;
 
 export type PublicEnvironment = typeof publicEnvironment;

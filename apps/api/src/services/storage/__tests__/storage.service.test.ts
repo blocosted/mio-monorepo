@@ -2,12 +2,12 @@
  * StorageService unit tests (no network).
  */
 
-import { describe, it, expect } from 'bun:test';
-
-import { StorageService } from '../storage.service';
 import type { IStorageClient } from '@mio/shared/server/connections/storage';
 import { ErrorCodes } from '@mio/shared';
 import { loadEnvironmentFromValues, syncEnvironmentToProcessEnv } from '@mio/shared/constants/environment.constants';
+
+import { StorageService } from '../storage.service';
+import { describe, expect, it } from 'bun:test';
 
 function setSupabaseUrl(url: string) {
   loadEnvironmentFromValues({ SUPABASE_URL: url }, { override: true });
@@ -23,16 +23,14 @@ describe('StorageService', () => {
       download: async () => Buffer.from('x'),
       delete: async () => undefined,
       deleteMany: async () => undefined,
-      exists: async () => true,
+      exists: async () => true
     };
 
     const service = new StorageService(client);
     const res = await service.upload(Buffer.from('audio'), 'a folder/file name.mp3');
 
     expect(res.path).toBe('a folder/file name.mp3');
-    expect(res.url).toBe(
-      'https://example.supabase.co/storage/v1/object/public/audio/a%20folder/file%20name.mp3'
-    );
+    expect(res.url).toBe('https://example.supabase.co/storage/v1/object/public/audio/a%20folder/file%20name.mp3');
   });
 
   it('maps upload errors to AppError(StorageUploadFailed)', async () => {
@@ -45,12 +43,12 @@ describe('StorageService', () => {
       download: async () => Buffer.from('x'),
       delete: async () => undefined,
       deleteMany: async () => undefined,
-      exists: async () => true,
+      exists: async () => true
     };
 
     const service = new StorageService(client);
     await expect(service.upload(Buffer.from('x'), 'file.mp3')).rejects.toMatchObject({
-      code: ErrorCodes.StorageUploadFailed,
+      code: ErrorCodes.StorageUploadFailed
     });
   });
 
@@ -62,12 +60,12 @@ describe('StorageService', () => {
       },
       delete: async () => undefined,
       deleteMany: async () => undefined,
-      exists: async () => false,
+      exists: async () => false
     };
 
     const service = new StorageService(client);
     await expect(service.download('missing.mp3')).rejects.toMatchObject({
-      code: ErrorCodes.StorageFileNotFound,
+      code: ErrorCodes.StorageFileNotFound
     });
   });
 
@@ -79,12 +77,12 @@ describe('StorageService', () => {
       },
       delete: async () => undefined,
       deleteMany: async () => undefined,
-      exists: async () => false,
+      exists: async () => false
     };
 
     const service = new StorageService(client);
     await expect(service.download('file.mp3')).rejects.toMatchObject({
-      code: ErrorCodes.StorageDownloadFailed,
+      code: ErrorCodes.StorageDownloadFailed
     });
   });
 
@@ -96,12 +94,12 @@ describe('StorageService', () => {
         throw new Error('nope');
       },
       deleteMany: async () => undefined,
-      exists: async () => true,
+      exists: async () => true
     };
 
     const service = new StorageService(client);
     await expect(service.delete('file.mp3')).rejects.toMatchObject({
-      code: ErrorCodes.StorageDeleteFailed,
+      code: ErrorCodes.StorageDeleteFailed
     });
   });
 
@@ -114,7 +112,7 @@ describe('StorageService', () => {
       deleteMany: async () => {
         called = true;
       },
-      exists: async () => true,
+      exists: async () => true
     };
 
     const service = new StorageService(client);
@@ -130,11 +128,10 @@ describe('StorageService', () => {
       deleteMany: async () => undefined,
       exists: async () => {
         throw new Error('boom');
-      },
+      }
     };
 
     const service = new StorageService(client);
     expect(await service.exists('x')).toBe(false);
   });
 });
-

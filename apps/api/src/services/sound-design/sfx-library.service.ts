@@ -5,17 +5,12 @@
  */
 
 import 'reflect-metadata';
-import { injectable, inject } from 'inversify';
 
-import { IocStore } from '../../ioc';
+import { inject, injectable } from 'inversify';
+
+import type { FindSfxParams, ISfxLibraryService, SfxLookupResult, StoredSfx, StoreSfxParams } from './sfx-library.service.types';
 import type { SfxLibraryStore } from './sfx-library.store';
-import type {
-    ISfxLibraryService,
-    FindSfxParams,
-    StoreSfxParams,
-    StoredSfx,
-    SfxLookupResult,
-} from './sfx-library.service.types';
+import { IocStore } from '../../ioc/ioc.types';
 
 /**
  * SFX Library Service Implementation
@@ -25,29 +20,29 @@ import type {
  */
 @injectable()
 export class SfxLibraryService implements ISfxLibraryService {
-    constructor(
-        @inject(IocStore.SFX_LIBRARY_STORE)
-        private readonly store: SfxLibraryStore,
-    ) {}
+  constructor(
+    @inject(IocStore.SFX_LIBRARY_STORE)
+    private readonly store: SfxLibraryStore
+  ) {}
 
-    /**
-     * Find SFX in library
-     */
-    async findSfx(params: FindSfxParams): Promise<SfxLookupResult> {
-        return this.store.findWithCache(params);
-    }
+  /**
+   * Find SFX in library
+   */
+  async findSfx(params: FindSfxParams): Promise<SfxLookupResult> {
+    return this.store.findWithCache(params);
+  }
 
-    /**
-     * Store new SFX in library
-     */
-    async storeSfx(params: StoreSfxParams): Promise<StoredSfx> {
-        return this.store.insert(params);
-    }
+  /**
+   * Store new SFX in library
+   */
+  async storeSfx(params: StoreSfxParams): Promise<StoredSfx> {
+    return this.store.insert(params);
+  }
 
-    /**
-     * Increment SFX usage counter
-     */
-    async incrementSfxUsage(id: string): Promise<void> {
-        await this.store.incrementUsage(id);
-    }
+  /**
+   * Increment SFX usage counter
+   */
+  async incrementSfxUsage(id: string): Promise<void> {
+    await this.store.incrementUsage(id);
+  }
 }

@@ -8,7 +8,7 @@
 import { t } from 'elysia';
 
 export const JobIdParamsSchema = t.Object({
-  id: t.String({ format: 'uuid' }),
+  id: t.String({ format: 'uuid' })
 });
 
 export const JobStepStatusSchema = t.Union([
@@ -16,14 +16,14 @@ export const JobStepStatusSchema = t.Union([
   t.Literal('processing'),
   t.Literal('completed'),
   t.Literal('failed'),
-  t.Literal('cancelled'),
+  t.Literal('cancelled')
 ]);
 
 export const JobStepSchema = t.Object({
   name: t.String(),
   status: JobStepStatusSchema,
   progress: t.Optional(t.Number({ minimum: 0, maximum: 100 })),
-  completedAt: t.Optional(t.String()),
+  completedAt: t.Optional(t.String())
 });
 
 export const JobStatusResponseSchema = t.Object({
@@ -34,12 +34,12 @@ export const JobStatusResponseSchema = t.Object({
   currentStep: t.String(),
   steps: t.Array(JobStepSchema),
   createdAt: t.String(),
-  updatedAt: t.String(),
+  updatedAt: t.String()
 });
 
 export const CancelJobResponseSchema = t.Object({
   message: t.String(),
-  jobId: t.String({ format: 'uuid' }),
+  jobId: t.String({ format: 'uuid' })
 });
 
 // Inferred types
@@ -48,4 +48,3 @@ export type JobStepStatus = typeof JobStepStatusSchema.static;
 export type JobStep = typeof JobStepSchema.static;
 export type JobStatusResponse = typeof JobStatusResponseSchema.static;
 export type CancelJobResponse = typeof CancelJobResponseSchema.static;
-

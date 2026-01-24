@@ -6,8 +6,9 @@ import {
   environment,
   loadEnvironmentFromProcessEnv,
   loadEnvironmentFromValues,
-  syncEnvironmentToProcessEnv,
+  syncEnvironmentToProcessEnv
 } from '@mio/shared/constants/environment.constants';
+
 import monorepoRoot from './getMonorepoRoot';
 
 /**
@@ -38,8 +39,7 @@ const CONFIG_KEY = 'CONFIG';
 const isCI = environment.CI === 'true';
 
 // If running in a test environment (bun test or anchor test), default to test config
-const isTestEnvironment =
-  environment.NODE_ENV === 'test' || process.argv.some((arg) => arg.includes('test'));
+const isTestEnvironment = environment.NODE_ENV === 'test' || process.argv.some((arg) => arg.includes('test'));
 
 export const config = ((environment[CONFIG_OVERRIDE_KEY] ?? environment[CONFIG_KEY] ?? (isTestEnvironment ? ConfigEnv.Test : ConfigEnv.Dev))?.toLowerCase() ??
   ConfigEnv.Dev) as ConfigEnv;
@@ -54,12 +54,7 @@ function preloadEnvironmentVariables() {
 
   // Ensure NODE_ENV is coherent for tooling.
   if (!environment.NODE_ENV) {
-    const nodeEnv =
-      config === ConfigEnv.Test
-        ? 'test'
-        : config === ConfigEnv.Production
-          ? 'production'
-          : 'development';
+    const nodeEnv = config === ConfigEnv.Test ? 'test' : config === ConfigEnv.Production ? 'production' : 'development';
 
     loadEnvironmentFromValues({ NODE_ENV: nodeEnv }, { override: false });
   }

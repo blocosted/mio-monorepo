@@ -1,16 +1,17 @@
 import { Elysia } from 'elysia';
 
-import { IocService, getInstance } from '../../ioc';
-import type { IStoriesService } from '../../services/stories';
-import type { IWorkflowOrchestratorService } from '../../services/workflows/workflow-orchestrator.service.types';
-
 import {
   CreateStoryBodySchema,
   EnrichStoryBodySchema,
   GenerateStoryBodySchema,
-  StoryProfileIdParamsSchema,
   StoryIdParamsSchema,
+  StoryProfileIdParamsSchema
 } from '@mio/shared/clients/mio/stories';
+
+import type { IStoriesService } from '../../services/stories';
+import type { IWorkflowOrchestratorService } from '../../services/workflows/workflow-orchestrator.service.types';
+import { IocService } from '../../ioc/ioc.types';
+import { getInstance } from '../../ioc/ioc.config';
 import { mapCreateBodyToInput, mapStoryToResponse } from './stories.handlers.map';
 
 export const storiesHandlers = new Elysia({ prefix: '/stories', tags: ['stories'] })
@@ -26,7 +27,7 @@ export const storiesHandlers = new Elysia({ prefix: '/stories', tags: ['stories'
       return mapStoryToResponse(story);
     },
     {
-      body: CreateStoryBodySchema,
+      body: CreateStoryBodySchema
     }
   )
 
@@ -45,7 +46,7 @@ export const storiesHandlers = new Elysia({ prefix: '/stories', tags: ['stories'
       return mapStoryToResponse(story);
     },
     {
-      params: StoryIdParamsSchema,
+      params: StoryIdParamsSchema
     }
   )
 
@@ -57,7 +58,7 @@ export const storiesHandlers = new Elysia({ prefix: '/stories', tags: ['stories'
       return [];
     },
     {
-      params: StoryProfileIdParamsSchema,
+      params: StoryProfileIdParamsSchema
     }
   )
 
@@ -70,20 +71,20 @@ export const storiesHandlers = new Elysia({ prefix: '/stories', tags: ['stories'
         title: 'Le Dragon Timide',
         mainCharacter: {
           name: 'Flamme',
-          description: 'Un petit dragon rouge qui a peur du noir',
+          description: 'Un petit dragon rouge qui a peur du noir'
         },
         setting: {
           location: 'Une grotte enchantée',
           era: 'Il y a très longtemps',
-          ambiance: 'magical_realm',
+          ambiance: 'magical_realm'
         },
         tone: 'heartwarming',
-        themes: ['courage', 'friendship'],
+        themes: ['courage', 'friendship']
       };
     },
     {
       params: StoryIdParamsSchema,
-      body: EnrichStoryBodySchema,
+      body: EnrichStoryBodySchema
     }
   )
 
@@ -109,7 +110,7 @@ export const storiesHandlers = new Elysia({ prefix: '/stories', tags: ['stories'
         jobId: job.id,
         storyId: params.id,
         childProfileId: story.childProfileId,
-        targetDurationMinutes: body.targetDurationMinutes ?? 5, // Default to 5 minutes
+        targetDurationMinutes: body.targetDurationMinutes ?? 5 // Default to 5 minutes
       });
 
       // Update job with workflowRunId
@@ -119,12 +120,12 @@ export const storiesHandlers = new Elysia({ prefix: '/stories', tags: ['stories'
       return {
         jobId: result.jobId,
         workflowRunId: result.workflowRunId,
-        message: 'Story generation started',
+        message: 'Story generation started'
       };
     },
     {
       params: StoryIdParamsSchema,
-      body: GenerateStoryBodySchema,
+      body: GenerateStoryBodySchema
     }
   )
 
@@ -137,7 +138,6 @@ export const storiesHandlers = new Elysia({ prefix: '/stories', tags: ['stories'
       return null;
     },
     {
-      params: StoryIdParamsSchema,
+      params: StoryIdParamsSchema
     }
   );
-

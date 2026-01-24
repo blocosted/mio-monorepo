@@ -6,17 +6,13 @@
  * and language configuration.
  */
 
-import { describe, it, expect } from 'bun:test';
-import { VocabularyLevel, Tone, Ambiance } from '@mio/shared/types';
-import { Gender } from '@mio/shared/types';
+import { Ambiance, Gender, Tone, VocabularyLevel } from '@mio/shared/types';
 
-import { parseEnrichedConcept } from '../llm.service.parser';
-import { getVocabularyLevel, AGE_TO_VOCABULARY } from '../llm.service.types';
-import {
-  buildEnrichmentSystemPrompt,
-  buildEnrichmentUserPrompt,
-} from '../prompts/enrichment.prompts';
 import type { EnrichmentProfile } from '../llm.service.types';
+import { parseEnrichedConcept } from '../llm.service.parser';
+import { AGE_TO_VOCABULARY, getVocabularyLevel } from '../llm.service.types';
+import { buildEnrichmentSystemPrompt, buildEnrichmentUserPrompt } from '../prompts/enrichment.prompts';
+import { describe, expect, it } from 'bun:test';
 
 describe('LLM Service - Enrichment', () => {
   describe('parseEnrichedConcept()', () => {
@@ -26,23 +22,23 @@ describe('LLM Service - Enrichment', () => {
         mainCharacter: {
           name: 'Flamme',
           description: 'Un petit dragon rouge avec des ecailles brillantes',
-          voiceType: 'enfantin',
+          voiceType: 'enfantin'
         },
         secondaryCharacters: [
           {
             name: 'Luna',
             description: 'Une fee lumineuse et gentille',
-            voiceType: 'melodieux',
-          },
+            voiceType: 'melodieux'
+          }
         ],
         setting: {
           location: 'Une foret enchantee',
           era: 'present',
-          ambiance: 'forest',
+          ambiance: 'forest'
         },
         tone: 'adventurous',
         themes: ['amitie', 'courage'],
-        synopsis: "Flamme le dragon decouvre qu'il a peur du noir.",
+        synopsis: "Flamme le dragon decouvre qu'il a peur du noir."
       });
 
       const result = parseEnrichedConcept(validResponse);
@@ -70,7 +66,7 @@ describe('LLM Service - Enrichment', () => {
         mainCharacter: { name: 'Test', description: 'Test' },
         setting: { location: 'Test', era: 'Test', ambiance: 'forest' },
         tone: 'funny',
-        themes: ['test'],
+        themes: ['test']
       });
 
       expect(() => parseEnrichedConcept(missingTitle)).toThrowError();
@@ -82,7 +78,7 @@ describe('LLM Service - Enrichment', () => {
         mainCharacter: { name: 'Hero', description: 'A brave hero' },
         setting: { location: 'Castle', era: 'medieval', ambiance: 'castle' },
         tone: 'adventurous',
-        themes: ['courage'],
+        themes: ['courage']
       });
 
       const result = parseEnrichedConcept(noSecondaryChars);
@@ -96,7 +92,7 @@ describe('LLM Service - Enrichment', () => {
         mainCharacter: { name: 'Hero', description: 'A brave hero' },
         setting: { location: 'Castle', era: 'medieval', ambiance: 'castle' },
         tone: 'adventurous',
-        themes: ['courage'],
+        themes: ['courage']
       });
 
       const result = parseEnrichedConcept(noSynopsis);
@@ -110,7 +106,7 @@ describe('LLM Service - Enrichment', () => {
         mainCharacter: { name: 'Hero', description: 'A brave hero' },
         setting: { location: 'Castle', era: 'medieval', ambiance: 'castle' },
         tone: 'invalid_tone',
-        themes: ['courage'],
+        themes: ['courage']
       });
 
       const result = parseEnrichedConcept(invalidTone);
@@ -125,10 +121,10 @@ describe('LLM Service - Enrichment', () => {
         setting: {
           location: 'Castle',
           era: 'medieval',
-          ambiance: 'invalid_ambiance',
+          ambiance: 'invalid_ambiance'
         },
         tone: 'adventurous',
-        themes: ['courage'],
+        themes: ['courage']
       });
 
       const result = parseEnrichedConcept(invalidAmbiance);
@@ -142,7 +138,7 @@ describe('LLM Service - Enrichment', () => {
         mainCharacter: { name: 'Hero', description: 'A brave hero' },
         setting: { location: 'Castle', era: 'medieval', ambiance: 'castle' },
         tone: 'adventurous',
-        themes: [],
+        themes: []
       });
 
       expect(() => parseEnrichedConcept(emptyThemes)).toThrowError();
@@ -154,7 +150,7 @@ describe('LLM Service - Enrichment', () => {
         mainCharacter: { name: 'Hero', description: 'A brave hero' },
         setting: { location: 'Castle', era: 'medieval', ambiance: 'castle' },
         tone: 'adventurous',
-        themes: ['courage', 123, null, 'friendship', ''],
+        themes: ['courage', 123, null, 'friendship', '']
       });
 
       const result = parseEnrichedConcept(mixedThemes);
@@ -216,42 +212,30 @@ describe('LLM Service - Enrichment', () => {
     const baseProfile: EnrichmentProfile = {
       firstName: 'Emma',
       age: 7,
-      gender: Gender.Girl,
+      gender: Gender.Girl
     };
 
     describe('basic profile integration', () => {
       it('includes child name in the prompt', () => {
-        const prompt = buildEnrichmentSystemPrompt(
-          baseProfile,
-          VocabularyLevel.Medium,
-        );
+        const prompt = buildEnrichmentSystemPrompt(baseProfile, VocabularyLevel.Medium);
 
         expect(prompt).toContain('Emma');
       });
 
       it('includes child age in the prompt', () => {
-        const prompt = buildEnrichmentSystemPrompt(
-          baseProfile,
-          VocabularyLevel.Medium,
-        );
+        const prompt = buildEnrichmentSystemPrompt(baseProfile, VocabularyLevel.Medium);
 
         expect(prompt).toContain('7-year-old');
       });
 
       it('includes gender-appropriate word for girl (default French)', () => {
-        const prompt = buildEnrichmentSystemPrompt(
-          { ...baseProfile, gender: Gender.Girl },
-          VocabularyLevel.Medium,
-        );
+        const prompt = buildEnrichmentSystemPrompt({ ...baseProfile, gender: Gender.Girl }, VocabularyLevel.Medium);
 
         expect(prompt).toContain('une 7-year-old fille');
       });
 
       it('includes gender-appropriate word for boy (default French)', () => {
-        const prompt = buildEnrichmentSystemPrompt(
-          { ...baseProfile, gender: Gender.Boy },
-          VocabularyLevel.Medium,
-        );
+        const prompt = buildEnrichmentSystemPrompt({ ...baseProfile, gender: Gender.Boy }, VocabularyLevel.Medium);
 
         expect(prompt).toContain('un 7-year-old garcon');
       });
@@ -261,13 +245,10 @@ describe('LLM Service - Enrichment', () => {
       it('includes favorite themes when provided', () => {
         const profileWithFavorites: EnrichmentProfile = {
           ...baseProfile,
-          favoriteThemes: ['dragons', 'princesses'],
+          favoriteThemes: ['dragons', 'princesses']
         };
 
-        const prompt = buildEnrichmentSystemPrompt(
-          profileWithFavorites,
-          VocabularyLevel.Medium,
-        );
+        const prompt = buildEnrichmentSystemPrompt(profileWithFavorites, VocabularyLevel.Medium);
 
         expect(prompt).toContain('dragons');
         expect(prompt).toContain('princesses');
@@ -277,13 +258,10 @@ describe('LLM Service - Enrichment', () => {
       it('includes avoided themes with strong emphasis', () => {
         const profileWithAvoided: EnrichmentProfile = {
           ...baseProfile,
-          avoidThemes: ['monsters', 'violence'],
+          avoidThemes: ['monsters', 'violence']
         };
 
-        const prompt = buildEnrichmentSystemPrompt(
-          profileWithAvoided,
-          VocabularyLevel.Medium,
-        );
+        const prompt = buildEnrichmentSystemPrompt(profileWithAvoided, VocabularyLevel.Medium);
 
         expect(prompt).toContain('monsters');
         expect(prompt).toContain('violence');
@@ -295,13 +273,10 @@ describe('LLM Service - Enrichment', () => {
       it('includes child as character instruction when requested', () => {
         const profileAsCharacter: EnrichmentProfile = {
           ...baseProfile,
-          includeChildAsCharacter: true,
+          includeChildAsCharacter: true
         };
 
-        const prompt = buildEnrichmentSystemPrompt(
-          profileAsCharacter,
-          VocabularyLevel.Medium,
-        );
+        const prompt = buildEnrichmentSystemPrompt(profileAsCharacter, VocabularyLevel.Medium);
 
         expect(prompt).toContain('main character MUST be named Emma');
       });
@@ -309,13 +284,10 @@ describe('LLM Service - Enrichment', () => {
       it('includes hero gender preference when same (girl)', () => {
         const profileSameGender: EnrichmentProfile = {
           ...baseProfile,
-          preferredHeroGender: 'same',
+          preferredHeroGender: 'same'
         };
 
-        const prompt = buildEnrichmentSystemPrompt(
-          profileSameGender,
-          VocabularyLevel.Medium,
-        );
+        const prompt = buildEnrichmentSystemPrompt(profileSameGender, VocabularyLevel.Medium);
 
         expect(prompt).toContain('main hero should be a girl');
       });
@@ -324,13 +296,10 @@ describe('LLM Service - Enrichment', () => {
         const profileSameGenderBoy: EnrichmentProfile = {
           ...baseProfile,
           gender: Gender.Boy,
-          preferredHeroGender: 'same',
+          preferredHeroGender: 'same'
         };
 
-        const prompt = buildEnrichmentSystemPrompt(
-          profileSameGenderBoy,
-          VocabularyLevel.Medium,
-        );
+        const prompt = buildEnrichmentSystemPrompt(profileSameGenderBoy, VocabularyLevel.Medium);
 
         expect(prompt).toContain('main hero should be a boy');
       });
@@ -338,10 +307,7 @@ describe('LLM Service - Enrichment', () => {
 
     describe('vocabulary level', () => {
       it('includes vocabulary level in the prompt', () => {
-        const prompt = buildEnrichmentSystemPrompt(
-          baseProfile,
-          VocabularyLevel.VerySimple,
-        );
+        const prompt = buildEnrichmentSystemPrompt(baseProfile, VocabularyLevel.VerySimple);
 
         expect(prompt).toContain('very_simple');
         expect(prompt).toContain('3-4 year old');
@@ -350,10 +316,7 @@ describe('LLM Service - Enrichment', () => {
 
     describe('JSON schema', () => {
       it('includes JSON schema requirements', () => {
-        const prompt = buildEnrichmentSystemPrompt(
-          baseProfile,
-          VocabularyLevel.Medium,
-        );
+        const prompt = buildEnrichmentSystemPrompt(baseProfile, VocabularyLevel.Medium);
 
         expect(prompt).toContain('"title"');
         expect(prompt).toContain('"mainCharacter"');
@@ -365,10 +328,7 @@ describe('LLM Service - Enrichment', () => {
 
     describe('language configuration', () => {
       it('defaults to French output language', () => {
-        const prompt = buildEnrichmentSystemPrompt(
-          baseProfile,
-          VocabularyLevel.Medium,
-        );
+        const prompt = buildEnrichmentSystemPrompt(baseProfile, VocabularyLevel.Medium);
 
         expect(prompt).toContain('MUST be written in French');
         expect(prompt).toContain('in French');
@@ -377,13 +337,10 @@ describe('LLM Service - Enrichment', () => {
       it('uses French when explicitly set', () => {
         const frenchProfile: EnrichmentProfile = {
           ...baseProfile,
-          language: 'fr',
+          language: 'fr'
         };
 
-        const prompt = buildEnrichmentSystemPrompt(
-          frenchProfile,
-          VocabularyLevel.Medium,
-        );
+        const prompt = buildEnrichmentSystemPrompt(frenchProfile, VocabularyLevel.Medium);
 
         expect(prompt).toContain('MUST be written in French');
       });
@@ -391,13 +348,10 @@ describe('LLM Service - Enrichment', () => {
       it('uses English when language is en', () => {
         const englishProfile: EnrichmentProfile = {
           ...baseProfile,
-          language: 'en',
+          language: 'en'
         };
 
-        const prompt = buildEnrichmentSystemPrompt(
-          englishProfile,
-          VocabularyLevel.Medium,
-        );
+        const prompt = buildEnrichmentSystemPrompt(englishProfile, VocabularyLevel.Medium);
 
         expect(prompt).toContain('MUST be written in English');
         expect(prompt).toContain('in English');
@@ -407,13 +361,10 @@ describe('LLM Service - Enrichment', () => {
         const englishProfile: EnrichmentProfile = {
           ...baseProfile,
           gender: Gender.Girl,
-          language: 'en',
+          language: 'en'
         };
 
-        const prompt = buildEnrichmentSystemPrompt(
-          englishProfile,
-          VocabularyLevel.Medium,
-        );
+        const prompt = buildEnrichmentSystemPrompt(englishProfile, VocabularyLevel.Medium);
 
         expect(prompt).toContain('a 7-year-old girl');
       });
@@ -422,13 +373,10 @@ describe('LLM Service - Enrichment', () => {
         const englishProfile: EnrichmentProfile = {
           ...baseProfile,
           gender: Gender.Boy,
-          language: 'en',
+          language: 'en'
         };
 
-        const prompt = buildEnrichmentSystemPrompt(
-          englishProfile,
-          VocabularyLevel.Medium,
-        );
+        const prompt = buildEnrichmentSystemPrompt(englishProfile, VocabularyLevel.Medium);
 
         expect(prompt).toContain('a 7-year-old boy');
       });
@@ -436,14 +384,9 @@ describe('LLM Service - Enrichment', () => {
 
     describe('prompt is in English', () => {
       it('system prompt instructions are in English', () => {
-        const prompt = buildEnrichmentSystemPrompt(
-          baseProfile,
-          VocabularyLevel.Medium,
-        );
+        const prompt = buildEnrichmentSystemPrompt(baseProfile, VocabularyLevel.Medium);
 
-        expect(prompt).toContain(
-          "You are a professional children's storyteller",
-        );
+        expect(prompt).toContain("You are a professional children's storyteller");
         expect(prompt).toContain('Child Context');
         expect(prompt).toContain('Required Vocabulary Level');
         expect(prompt).toContain('Output Language');
@@ -456,9 +399,7 @@ describe('LLM Service - Enrichment', () => {
 
   describe('buildEnrichmentUserPrompt()', () => {
     it('wraps the initial prompt in quotes', () => {
-      const userPrompt = buildEnrichmentUserPrompt(
-        'A dragon who is afraid of the dark',
-      );
+      const userPrompt = buildEnrichmentUserPrompt('A dragon who is afraid of the dark');
 
       expect(userPrompt).toContain('"A dragon who is afraid of the dark"');
     });

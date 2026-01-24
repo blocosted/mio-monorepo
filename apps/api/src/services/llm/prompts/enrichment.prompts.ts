@@ -7,7 +7,8 @@
  * Note: Prompts are in English but the story content language is configurable.
  */
 
-import { VocabularyLevel, type Language } from '@mio/shared/types';
+import { type Language, VocabularyLevel } from '@mio/shared/types';
+
 import type { EnrichmentProfile } from '../llm.service.types';
 
 /** Default language for story content */
@@ -18,7 +19,7 @@ const DEFAULT_LANGUAGE: Language = 'fr';
  */
 const LANGUAGE_NAMES: Record<Language, string> = {
   fr: 'French',
-  en: 'English',
+  en: 'English'
 };
 
 /**
@@ -32,67 +33,48 @@ const VOCABULARY_DESCRIPTIONS: Record<VocabularyLevel, string> = {
   [VocabularyLevel.Medium]:
     'Appropriate vocabulary for 7-9 year olds. Can use more descriptive language. Sentences can be longer with some complexity. Can include mild suspense and more nuanced emotions.',
   [VocabularyLevel.Advanced]:
-    'Rich vocabulary for 10-12 year olds. Can use more sophisticated storytelling techniques. Complex sentences are fine. Can include subtle themes, irony, and character development.',
+    'Rich vocabulary for 10-12 year olds. Can use more sophisticated storytelling techniques. Complex sentences are fine. Can include subtle themes, irony, and character development.'
 };
 
 /**
  * Gender-specific articles by language
  */
-const GENDER_ARTICLES: Record<
-  Language,
-  Record<string, { article: string; childWord: string }>
-> = {
+const GENDER_ARTICLES: Record<Language, Record<string, { article: string; childWord: string }>> = {
   fr: {
     boy: { article: 'un', childWord: 'garcon' },
     girl: { article: 'une', childWord: 'fille' },
-    neutral: { article: 'un(e)', childWord: 'enfant' },
+    neutral: { article: 'un(e)', childWord: 'enfant' }
   },
   en: {
     boy: { article: 'a', childWord: 'boy' },
     girl: { article: 'a', childWord: 'girl' },
-    neutral: { article: 'a', childWord: 'child' },
-  },
+    neutral: { article: 'a', childWord: 'child' }
+  }
 };
 
 /**
  * Build context string for the child's profile
  */
-function buildProfileContext(
-  profile: EnrichmentProfile,
-  language: Language,
-): string {
+function buildProfileContext(profile: EnrichmentProfile, language: Language): string {
   const genderInfo = GENDER_ARTICLES[language][profile.gender];
   const parts: string[] = [];
 
-  parts.push(
-    `The story is for ${profile.firstName}, ${genderInfo?.article} ${profile.age}-year-old ${genderInfo?.childWord}.`,
-  );
+  parts.push(`The story is for ${profile.firstName}, ${genderInfo?.article} ${profile.age}-year-old ${genderInfo?.childWord}.`);
 
   if (profile.includeChildAsCharacter) {
-    parts.push(
-      `The main character MUST be named ${profile.firstName} and match the child's profile.`,
-    );
+    parts.push(`The main character MUST be named ${profile.firstName} and match the child's profile.`);
   }
 
   if (profile.favoriteThemes && profile.favoriteThemes.length > 0) {
-    parts.push(
-      `Favorite themes to incorporate: ${profile.favoriteThemes.join(', ')}.`,
-    );
+    parts.push(`Favorite themes to incorporate: ${profile.favoriteThemes.join(', ')}.`);
   }
 
   if (profile.avoidThemes && profile.avoidThemes.length > 0) {
-    parts.push(
-      `IMPORTANT - Themes to ABSOLUTELY AVOID: ${profile.avoidThemes.join(', ')}. NEVER mention these themes.`,
-    );
+    parts.push(`IMPORTANT - Themes to ABSOLUTELY AVOID: ${profile.avoidThemes.join(', ')}. NEVER mention these themes.`);
   }
 
   if (profile.preferredHeroGender === 'same') {
-    const heroGender =
-      profile.gender === 'boy'
-        ? 'a boy'
-        : profile.gender === 'girl'
-          ? 'a girl'
-          : 'gender-neutral';
+    const heroGender = profile.gender === 'boy' ? 'a boy' : profile.gender === 'girl' ? 'a girl' : 'gender-neutral';
     parts.push(`The main hero should be ${heroGender}.`);
   }
 
@@ -102,10 +84,7 @@ function buildProfileContext(
 /**
  * Build the system prompt for story enrichment
  */
-export function buildEnrichmentSystemPrompt(
-  profile: EnrichmentProfile,
-  vocabularyLevel: VocabularyLevel,
-): string {
+export function buildEnrichmentSystemPrompt(profile: EnrichmentProfile, vocabularyLevel: VocabularyLevel): string {
   const language = profile.language ?? DEFAULT_LANGUAGE;
   const languageName = LANGUAGE_NAMES[language];
   const profileContext = buildProfileContext(profile, language);

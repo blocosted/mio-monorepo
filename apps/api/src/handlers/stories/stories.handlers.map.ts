@@ -5,8 +5,9 @@
  * Keep handlers thin: map request/response here.
  */
 
-import type { CreateStoryInput, Story } from '../../services/stories';
 import type { CreateStoryBody, StoryResponse } from '@mio/shared/clients/mio/stories';
+
+import type { CreateStoryInput, Story } from '../../services/stories';
 
 /**
  * Map API request body to service input for creation
@@ -14,7 +15,7 @@ import type { CreateStoryBody, StoryResponse } from '@mio/shared/clients/mio/sto
 export function mapCreateBodyToInput(body: CreateStoryBody): CreateStoryInput {
   return {
     childProfileId: body.childProfileId,
-    prompt: body.prompt,
+    prompt: body.prompt
   };
 }
 
@@ -30,7 +31,6 @@ export function mapStoryToResponse(story: Story): StoryResponse {
     finalAudioUrl: story.finalAudioUrl,
     duration: story.duration,
     createdAt: story.createdAt.toISOString(),
-    updatedAt: story.updatedAt.toISOString(),
+    updatedAt: story.updatedAt.toISOString()
   };
 }
-

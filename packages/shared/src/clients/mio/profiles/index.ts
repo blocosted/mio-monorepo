@@ -6,13 +6,8 @@
  */
 
 import { t } from 'elysia';
-import {
-  GenderValues,
-  HeroGenderValues,
-  StoryDurationValues,
-  NarratorVoiceValues,
-  LanguageValues,
-} from '../../../types';
+
+import { GenderValues, HeroGenderValues, LanguageValues, NarratorVoiceValues, StoryDurationValues } from '../../../types';
 
 /**
  * Typebox enum helper - creates a strict union from a literal tuple
@@ -22,7 +17,7 @@ function enumValues<const T extends readonly [string, ...string[]]>(values: T) {
 }
 
 export const ProfileIdParamsSchema = t.Object({
-  id: t.String({ format: 'uuid' }),
+  id: t.String({ format: 'uuid' })
 });
 
 export const ProfilePreferencesSchema = t.Object({
@@ -32,14 +27,14 @@ export const ProfilePreferencesSchema = t.Object({
   preferredHeroGender: t.Optional(enumValues(HeroGenderValues)),
   preferredStoryDuration: t.Optional(enumValues(StoryDurationValues)),
   narratorVoicePreference: t.Optional(enumValues(NarratorVoiceValues)),
-  language: t.Optional(enumValues(LanguageValues)),
+  language: t.Optional(enumValues(LanguageValues))
 });
 
 export const CreateProfileBodySchema = t.Object({
   firstName: t.String({ minLength: 1, maxLength: 50 }),
   age: t.Number({ minimum: 3, maximum: 12 }),
   gender: enumValues(GenderValues),
-  preferences: t.Optional(ProfilePreferencesSchema),
+  preferences: t.Optional(ProfilePreferencesSchema)
 });
 
 export const UpdateProfileBodySchema = t.Partial(
@@ -47,7 +42,7 @@ export const UpdateProfileBodySchema = t.Partial(
     firstName: t.String({ minLength: 1, maxLength: 50 }),
     age: t.Number({ minimum: 3, maximum: 12 }),
     gender: enumValues(GenderValues),
-    preferences: ProfilePreferencesSchema,
+    preferences: ProfilePreferencesSchema
   })
 );
 
@@ -58,7 +53,7 @@ export const ProfileResponseSchema = t.Object({
   gender: enumValues(GenderValues),
   preferences: ProfilePreferencesSchema,
   createdAt: t.String(),
-  updatedAt: t.String(),
+  updatedAt: t.String()
 });
 
 // Inferred types
@@ -67,5 +62,3 @@ export type CreateProfileBody = typeof CreateProfileBodySchema.static;
 export type UpdateProfileBody = typeof UpdateProfileBodySchema.static;
 export type ProfilePreferences = typeof ProfilePreferencesSchema.static;
 export type ProfileResponse = typeof ProfileResponseSchema.static;
-
-

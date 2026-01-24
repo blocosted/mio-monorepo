@@ -5,17 +5,14 @@
  * with precise word count control and ElevenLabs v3 compatibility.
  */
 
-import {
-  VocabularyLevel,
-  type ScriptGenerationConstraints,
-  type Language,
-} from '@mio/shared/types';
+import { type Language, type ScriptGenerationConstraints, VocabularyLevel } from '@mio/shared/types';
+
 import type { EnrichedConcept, StoryAnswer } from '../../stories/stories.service.types';
 
 /** Language display names */
 const LANGUAGE_NAMES: Record<Language, string> = {
   fr: 'French',
-  en: 'English',
+  en: 'English'
 };
 
 /**
@@ -48,7 +45,7 @@ const VOCABULARY_GUIDELINES: Record<VocabularyLevel, string> = {
 - Complex sentences allowed
 - Subtle themes and irony permitted
 - Full range of emotions
-- Character depth through dialogue and action`,
+- Character depth through dialogue and action`
 };
 
 /**
@@ -87,60 +84,43 @@ interface ProsodyExamples {
 
 const PROSODY_EXAMPLES: Record<Language, ProsodyExamples> = {
   fr: {
-    speechVerbs: 'murmura, chuchota, s\'exclama, s\'ecria, souffla, balbutia, begaya, grommela, soupira, gemit, lanca, articula, bredouilla, hoqueta, sanglota',
+    speechVerbs: "murmura, chuchota, s'exclama, s'ecria, souffla, balbutia, begaya, grommela, soupira, gemit, lanca, articula, bredouilla, hoqueta, sanglota",
     voiceDescriptions: '"d\'une voix tremblante", "la voix brisee", "d\'un ton hesitant"',
     bodyDescriptions: '"les mains tremblantes", "le souffle coupe", "les yeux ecarquilles"',
     gestureDescriptions: '"en reculant d\'un pas", "serrant les poings", "le regard fuyant"',
     emotionTable: {
       fear: {
         bad: '"J\'ai peur" dit-elle.',
-        good: '"J\'ai peur..." murmura-t-elle, la voix a peine audible, reculant d\'un pas.',
+        good: '"J\'ai peur..." murmura-t-elle, la voix a peine audible, reculant d\'un pas.'
       },
       joy: {
         bad: '"Super!" dit-il.',
-        good: '"SUPER!!" s\'ecria-t-il, les yeux petillants, bondissant sur place.',
+        good: '"SUPER!!" s\'ecria-t-il, les yeux petillants, bondissant sur place.'
       },
       sadness: {
         bad: '"D\'accord" dit-elle.',
-        good: '"D\'accord..." souffla-t-elle, la gorge serree, baissant les yeux.',
+        good: '"D\'accord..." souffla-t-elle, la gorge serree, baissant les yeux.'
       },
       anger: {
         bad: '"Non!" dit-il.',
-        good: '"NON!" cria-t-il, les poings serres, le visage rouge de colere.',
+        good: '"NON!" cria-t-il, les poings serres, le visage rouge de colere.'
       },
       surprise: {
         bad: '"Quoi?" dit-elle.',
-        good: '"Quoi?!" s\'etrangla-t-elle, les yeux ecarquilles, n\'en croyant pas ses oreilles.',
-      },
+        good: '"Quoi?!" s\'etrangla-t-elle, les yeux ecarquilles, n\'en croyant pas ses oreilles.'
+      }
     },
     punctuation: {
-      caps: [
-        '"Tu ne comprends PAS!"',
-        '"C\'est INCROYABLE!"',
-        '"Il faut qu\'on PARTE!"',
-        '"JAMAIS je ne ferai ca!"',
-      ],
-      ellipses: [
-        '"Je... je ne sais pas..."',
-        '"Et si... et si on essayait?"',
-        '"C\'est vraiment... magique."',
-      ],
-      dashes: [
-        '"C\'etait - comment dire - inattendu."',
-        '"On pourrait - non, attends - peut-etre que..."',
-        '"Je pensais que - enfin, je croyais..."',
-      ],
-      combinations: [
-        '"Attends... C\'est CA!"',
-        '"Non mais - ATTENDS! Tu as vu ca?!"',
-        '"Je... je n\'arrive pas a y CROIRE!"',
-      ],
+      caps: ['"Tu ne comprends PAS!"', '"C\'est INCROYABLE!"', '"Il faut qu\'on PARTE!"', '"JAMAIS je ne ferai ca!"'],
+      ellipses: ['"Je... je ne sais pas..."', '"Et si... et si on essayait?"', '"C\'est vraiment... magique."'],
+      dashes: ['"C\'etait - comment dire - inattendu."', '"On pourrait - non, attends - peut-etre que..."', '"Je pensais que - enfin, je croyais..."'],
+      combinations: ['"Attends... C\'est CA!"', '"Non mais - ATTENDS! Tu as vu ca?!"', '"Je... je n\'arrive pas a y CROIRE!"']
     },
     fullExample: {
       bad: '[scared] "J\'ai entendu quelque chose."',
       good: `[scared] "J'ai... j'ai entendu quelque chose!" chuchota Marie, le coeur
 battant a tout rompre. Elle se figea. "La-bas - tu as VU? Quelque chose
-a BOUGE!" [whimpers]`,
+a BOUGE!" [whimpers]`
     },
     segmentExamples: {
       fear: `[nervous] "Tu as entendu ca?" chuchota Marie, le coeur battant a tout rompre.
@@ -154,64 +134,48 @@ Elle baissa les yeux, les epaules affaissees. "C'est juste que... je pensais
 que ca serait DIFFERENT, tu sais?" souffla-t-elle d'une voix a peine audible.`,
       surprise: `[gasps] "Quoi?! C'est... c'est IMPOSSIBLE!" s'etrangla-t-il, les yeux
 ecarquilles. Il recula d'un pas, bouche bee. "Mais alors... TOUT ce qu'on
-croyait savoir etait FAUX!" lanca-t-il, n'en revenant pas.`,
-    },
+croyait savoir etait FAUX!" lanca-t-il, n'en revenant pas.`
+    }
   },
   en: {
-    speechVerbs: 'whispered, murmured, exclaimed, cried out, breathed, stammered, stuttered, grumbled, sighed, moaned, called out, articulated, mumbled, gasped, sobbed',
+    speechVerbs:
+      'whispered, murmured, exclaimed, cried out, breathed, stammered, stuttered, grumbled, sighed, moaned, called out, articulated, mumbled, gasped, sobbed',
     voiceDescriptions: '"in a trembling voice", "with a broken voice", "in a hesitant tone"',
     bodyDescriptions: '"with trembling hands", "breathless", "eyes wide open"',
     gestureDescriptions: '"stepping back", "clenching fists", "averting gaze"',
     emotionTable: {
       fear: {
         bad: '"I\'m scared" she said.',
-        good: '"I\'m scared..." she whispered, her voice barely audible, stepping back.',
+        good: '"I\'m scared..." she whispered, her voice barely audible, stepping back.'
       },
       joy: {
         bad: '"Great!" he said.',
-        good: '"This is AMAZING!!" he exclaimed, eyes sparkling, jumping up and down.',
+        good: '"This is AMAZING!!" he exclaimed, eyes sparkling, jumping up and down.'
       },
       sadness: {
         bad: '"Okay" she said.',
-        good: '"Okay..." she breathed, throat tight, lowering her eyes.',
+        good: '"Okay..." she breathed, throat tight, lowering her eyes.'
       },
       anger: {
         bad: '"No!" he said.',
-        good: '"NO!" he shouted, fists clenched, face red with anger.',
+        good: '"NO!" he shouted, fists clenched, face red with anger.'
       },
       surprise: {
         bad: '"What?" she said.',
-        good: '"What?!" she gasped, eyes wide, unable to believe her ears.',
-      },
+        good: '"What?!" she gasped, eyes wide, unable to believe her ears.'
+      }
     },
     punctuation: {
-      caps: [
-        '"You don\'t UNDERSTAND!"',
-        '"This is INCREDIBLE!"',
-        '"We have to LEAVE!"',
-        '"I will NEVER do that!"',
-      ],
-      ellipses: [
-        '"I... I don\'t know..."',
-        '"What if... what if we tried?"',
-        '"It\'s truly... magical."',
-      ],
-      dashes: [
-        '"It was - how to say - unexpected."',
-        '"We could - no, wait - maybe..."',
-        '"I thought that - well, I believed..."',
-      ],
-      combinations: [
-        '"Wait... That\'s IT!"',
-        '"No but - WAIT! Did you see that?!"',
-        '"I... I can\'t BELIEVE it!"',
-      ],
+      caps: ['"You don\'t UNDERSTAND!"', '"This is INCREDIBLE!"', '"We have to LEAVE!"', '"I will NEVER do that!"'],
+      ellipses: ['"I... I don\'t know..."', '"What if... what if we tried?"', '"It\'s truly... magical."'],
+      dashes: ['"It was - how to say - unexpected."', '"We could - no, wait - maybe..."', '"I thought that - well, I believed..."'],
+      combinations: ['"Wait... That\'s IT!"', '"No but - WAIT! Did you see that?!"', '"I... I can\'t BELIEVE it!"']
     },
     fullExample: {
       bad: '[scared] "I heard something."',
       good: `[scared] "I... I heard something!" whispered Emma, her heart
 pounding wildly. She froze. "Over there - did you SEE? Something
-MOVED!" [whimpers]`,
+MOVED!" [whimpers]`
     },
     segmentExamples: {
       fear: `[nervous] "Did you hear that?" whispered Emma, her heart pounding wildly.
@@ -225,9 +189,9 @@ She lowered her eyes, shoulders slumped. "It's just that... I thought
 it would be DIFFERENT, you know?" she breathed, barely audible.`,
       surprise: `[gasps] "What?! It's... it's IMPOSSIBLE!" he gasped, eyes wide
 with disbelief. He stepped back, mouth agape. "But then... EVERYTHING we
-thought we knew was WRONG!" he exclaimed, stunned.`,
-    },
-  },
+thought we knew was WRONG!" he exclaimed, stunned.`
+    }
+  }
 };
 
 /**
@@ -266,16 +230,16 @@ ${examples.speechVerbs}
 ### 2. Expressive Punctuation (REQUIRED in 50%+ of dialogues)
 
 **CAPS** = important words, strong emphasis (1-2 words per sentence max)
-${punctuation.caps.map(ex => `- ${ex}`).join('\n')}
+${punctuation.caps.map((ex) => `- ${ex}`).join('\n')}
 
 **Ellipses (...)** = hesitation, suspense, overflowing emotion
-${punctuation.ellipses.map(ex => `- ${ex}`).join('\n')}
+${punctuation.ellipses.map((ex) => `- ${ex}`).join('\n')}
 
 **Dashes (-)** = interruption, word searching, self-correction
-${punctuation.dashes.map(ex => `- ${ex}`).join('\n')}
+${punctuation.dashes.map((ex) => `- ${ex}`).join('\n')}
 
 **Combinations** = maximum impact
-${punctuation.combinations.map(ex => `- ${ex}`).join('\n')}
+${punctuation.combinations.map((ex) => `- ${ex}`).join('\n')}
 
 ### 3. Audio Tags (COMPLEMENT only)
 
@@ -394,7 +358,7 @@ export function buildScriptGenerationSystemPrompt(
   profile: { firstName: string; age: number; gender: string; language?: Language },
   concept: EnrichedConcept,
   vocabularyLevel: VocabularyLevel,
-  constraints: ScriptGenerationConstraints,
+  constraints: ScriptGenerationConstraints
 ): string {
   const language = profile.language ?? 'fr';
   const languageName = LANGUAGE_NAMES[language];
@@ -405,12 +369,10 @@ export function buildScriptGenerationSystemPrompt(
   // Calculate minimum words per segment
   const totalSegments = constraints.minNarrationSegments + constraints.minDialogueSegments;
   // Apply provider-specific inflation (Claude ~15%, OpenAI ~80%)
-  const inflatedTargetWordCount = Math.round(
-    durationBudget.targetWordCount * (1 + constraints.wordCountInflation)
-  );
+  const inflatedTargetWordCount = Math.round(durationBudget.targetWordCount * (1 + constraints.wordCountInflation));
   const avgWordsPerSegment = Math.round(inflatedTargetWordCount / totalSegments);
   const minWordsPerNarration = Math.round(avgWordsPerSegment * 1.2); // Narrations tend to be longer
-  const minWordsPerDialogue = Math.round(avgWordsPerSegment * 0.8);  // Dialogues slightly shorter
+  const minWordsPerDialogue = Math.round(avgWordsPerSegment * 0.8); // Dialogues slightly shorter
 
   return `You are an expert children's audiobook scriptwriter creating professional-quality audio stories.
 
@@ -649,13 +611,9 @@ Before finalizing, verify:
 }
 
 /**
-* Build the user prompt for script generation
+ * Build the user prompt for script generation
  */
-export function buildScriptGenerationUserPrompt(
-  concept: EnrichedConcept,
-  answers: StoryAnswer[],
-  previousAttemptFeedback?: string,
-): string {
+export function buildScriptGenerationUserPrompt(concept: EnrichedConcept, answers: StoryAnswer[], previousAttemptFeedback?: string): string {
   const answersContext = buildAnswersContext(answers);
 
   let prompt = `Generate the complete audio script for this story.

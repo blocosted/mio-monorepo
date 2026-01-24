@@ -47,9 +47,7 @@ export class Logger {
    */
   public static async create(): Promise<Logger> {
     const isDev = environment.NODE_ENV !== 'production';
-    const logLayer = isDev
-      ? await Logger.createDevLogger()
-      : Logger.createProdLogger();
+    const logLayer = isDev ? await Logger.createDevLogger() : Logger.createProdLogger();
 
     return new Logger(logLayer);
   }
@@ -60,9 +58,7 @@ export class Logger {
     }
 
     // Dynamic import to avoid bundling dev dependency in production
-    const { getSimplePrettyTerminal, neon } = await import(
-      '@loglayer/transport-simple-pretty-terminal'
-    );
+    const { getSimplePrettyTerminal, neon } = await import('@loglayer/transport-simple-pretty-terminal');
 
     return new LogLayer({
       errorSerializer: serializeError,
@@ -71,8 +67,8 @@ export class Logger {
         level: getLogLevel(),
         runtime: 'node',
         viewMode: 'inline',
-        theme: neon,
-      }),
+        theme: neon
+      })
     });
   }
 
@@ -86,8 +82,8 @@ export class Logger {
         messageField: 'message',
         levelField: 'level',
         dateField: 'timestamp',
-        dateFn: () => new Date().toISOString(),
-      }),
+        dateFn: () => new Date().toISOString()
+      })
     });
   }
 
@@ -104,7 +100,7 @@ export class Logger {
   public withModule(moduleName: string, operation?: string) {
     return this.logger.withContext({
       module: moduleName,
-      ...(operation && { operation }),
+      ...(operation && { operation })
     });
   }
 
@@ -114,7 +110,7 @@ export class Logger {
   public withRequest(requestId: string, additionalContext?: Partial<LogContext>) {
     return this.logger.withContext({
       requestId,
-      ...additionalContext,
+      ...additionalContext
     });
   }
 

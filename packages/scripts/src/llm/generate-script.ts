@@ -6,31 +6,17 @@
  */
 
 import { existsSync } from 'node:fs';
+
 import { config as loadDotenv } from 'dotenv';
 
+import type { EnrichedConcept, StoryAnswer } from '@mio/api/services/stories/stories.service.types';
+import { AnthropicRepository, OpenAIRepository } from '@mio/api/repositories/llm';
+import { type EnrichmentProfile, getVocabularyLevel, type ILLMRepository, type LLMCompletionOptions, ScriptGenerationService } from '@mio/api/services/llm';
+import { buildScriptGenerationSystemPrompt, buildScriptGenerationUserPrompt } from '@mio/api/services/llm/prompts/scriptGeneration.prompts';
 import { loadEnvironmentFromProcessEnv } from '@mio/shared/constants/environment.constants';
 import { Logger } from '@mio/shared/server/logger';
-import type { EnrichedConcept, StoryAnswer } from '@mio/api/services/stories/stories.service.types';
 
-import {
-  createRunDir,
-  readJsonFile,
-  writeJsonFile,
-} from '../_local-run-store/run-store';
-
-import { OpenAIRepository, AnthropicRepository } from '@mio/api/repositories/llm';
-import {
-  ScriptGenerationService,
-  type EnrichmentProfile,
-  type LLMCompletionOptions,
-  type ILLMRepository,
-  getVocabularyLevel,
-} from '@mio/api/services/llm';
-
-import {
-  buildScriptGenerationSystemPrompt,
-  buildScriptGenerationUserPrompt,
-} from '@mio/api/services/llm/prompts/scriptGeneration.prompts';
+import { createRunDir, readJsonFile, writeJsonFile } from '../_local-run-store/run-store';
 
 type ProfileName = 'emilie' | 'leo' | 'sam';
 
@@ -43,7 +29,7 @@ const TEST_PROFILES: Record<ProfileName, EnrichmentProfile> = {
     avoidThemes: ['spiders', 'blood'],
     includeChildAsCharacter: true,
     preferredHeroGender: 'same',
-    language: 'fr',
+    language: 'fr'
   },
   leo: {
     firstName: 'Leo',
@@ -53,7 +39,7 @@ const TEST_PROFILES: Record<ProfileName, EnrichmentProfile> = {
     avoidThemes: ['monsters'],
     includeChildAsCharacter: false,
     preferredHeroGender: 'any',
-    language: 'fr',
+    language: 'fr'
   },
   sam: {
     firstName: 'Sam',
@@ -63,8 +49,8 @@ const TEST_PROFILES: Record<ProfileName, EnrichmentProfile> = {
     avoidThemes: ['nightmares'],
     includeChildAsCharacter: true,
     preferredHeroGender: 'any',
-    language: 'en',
-  },
+    language: 'en'
+  }
 };
 
 function loadEnv(envFile?: string): void {
@@ -156,30 +142,17 @@ export async function runGenerateScriptCommand(args: {
     answers = storedInput.answers;
     options = storedInput.options ?? options;
   } else if (args.enrichInputFile) {
-    const enrichOutputPath = args.enrichInputFile.replace(
-      'input.json',
-      'output.json',
-    );
-    const enrichInputPath = args.enrichInputFile.endsWith('input.json')
-      ? args.enrichInputFile
-      : args.enrichInputFile.replace('output.json', 'input.json');
+    const enrichOutputPath = args.enrichInputFile.replace('input.json', 'output.json');
+    const enrichInputPath = args.enrichInputFile.endsWith('input.json') ? args.enrichInputFile : args.enrichInputFile.replace('output.json', 'input.json');
 
     if (existsSync(enrichOutputPath)) {
-      const enrichOutput =
-        readJsonFile<EnrichStoryStoredOutput>(enrichOutputPath);
+      const enrichOutput = readJsonFile<EnrichStoryStoredOutput>(enrichOutputPath);
       enrichedConcept = enrichOutput.result.enrichedConcept;
-    } else if (
-      existsSync(args.enrichInputFile) &&
-      args.enrichInputFile.endsWith('output.json')
-    ) {
-      const enrichOutput = readJsonFile<EnrichStoryStoredOutput>(
-        args.enrichInputFile,
-      );
+    } else if (existsSync(args.enrichInputFile) && args.enrichInputFile.endsWith('output.json')) {
+      const enrichOutput = readJsonFile<EnrichStoryStoredOutput>(args.enrichInputFile);
       enrichedConcept = enrichOutput.result.enrichedConcept;
     } else {
-      throw new Error(
-        `Cannot find enrich-story output. Provide path to output.json or input.json from an enrich-story run.`,
-      );
+      throw new Error(`Cannot find enrich-story output. Provide path to output.json or input.json from an enrich-story run.`);
     }
 
     if (existsSync(enrichInputPath)) {
@@ -188,35 +161,26 @@ export async function runGenerateScriptCommand(args: {
     } else {
       profile = TEST_PROFILES[args.profile as ProfileName];
       if (!profile) {
-        throw new Error(
-          `Could not find input.json and unknown profile "${args.profile}". Expected one of: ${Object.keys(TEST_PROFILES).join(', ')}`,
-        );
+        throw new Error(`Could not find input.json and unknown profile "${args.profile}". Expected one of: ${Object.keys(TEST_PROFILES).join(', ')}`);
       }
     }
   } else {
-    throw new Error(
-      'Either --enrichInputFile (from enrich-story) or --inputFile (from generate-script) is required',
-    );
+    throw new Error('Either --enrichInputFile (from enrich-story) or --inputFile (from generate-script) is required');
   }
 
   const vocabularyLevel = getVocabularyLevel(profile.age);
   const constraints = service.buildConstraints(args.targetDurationMinutes);
 
-  const systemPrompt = buildScriptGenerationSystemPrompt(
-    profile,
-    enrichedConcept,
-    vocabularyLevel,
-    constraints,
-  );
+  const systemPrompt = buildScriptGenerationSystemPrompt(profile, enrichedConcept, vocabularyLevel, constraints);
   const userPrompt = buildScriptGenerationUserPrompt(enrichedConcept, answers);
 
   const run = args.save
     ? createRunDir({
-      rootDir: args.storeDir,
-      namespace: 'llm',
-      command: 'generate-script',
-      labelParts: [profile.firstName, enrichedConcept.title.slice(0, 30)],
-    })
+        rootDir: args.storeDir,
+        namespace: 'llm',
+        command: 'generate-script',
+        labelParts: [profile.firstName, enrichedConcept.title.slice(0, 30)]
+      })
     : null;
 
   if (run) {
@@ -225,14 +189,14 @@ export async function runGenerateScriptCommand(args: {
       profile,
       answers,
       targetDurationMinutes: args.targetDurationMinutes,
-      options,
+      options
     } satisfies GenerateScriptStoredInput);
 
     writeJsonFile(run.runDir, 'prompts.json', {
       vocabularyLevel,
       constraints,
       systemPrompt,
-      userPrompt,
+      userPrompt
     });
 
     writeJsonFile(run.runDir, 'meta.json', {
@@ -243,12 +207,12 @@ export async function runGenerateScriptCommand(args: {
       targetWordCount: constraints.durationBudget.targetWordCount,
       answersCount: answers.length,
       createdAt: new Date().toISOString(),
-      dryRun: args.dryRun,
+      dryRun: args.dryRun
     });
   }
 
   if (args.dryRun) {
-    const payload = {
+    const _payload = {
       profile: profile.firstName,
       enrichedConcept,
       answers,
@@ -257,9 +221,8 @@ export async function runGenerateScriptCommand(args: {
       vocabularyLevel,
       systemPrompt,
       userPrompt,
-      artifactsDir: run?.runDir,
+      artifactsDir: run?.runDir
     };
-    console.log(JSON.stringify(payload, null, 2));
     return;
   }
 
@@ -269,9 +232,9 @@ export async function runGenerateScriptCommand(args: {
         enrichedConcept,
         profile,
         answers,
-        targetDurationMinutes: args.targetDurationMinutes,
+        targetDurationMinutes: args.targetDurationMinutes
       },
-      repository,
+      repository
     );
 
     if (run) {
@@ -279,37 +242,16 @@ export async function runGenerateScriptCommand(args: {
         vocabularyLevel,
         validation: result.validation,
         attempts: result.attempts,
-        script: result.script,
+        script: result.script
       });
     }
-
-    console.log(
-      JSON.stringify(
-        {
-          profile: profile.firstName,
-          storyTitle: enrichedConcept.title,
-          targetDurationMinutes: args.targetDurationMinutes,
-          targetWordCount: constraints.durationBudget.targetWordCount,
-          actualWordCount: result.validation.wordCount,
-          estimatedDuration: result.validation.estimatedDuration,
-          vocabularyLevel,
-          attempts: result.attempts,
-          validation: result.validation,
-          trackCount: result.script.tracks.length,
-          characterCount: result.script.characters.length,
-          artifactsDir: run?.runDir,
-        },
-        null,
-        2,
-      ),
-    );
   } catch (error) {
     // Save debug info even on failure
     if (run) {
       writeJsonFile(run.runDir, 'error.json', {
         error: (error as Error).message,
         stack: (error as Error).stack,
-        timestamp: new Date().toISOString(),
+        timestamp: new Date().toISOString()
       });
     }
     throw error;

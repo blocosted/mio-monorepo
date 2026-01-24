@@ -5,17 +5,12 @@
  */
 
 import 'reflect-metadata';
-import { injectable, inject } from 'inversify';
 
-import { IocStore } from '../../ioc';
+import { inject, injectable } from 'inversify';
+
+import type { FindMusicParams, IMusicLibraryService, MusicLookupResult, StoredMusic, StoreMusicParams } from './music-library.service.types';
 import type { MusicLibraryStore } from './music-library.store';
-import type {
-    IMusicLibraryService,
-    FindMusicParams,
-    StoreMusicParams,
-    StoredMusic,
-    MusicLookupResult,
-} from './music-library.service.types';
+import { IocStore } from '../../ioc/ioc.types';
 
 /**
  * Music Library Service Implementation
@@ -25,29 +20,29 @@ import type {
  */
 @injectable()
 export class MusicLibraryService implements IMusicLibraryService {
-    constructor(
-        @inject(IocStore.MUSIC_LIBRARY_STORE)
-        private readonly store: MusicLibraryStore,
-    ) {}
+  constructor(
+    @inject(IocStore.MUSIC_LIBRARY_STORE)
+    private readonly store: MusicLibraryStore
+  ) {}
 
-    /**
-     * Find Music in library
-     */
-    async findMusic(params: FindMusicParams): Promise<MusicLookupResult> {
-        return this.store.findWithCache(params);
-    }
+  /**
+   * Find Music in library
+   */
+  async findMusic(params: FindMusicParams): Promise<MusicLookupResult> {
+    return this.store.findWithCache(params);
+  }
 
-    /**
-     * Store new Music in library
-     */
-    async storeMusic(params: StoreMusicParams): Promise<StoredMusic> {
-        return this.store.insert(params);
-    }
+  /**
+   * Store new Music in library
+   */
+  async storeMusic(params: StoreMusicParams): Promise<StoredMusic> {
+    return this.store.insert(params);
+  }
 
-    /**
-     * Increment Music usage counter
-     */
-    async incrementMusicUsage(id: string): Promise<void> {
-        await this.store.incrementUsage(id);
-    }
+  /**
+   * Increment Music usage counter
+   */
+  async incrementMusicUsage(id: string): Promise<void> {
+    await this.store.incrementUsage(id);
+  }
 }

@@ -6,21 +6,17 @@
  */
 
 import 'reflect-metadata';
-import { injectable, inject } from 'inversify';
+
+import type { ChatModel } from 'openai/resources/index.mjs';
+import { inject, injectable } from 'inversify';
 import OpenAI from 'openai';
 
+import type { Logger } from '@mio/shared/server/logger';
 import { AppError, ErrorCodes } from '@mio/shared';
 import { environment } from '@mio/shared/constants/environment.constants';
-import { Logger } from '@mio/shared/server/logger';
 
-import { IocConnection } from '../../ioc';
-import type {
-  ILLMRepository,
-  LLMRepositoryType,
-  LLMCompletionOptions,
-  LLMRawResponse,
-} from './llm-repository.types';
-import type { ChatModel } from 'openai/resources/index.mjs';
+import type { ILLMRepository, LLMCompletionOptions, LLMRawResponse, LLMRepositoryType } from './llm-repository.types';
+import { IocConnection } from '../../ioc/ioc.types';
 
 /** Default configuration */
 const DEFAULT_MODEL: ChatModel = 'gpt-4o';
@@ -39,7 +35,7 @@ export class OpenAIRepository implements ILLMRepository {
 
   constructor(
     @inject(IocConnection.LOGGER)
-    private readonly logger: Logger,
+    private readonly logger: Logger
   ) {
     const apiKey = environment.OPENAI_API_KEY;
     if (!apiKey) {
@@ -48,7 +44,7 @@ export class OpenAIRepository implements ILLMRepository {
 
     this.client = new OpenAI({
       apiKey,
-      timeout: DEFAULT_TIMEOUT,
+      timeout: DEFAULT_TIMEOUT
     });
   }
 
@@ -56,11 +52,7 @@ export class OpenAIRepository implements ILLMRepository {
     return !!environment.OPENAI_API_KEY;
   }
 
-  async completeWithRetry(
-    systemPrompt: string,
-    userPrompt: string,
-    options?: LLMCompletionOptions,
-  ): Promise<LLMRawResponse> {
+  async completeWithRetry(systemPrompt: string, userPrompt: string, options?: LLMCompletionOptions): Promise<LLMRawResponse> {
     const model = options?.model ?? DEFAULT_MODEL;
     const maxTokens = options?.maxTokens ?? DEFAULT_MAX_TOKENS;
     const temperature = options?.temperature ?? DEFAULT_TEMPERATURE;
@@ -76,15 +68,15 @@ export class OpenAIRepository implements ILLMRepository {
           temperature,
           messages: [
             { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt },
+            { role: 'user', content: userPrompt }
           ],
-          response_format: { type: 'json_object' },
+          response_format: { type: 'json_object' }
         });
 
         const content = completion.choices[0]?.message?.content;
         if (!content) {
           throw new AppError(ErrorCodes.InternalError, {
-            name: 'LLMEmptyResponse',
+            name: 'LLMEmptyResponse'
           });
         }
 
@@ -92,7 +84,7 @@ export class OpenAIRepository implements ILLMRepository {
           content,
           promptTokens: completion.usage?.prompt_tokens,
           completionTokens: completion.usage?.completion_tokens,
-          model: completion.model,
+          model: completion.model
         };
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
@@ -100,7 +92,7 @@ export class OpenAIRepository implements ILLMRepository {
         if (this.isRateLimitError(error)) {
           this.logger.warn('OpenAI rate limit, retrying', {
             attempt,
-            retryDelay,
+            retryDelay
           });
 
           if (attempt < MAX_RETRIES) {
@@ -114,7 +106,7 @@ export class OpenAIRepository implements ILLMRepository {
           this.logger.error('OpenAI timeout', { attempt });
           throw new AppError(ErrorCodes.InternalError, {
             name: 'LLMTimeout',
-            error: lastError,
+            error: lastError
           });
         }
 
@@ -125,7 +117,7 @@ export class OpenAIRepository implements ILLMRepository {
     this.logger.error('OpenAI request failed', { error: lastError?.message });
     throw new AppError(ErrorCodes.InternalError, {
       name: 'LLMRequestFailed',
-      error: lastError ?? undefined,
+      error: lastError ?? undefined
     });
   }
 

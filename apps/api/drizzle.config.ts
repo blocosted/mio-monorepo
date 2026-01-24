@@ -1,7 +1,9 @@
-import { defineConfig } from 'drizzle-kit';
 import path from 'node:path';
 
+import { defineConfig } from 'drizzle-kit';
+
 import '@mio/helpers/env.loader';
+
 import monorepoRoot from '@mio/helpers/getMonorepoRoot';
 import { environment } from '@mio/shared/constants/environment.constants';
 

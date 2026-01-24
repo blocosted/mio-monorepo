@@ -6,24 +6,16 @@
 
 import { Elysia } from 'elysia';
 
-import { IocService, getInstance } from '../../ioc';
-import type { IProfilesService } from '../../services/profiles';
+import { CreateProfileBodySchema, ProfileIdParamsSchema, UpdateProfileBodySchema } from '@mio/shared/clients/mio/profiles';
 
-import {
-  CreateProfileBodySchema,
-  ProfileIdParamsSchema,
-  UpdateProfileBodySchema,
-} from '@mio/shared/clients/mio/profiles';
-import {
-  mapProfileToResponse,
-  mapProfilesToResponse,
-  mapCreateBodyToInput,
-  mapUpdateBodyToInput,
-} from './profiles.handlers.map';
+import type { IProfilesService } from '../../services/profiles';
+import { IocService } from '../../ioc/ioc.types';
+import { getInstance } from '../../ioc/ioc.config';
+import { mapCreateBodyToInput, mapProfilesToResponse, mapProfileToResponse, mapUpdateBodyToInput } from './profiles.handlers.map';
 
 export const profilesHandlers = new Elysia({
   prefix: '/profiles',
-  tags: ['profiles'],
+  tags: ['profiles']
 })
   // List all profiles
   .get('/', async () => {
@@ -43,7 +35,7 @@ export const profilesHandlers = new Elysia({
       return mapProfileToResponse(profile);
     },
     {
-      body: CreateProfileBodySchema,
+      body: CreateProfileBodySchema
     }
   )
 
@@ -62,7 +54,7 @@ export const profilesHandlers = new Elysia({
       return mapProfileToResponse(profile);
     },
     {
-      params: ProfileIdParamsSchema,
+      params: ProfileIdParamsSchema
     }
   )
 
@@ -83,7 +75,7 @@ export const profilesHandlers = new Elysia({
     },
     {
       params: ProfileIdParamsSchema,
-      body: UpdateProfileBodySchema,
+      body: UpdateProfileBodySchema
     }
   )
 
@@ -103,6 +95,6 @@ export const profilesHandlers = new Elysia({
       return null;
     },
     {
-      params: ProfileIdParamsSchema,
+      params: ProfileIdParamsSchema
     }
   );

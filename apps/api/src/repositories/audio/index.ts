@@ -4,9 +4,7 @@
  * Unified external audio API client for ElevenLabs TTS and Sound Effects.
  */
 
-export * from './audio-repository.types';
 export * from './audio.repository';
-
 // Backward-compatible aliases for legacy script imports
-export { AudioRepository as SoundEffectsRepository } from './audio.repository';
-export { AudioRepository as VoicesRepository } from './audio.repository';
+export { AudioRepository as SoundEffectsRepository, AudioRepository as VoicesRepository } from './audio.repository';
+export * from './audio-repository.types';

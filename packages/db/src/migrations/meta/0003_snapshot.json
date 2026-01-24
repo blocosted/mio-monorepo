@@ -65,12 +65,8 @@
           "name": "audio_assets_story_id_stories_id_fk",
           "tableFrom": "audio_assets",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -78,12 +74,8 @@
           "name": "audio_assets_segment_id_story_segments_id_fk",
           "tableFrom": "audio_assets",
           "tableTo": "story_segments",
-          "columnsFrom": [
-            "segment_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["segment_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -312,9 +304,7 @@
         "audio_library_ambiance_canonical_key_unique": {
           "name": "audio_library_ambiance_canonical_key_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "canonical_key"
-          ]
+          "columns": ["canonical_key"]
         }
       },
       "policies": {},
@@ -519,9 +509,7 @@
         "audio_library_music_canonical_key_unique": {
           "name": "audio_library_music_canonical_key_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "canonical_key"
-          ]
+          "columns": ["canonical_key"]
         }
       },
       "policies": {},
@@ -732,9 +720,7 @@
         "audio_library_sfx_canonical_key_unique": {
           "name": "audio_library_sfx_canonical_key_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "canonical_key"
-          ]
+          "columns": ["canonical_key"]
         }
       },
       "policies": {},
@@ -973,9 +959,7 @@
         "elevenlabs_voices_voice_id_unique": {
           "name": "elevenlabs_voices_voice_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "voice_id"
-          ]
+          "columns": ["voice_id"]
         }
       },
       "policies": {},
@@ -1065,12 +1049,8 @@
           "name": "generation_jobs_story_id_stories_id_fk",
           "tableFrom": "generation_jobs",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1080,9 +1060,7 @@
         "generation_jobs_story_id_unique": {
           "name": "generation_jobs_story_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "story_id"
-          ]
+          "columns": ["story_id"]
         }
       },
       "policies": {},
@@ -1170,12 +1148,8 @@
           "name": "stories_child_profile_id_child_profiles_id_fk",
           "tableFrom": "stories",
           "tableTo": "child_profiles",
-          "columnsFrom": [
-            "child_profile_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["child_profile_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1247,12 +1221,8 @@
           "name": "story_segments_story_id_stories_id_fk",
           "tableFrom": "story_segments",
           "tableTo": "stories",
-          "columnsFrom": [
-            "story_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["story_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }

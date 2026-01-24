@@ -4,5 +4,5 @@
  * Provides backward compatibility for imports.
  */
 
+export type { CreateStoryRowInput, IStoriesStore, StoryRow } from './stories.service.types';
 export { StoriesStore } from './stories.service.store';
-export type { StoryRow, CreateStoryRowInput, IStoriesStore } from './stories.service.types';

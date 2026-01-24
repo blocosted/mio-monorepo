@@ -5,17 +5,12 @@
  */
 
 import 'reflect-metadata';
-import { injectable, inject } from 'inversify';
 
-import { IocStore } from '../../ioc';
+import { inject, injectable } from 'inversify';
+
+import type { AmbianceLookupResult, FindAmbianceParams, IAmbianceLibraryService, StoreAmbianceParams, StoredAmbiance } from './ambiance-library.service.types';
 import type { AmbianceLibraryStore } from './ambiance-library.store';
-import type {
-    IAmbianceLibraryService,
-    FindAmbianceParams,
-    StoreAmbianceParams,
-    StoredAmbiance,
-    AmbianceLookupResult,
-} from './ambiance-library.service.types';
+import { IocStore } from '../../ioc/ioc.types';
 
 /**
  * Ambiance Library Service Implementation
@@ -25,29 +20,29 @@ import type {
  */
 @injectable()
 export class AmbianceLibraryService implements IAmbianceLibraryService {
-    constructor(
-        @inject(IocStore.AMBIANCE_LIBRARY_STORE)
-        private readonly store: AmbianceLibraryStore,
-    ) {}
+  constructor(
+    @inject(IocStore.AMBIANCE_LIBRARY_STORE)
+    private readonly store: AmbianceLibraryStore
+  ) {}
 
-    /**
-     * Find Ambiance in library
-     */
-    async findAmbiance(params: FindAmbianceParams): Promise<AmbianceLookupResult> {
-        return this.store.findWithCache(params);
-    }
+  /**
+   * Find Ambiance in library
+   */
+  async findAmbiance(params: FindAmbianceParams): Promise<AmbianceLookupResult> {
+    return this.store.findWithCache(params);
+  }
 
-    /**
-     * Store new Ambiance in library
-     */
-    async storeAmbiance(params: StoreAmbianceParams): Promise<StoredAmbiance> {
-        return this.store.insert(params);
-    }
+  /**
+   * Store new Ambiance in library
+   */
+  async storeAmbiance(params: StoreAmbianceParams): Promise<StoredAmbiance> {
+    return this.store.insert(params);
+  }
 
-    /**
-     * Increment Ambiance usage counter
-     */
-    async incrementAmbianceUsage(id: string): Promise<void> {
-        await this.store.incrementUsage(id);
-    }
+  /**
+   * Increment Ambiance usage counter
+   */
+  async incrementAmbianceUsage(id: string): Promise<void> {
+    await this.store.incrementUsage(id);
+  }
 }

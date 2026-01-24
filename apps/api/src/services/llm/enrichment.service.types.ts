@@ -4,7 +4,8 @@
  * Defines interfaces and types for story enrichment service.
  */
 
-import type { VocabularyLevel, Gender, Language } from '@mio/shared/types';
+import type { Gender, Language, VocabularyLevel } from '@mio/shared/types';
+
 import type { EnrichedConcept } from '../stories/stories.service.types';
 
 /**
@@ -66,8 +67,5 @@ export interface IEnrichmentService {
    * @param options - Optional completion settings
    * @returns Enriched story concept with vocabulary level
    */
-  enrichStory(
-    input: EnrichStoryInput,
-    options?: LLMCompletionOptions,
-  ): Promise<EnrichStoryResult>;
+  enrichStory(input: EnrichStoryInput, options?: LLMCompletionOptions): Promise<EnrichStoryResult>;
 }

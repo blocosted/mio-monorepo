@@ -4,14 +4,15 @@
  * Covers the real HTTP layer (Elysia + Treaty) and the handler mappers.
  */
 
-import { describe, it, expect, beforeAll, beforeEach } from 'bun:test';
-
-import { cleanTestPostgresData } from '../../../tests/test-utils';
-import { getInstance, IocConnection } from '../../../ioc';
+import type { MioApiClient } from '@mio/shared/clients/mio';
 import type { DatabaseConnection } from '@mio/shared/server/connections/db';
-import { MioApiClient } from '@mio/shared/clients/mio';
-import { Gender } from '@mio/shared/types';
 import { createMioApiClient } from '@mio/api/tests/test-utils';
+import { Gender } from '@mio/shared/types';
+
+import { IocConnection } from '../../../ioc/ioc.types';
+import { getInstance } from '../../../ioc/ioc.config';
+import { cleanTestPostgresData } from '../../../tests/test-utils';
+import { beforeAll, beforeEach, describe, expect, it } from 'bun:test';
 
 describe('profilesHandlers', () => {
   let db: DatabaseConnection;
@@ -30,7 +31,7 @@ describe('profilesHandlers', () => {
     const created = await mio.profiles.createProfile({
       firstName: 'Emma',
       age: 7,
-      gender: Gender.Girl,
+      gender: Gender.Girl
     });
 
     expect(created.id).toBeDefined();
@@ -54,7 +55,7 @@ describe('profilesHandlers', () => {
     const created = await mio.profiles.createProfile({
       firstName: 'Emma',
       age: 7,
-      gender: Gender.Girl,
+      gender: Gender.Girl
     });
 
     const res = await mio.api.profiles({ id: created.id }).patch({ firstName: 'Emilie' });
@@ -70,11 +71,10 @@ describe('profilesHandlers', () => {
     const created = await mio.profiles.createProfile({
       firstName: 'Emma',
       age: 7,
-      gender: Gender.Girl,
+      gender: Gender.Girl
     });
 
     const del = await mio.api.profiles({ id: created.id }).delete();
     expect(del.status).toBe(204);
   });
 });
-

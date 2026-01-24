@@ -4,13 +4,13 @@
  * Ensures TypeBox validation rejects invalid inputs.
  */
 
-import { describe, it, expect, beforeAll } from 'bun:test';
-
 import { treaty } from '@elysiajs/eden';
 
-import { createApiApp } from '../../../api.server';
-import { MioApiClient } from '@mio/shared/clients/mio';
 import { ErrorCodes } from '@mio/shared';
+import { MioApiClient } from '@mio/shared/clients/mio';
+
+import { createApiApp } from '../../../api.server';
+import { beforeAll, describe, expect, it } from 'bun:test';
 
 describe('storiesHandlers validation', () => {
   // Shared setup to avoid repeating app/client initialization per test.
@@ -26,7 +26,7 @@ describe('storiesHandlers validation', () => {
     await expect(
       mio.stories.createStory({
         childProfileId: '00000000-0000-0000-0000-000000000000',
-        prompt: 'hi',
+        prompt: 'hi'
       })
     ).rejects.toMatchObject({ code: ErrorCodes.ValidationError });
   });
@@ -37,9 +37,8 @@ describe('storiesHandlers validation', () => {
     await expect(
       mio.stories.createStory({
         childProfileId: '00000000-0000-0000-0000-000000000000',
-        prompt: longPrompt,
+        prompt: longPrompt
       })
     ).rejects.toMatchObject({ code: ErrorCodes.ValidationError });
   });
 });
-

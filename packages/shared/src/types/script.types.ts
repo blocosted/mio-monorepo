@@ -9,7 +9,7 @@
  */
 
 import type { Language } from './profiles.types';
-import type { VocabularyLevel, Emotion } from './stories.types';
+import type { Emotion, VocabularyLevel } from './stories.types';
 
 /**
  * Audio track types for mixing
@@ -115,11 +115,7 @@ export interface AmbianceSegmentContent {
 /**
  * Union type for all segment content types
  */
-export type SegmentContent =
-  | VoiceSegmentContent
-  | SfxSegmentContent
-  | MusicSegmentContent
-  | AmbianceSegmentContent;
+export type SegmentContent = VoiceSegmentContent | SfxSegmentContent | MusicSegmentContent | AmbianceSegmentContent;
 
 /**
  * Timeline segment with absolute positioning

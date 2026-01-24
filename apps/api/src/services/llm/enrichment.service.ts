@@ -5,24 +5,17 @@
  */
 
 import 'reflect-metadata';
-import { injectable, inject } from 'inversify';
 
-import { Logger } from '@mio/shared/server/logger';
+import { inject, injectable } from 'inversify';
 
-import { IocConnection, IocRepository } from '../../ioc';
+import type { Logger } from '@mio/shared/server/logger';
+
 import type { ILLMRepository } from '../../repositories/llm';
-import type {
-  IEnrichmentService,
-  EnrichStoryInput,
-  EnrichStoryResult,
-  LLMCompletionOptions,
-} from './enrichment.service.types';
-import { getVocabularyLevel } from './llm.service.types';
-import {
-  buildEnrichmentSystemPrompt,
-  buildEnrichmentUserPrompt,
-} from './prompts/enrichment.prompts';
+import type { EnrichStoryInput, EnrichStoryResult, IEnrichmentService, LLMCompletionOptions } from './enrichment.service.types';
+import { IocConnection, IocRepository } from '../../ioc/ioc.types';
 import { parseEnrichedConcept } from './llm.service.parser';
+import { getVocabularyLevel } from './llm.service.types';
+import { buildEnrichmentSystemPrompt, buildEnrichmentUserPrompt } from './prompts/enrichment.prompts';
 
 @injectable()
 export class EnrichmentService implements IEnrichmentService {
@@ -30,16 +23,13 @@ export class EnrichmentService implements IEnrichmentService {
     @inject(IocRepository.LLM_REPOSITORY)
     private readonly repository: ILLMRepository,
     @inject(IocConnection.LOGGER)
-    private readonly logger: Logger,
+    private readonly logger: Logger
   ) {}
 
   /**
    * Enrich a story prompt into a full concept
    */
-  async enrichStory(
-    input: EnrichStoryInput,
-    options?: LLMCompletionOptions,
-  ): Promise<EnrichStoryResult> {
+  async enrichStory(input: EnrichStoryInput, options?: LLMCompletionOptions): Promise<EnrichStoryResult> {
     const { story, profile } = input;
     const vocabularyLevel = getVocabularyLevel(profile.age);
 
@@ -51,14 +41,10 @@ export class EnrichmentService implements IEnrichmentService {
       childName: profile.firstName,
       childAge: profile.age,
       vocabularyLevel,
-      provider: this.repository.repositoryType,
+      provider: this.repository.repositoryType
     });
 
-    const response = await this.repository.completeWithRetry(
-      systemPrompt,
-      userPrompt,
-      options,
-    );
+    const response = await this.repository.completeWithRetry(systemPrompt, userPrompt, options);
 
     const enrichedConcept = parseEnrichedConcept(response.content);
 
@@ -68,12 +54,12 @@ export class EnrichmentService implements IEnrichmentService {
       tone: enrichedConcept.tone,
       themes: enrichedConcept.themes,
       promptTokens: response.promptTokens,
-      completionTokens: response.completionTokens,
+      completionTokens: response.completionTokens
     });
 
     return {
       enrichedConcept,
-      vocabularyLevel,
+      vocabularyLevel
     };
   }
 }

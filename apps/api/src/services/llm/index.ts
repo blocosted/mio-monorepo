@@ -4,55 +4,48 @@
  * Centralized exports for the LLM service module.
  */
 
+// Repository types (re-exported for convenience)
+export type {
+  ILLMRepository,
+  ILLMRepositoryRegistry,
+  LLMRawResponse,
+  LLMRepositoryType
+} from '../../repositories/llm';
+// Enrichment service types
+export type {
+  EnrichmentProfile,
+  EnrichmentStory,
+  EnrichStoryInput,
+  EnrichStoryResult,
+  IEnrichmentService,
+  LLMCompletionOptions
+} from './enrichment.service.types';
 // Legacy service types (kept for backward compatibility)
 export type {
   ILLMService,
-  LLMProvider,
+  LLMProvider
 } from './llm.service.types';
-
-export {
-  getVocabularyLevel,
-  AGE_TO_VOCABULARY,
-  AVAILABLE_TONES,
-  AVAILABLE_AMBIANCES,
-} from './llm.service.types';
-
-// Enrichment service types
-export type {
-  IEnrichmentService,
-  EnrichStoryInput,
-  EnrichStoryResult,
-  EnrichmentProfile,
-  EnrichmentStory,
-  LLMCompletionOptions,
-} from './enrichment.service.types';
-
 // Script generation service types (timeline-based)
 export type {
   IScriptGenerationService,
-  ScriptValidationResult,
+  ScriptGenerationContext,
   ScriptGenerationInput,
   ScriptGenerationResult,
-  ScriptGenerationContext,
+  ScriptValidationResult
 } from './script-generation.service.types';
-
-// Repository types (re-exported for convenience)
-export type {
-  LLMRepositoryType,
-  LLMRawResponse,
-  ILLMRepository,
-  ILLMRepositoryRegistry,
-} from '../../repositories/llm';
-
 // Implementations
 export { EnrichmentService } from './enrichment.service';
-export { ScriptGenerationService } from './script-generation.service';
-
 // Parsers
 export { parseEnrichedConcept } from './llm.service.parser';
-
+export {
+  AGE_TO_VOCABULARY,
+  AVAILABLE_AMBIANCES,
+  AVAILABLE_TONES,
+  getVocabularyLevel
+} from './llm.service.types';
 // Prompts
 export {
   buildScriptGenerationSystemPrompt,
-  buildScriptGenerationUserPrompt,
+  buildScriptGenerationUserPrompt
 } from './prompts/scriptGeneration.prompts';
+export { ScriptGenerationService } from './script-generation.service';
