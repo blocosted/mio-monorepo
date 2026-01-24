@@ -27,6 +27,8 @@ export function mapStoryToResponse(story: Story): StoryResponse {
     childProfileId: story.childProfileId,
     initialPrompt: story.initialPrompt,
     status: story.status,
+    finalAudioUrl: story.finalAudioUrl,
+    duration: story.duration,
     createdAt: story.createdAt.toISOString(),
     updatedAt: story.updatedAt.toISOString(),
   };

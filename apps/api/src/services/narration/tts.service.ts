@@ -26,17 +26,14 @@ import type {
     GenerateSpeechResult,
     BatchGenerateSpeechInput,
     BatchGenerateSpeechResult,
-    CharacterArchetype,
 } from './tts.service.types';
 import {
-    VOICE_IDS_BY_LANGUAGE,
     EMOTION_VOICE_SETTINGS,
     EMOTION_AUDIO_TAGS,
     DEFAULT_VOICE_SETTINGS,
     RATE_LIMIT_CONFIG,
     CONCURRENCY_CONFIG,
     AUDIO_FORMAT,
-    ARCHETYPE_KEYWORDS,
     DEFAULT_TTS_MODEL,
     DEFAULT_OUTPUT_FORMAT,
 } from './tts.service.constants';
@@ -238,36 +235,6 @@ export class TTSService extends AbstractService implements ITTSService {
             failureCount,
             totalDurationSeconds,
         };
-    }
-
-    /**
-     * Select appropriate voice ID for a character
-     *
-     * @param description - Character description or archetype name
-     * @param options - Voice selection options (gender, language)
-     * @returns ElevenLabs voice ID appropriate for the language
-     */
-    selectVoiceForCharacter(
-        description: string,
-        options?: { gender?: 'male' | 'female'; language?: typeof Language[keyof typeof Language] }
-    ): string {
-        const gender = options?.gender ?? 'female';
-        const language = options?.language ?? Language.French; // Default to French
-        const lowerDescription = description.toLowerCase();
-
-        // Get voice IDs for the specified language
-        const voiceIds = VOICE_IDS_BY_LANGUAGE[language];
-
-        // Find matching archetype by keywords
-        for (const [archetype, keywords] of Object.entries(ARCHETYPE_KEYWORDS)) {
-            if (keywords.some(keyword => lowerDescription.includes(keyword))) {
-                const voices = voiceIds[archetype as CharacterArchetype];
-                return voices[gender];
-            }
-        }
-
-        // Default to narrator
-        return voiceIds.narrator[gender];
     }
 
     /**

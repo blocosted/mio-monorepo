@@ -14,7 +14,7 @@
  */
 
 import pLimit from 'p-limit';
-import { getInstance, IocService, IocStore, IocConnection } from '../../ioc';
+import { getInstance, IocService, IocStore, IocConnection, IocRepository } from '../../ioc';
 import { WorkflowStepHelper } from './story-generation.workflow.helper';
 import {
     type StoryGenerationWorkflowContext,
@@ -22,19 +22,21 @@ import {
 } from './story-generation.workflow.types';
 import { VOICE_GENERATION_CONCURRENCY, S3_TEMP_PATHS, getStepConfig } from './story-generation.workflow.constants';
 import type { IEnrichmentService } from '../../services/llm/enrichment.service.types';
-import type { IScriptGenerationService, StoryScript } from '../../services/stories/script-generation.service.types';
-import type { ITTSService } from '../../services/audio/tts.service.types';
-import type { ISfxService } from '../../services/audio/sfx.service.types';
-import type { IMusicGeneratorService } from '../../services/audio/music-generator.service.types';
-import type { IAmbianceGeneratorService } from '../../services/audio/ambiance-generator.service.types';
-import type { IFFmpegMixerService } from '../../services/audio/ffmpeg-mixer.service.types';
+import type { IScriptGenerationService } from '../../services/llm/script-generation.service.types';
+import type { ITTSService } from '../../services/narration/tts.service.types';
+import type { ISfxService } from '../../services/sound-design/sfx.service.types';
+import type { IMusicGeneratorService } from '../../services/music/music-generator.service.types';
+import type { IAmbianceGeneratorService } from '../../services/ambiance/ambiance-generator.service.types';
+import type { IFFmpegMixerService } from '../../services/audio-mixing/ffmpeg-mixer.service.types';
 import type { IStorageService } from '../../services/storage/storage.service.types';
 import type { StoriesStore } from '../../services/stories/stories.store';
 import type { ProfilesStore } from '../../services/profiles/profiles.service.store';
 import type { AudioAssetsStore } from '../../services/audio/audio-assets.store';
 import type { GenerationJobsStore } from '../../services/stories/generation-jobs.store';
 import type { IJobProgressService } from '../../services/cache';
-import { AudioAssetType } from '@mio/shared/types';
+import type { ILLMRepository } from '../../repositories/llm/llm-repository.types';
+import type { IVoiceRegistryService } from '../../services/narration/voice-registry.service.types';
+import { AudioAssetType, VoiceGender, VoiceAge, VoiceUseCase, type StoryScript } from '@mio/shared/types';
 import type { Logger } from '@mio/shared/server/logger/Logger';
 
 const getLogger = () => getInstance<Logger>(IocConnection.LOGGER);
@@ -147,16 +149,46 @@ export async function scriptGenerationStep(
             }
 
             const scriptService = getInstance<IScriptGenerationService>(IocService.SCRIPT_GENERATION);
+            const llmRepository = getInstance<ILLMRepository>(IocRepository.LLM_REPOSITORY);
             const storiesStore = getInstance<StoriesStore>(IocStore.STORIES_STORE);
+            const profilesStore = getInstance<ProfilesStore>(IocStore.PROFILES_STORE);
 
             await helper.updateProgress(context.jobId, config.startProgress, config.name);
 
-            // Generate script using new simplified API
-            const result = await scriptService.generateScript({
-                storyId: context.storyId,
-                enrichedConcept,
-                targetDurationMinutes: context.targetDurationMinutes,
-            });
+            // Load story to get childProfileId and answers
+            const story = await storiesStore.findById(context.storyId);
+            if (!story) {
+                throw new Error(`Story not found: ${context.storyId}`);
+            }
+
+            // Load child profile
+            const childProfile = await profilesStore.findById(story.childProfileId);
+            if (!childProfile) {
+                throw new Error(`Child profile not found: ${story.childProfileId}`);
+            }
+
+            // Build profile for script generation
+            const profile = {
+                firstName: childProfile.firstName,
+                age: childProfile.age,
+                gender: childProfile.gender,
+                favoriteThemes: childProfile.preferences.favoriteThemes,
+                avoidThemes: childProfile.preferences.avoidThemes,
+                includeChildAsCharacter: childProfile.preferences.includeChildAsCharacter,
+                preferredHeroGender: childProfile.preferences.preferredHeroGender,
+                language: childProfile.preferences.language ?? 'fr',
+            };
+
+            // Generate script with correct API (input + provider)
+            const result = await scriptService.generateScript(
+                {
+                    enrichedConcept,
+                    profile,
+                    answers: story.answers || [],
+                    targetDurationMinutes: context.targetDurationMinutes,
+                },
+                llmRepository
+            );
 
             // Update story in DB
             await storiesStore.updateScript(context.storyId, result.script);
@@ -171,6 +203,177 @@ export async function scriptGenerationStep(
         undefined,
         { retries: config.retries, timeout: config.timeout }
     );
+}
+
+/**
+ * Step 2.5: Voice Assignment
+ * Assigns voice IDs to characters from the database (no hardcoded voices)
+ */
+export async function voiceAssignmentStep(
+    context: StoryGenerationWorkflowContext
+): Promise<StoryGenerationWorkflowContext> {
+    const config = getStepConfig(WORKFLOW_STEPS.VOICE_ASSIGNMENT);
+    const helper = new WorkflowStepHelper();
+
+    if (!context.script) {
+        throw new Error('Script not found in context');
+    }
+
+    const script = context.script;
+
+    return helper.executeStepWithRollback(
+        context.jobId,
+        config.name,
+        async () => {
+            if (await helper.isJobCancelled(context.jobId)) {
+                throw new Error('Job cancelled by user');
+            }
+
+            const voiceRegistry = getInstance<IVoiceRegistryService>(IocService.VOICE_REGISTRY);
+            const profilesStore = getInstance<ProfilesStore>(IocStore.PROFILES_STORE);
+            const storiesStore = getInstance<StoriesStore>(IocStore.STORIES_STORE);
+
+            await helper.updateProgress(context.jobId, config.startProgress, config.name);
+
+            // Load child profile for language preference
+            const story = await storiesStore.findById(context.storyId);
+            if (!story) {
+                throw new Error(`Story not found: ${context.storyId}`);
+            }
+
+            const childProfile = await profilesStore.findById(story.childProfileId);
+            const language = childProfile?.preferences?.language ?? 'fr';
+
+            // Get available voices from database
+            const availableVoices = await voiceRegistry.getVoicesByFilter({
+                useCase: VoiceUseCase.NarrativeStory,
+            });
+
+            if (availableVoices.length === 0) {
+                getLogger().error('No voices found in database. Run voice sync first.');
+                throw new Error('No voices available. Please sync voices from ElevenLabs.');
+            }
+
+            getLogger().info('Assigning voices to characters', {
+                jobId: context.jobId,
+                characterCount: script.characters.length,
+                availableVoices: availableVoices.length,
+                language,
+            });
+
+            // Assign voices to each character
+            const updatedCharacters = script.characters.map((character) => {
+                const voiceId = selectVoiceForCharacter(
+                    character.voiceDescription ?? character.characterName,
+                    availableVoices,
+                    language
+                );
+
+                getLogger().info('Voice assigned to character', {
+                    characterName: character.characterName,
+                    voiceDescription: character.voiceDescription,
+                    assignedVoiceId: voiceId,
+                });
+
+                return {
+                    ...character,
+                    voiceId,
+                };
+            });
+
+            // Update script with voice-assigned characters
+            const updatedScript: StoryScript = {
+                ...script,
+                characters: updatedCharacters,
+            };
+
+            // Persist updated script to DB
+            await storiesStore.updateScript(context.storyId, updatedScript);
+
+            await helper.updateProgress(context.jobId, config.endProgress, config.name);
+
+            return {
+                ...context,
+                script: updatedScript,
+            };
+        },
+        undefined,
+        { retries: config.retries, timeout: config.timeout }
+    );
+}
+
+/**
+ * Select the best voice for a character based on description
+ */
+function selectVoiceForCharacter(
+    description: string,
+    voices: Array<{ voiceId: string; gender?: string | null; age?: string | null; language?: string | null; name: string }>,
+    preferredLanguage: string
+): string {
+    const lowerDesc = description.toLowerCase();
+
+    // Detect gender from description
+    let targetGender: string | null = null;
+    if (lowerDesc.includes('female') || lowerDesc.includes('woman') || lowerDesc.includes('girl') ||
+        lowerDesc.includes('femme') || lowerDesc.includes('fille') || lowerDesc.includes('feminine') ||
+        lowerDesc.includes('mother') || lowerDesc.includes('maman') || lowerDesc.includes('mere') ||
+        lowerDesc.includes('princess') || lowerDesc.includes('princesse') || lowerDesc.includes('queen') ||
+        lowerDesc.includes('reine') || lowerDesc.includes('grandmother') || lowerDesc.includes('grand-mere')) {
+        targetGender = VoiceGender.Female;
+    } else if (lowerDesc.includes('male') || lowerDesc.includes('man') || lowerDesc.includes('boy') ||
+        lowerDesc.includes('homme') || lowerDesc.includes('garcon') || lowerDesc.includes('masculine') ||
+        lowerDesc.includes('father') || lowerDesc.includes('papa') || lowerDesc.includes('pere') ||
+        lowerDesc.includes('prince') || lowerDesc.includes('king') || lowerDesc.includes('roi') ||
+        lowerDesc.includes('grandfather') || lowerDesc.includes('grand-pere')) {
+        targetGender = VoiceGender.Male;
+    }
+
+    // Detect age from description
+    let targetAge: string | null = null;
+    if (lowerDesc.includes('child') || lowerDesc.includes('young') || lowerDesc.includes('kid') ||
+        lowerDesc.includes('enfant') || lowerDesc.includes('jeune') || lowerDesc.includes('petit')) {
+        targetAge = VoiceAge.Young;
+    } else if (lowerDesc.includes('old') || lowerDesc.includes('elder') || lowerDesc.includes('wise') ||
+        lowerDesc.includes('ancien') || lowerDesc.includes('vieux') || lowerDesc.includes('sage') ||
+        lowerDesc.includes('grandmother') || lowerDesc.includes('grandfather') ||
+        lowerDesc.includes('grand-mere') || lowerDesc.includes('grand-pere')) {
+        targetAge = VoiceAge.Old;
+    }
+
+    // Filter voices by criteria
+    let candidates = voices;
+
+    // Prefer voices matching the language
+    const languageMatches = candidates.filter(v =>
+        v.language?.toLowerCase().includes(preferredLanguage.toLowerCase())
+    );
+    if (languageMatches.length > 0) {
+        candidates = languageMatches;
+    }
+
+    // Filter by gender if detected
+    if (targetGender) {
+        const genderMatches = candidates.filter(v => v.gender === targetGender);
+        if (genderMatches.length > 0) {
+            candidates = genderMatches;
+        }
+    }
+
+    // Filter by age if detected
+    if (targetAge) {
+        const ageMatches = candidates.filter(v => v.age === targetAge);
+        if (ageMatches.length > 0) {
+            candidates = ageMatches;
+        }
+    }
+
+    // Return the first match, or fallback to first available voice
+    const selected = candidates[0] ?? voices[0];
+    if (!selected) {
+        throw new Error('No voice available for assignment');
+    }
+
+    return selected.voiceId;
 }
 
 /**
@@ -203,8 +406,9 @@ export async function voiceGenerationStep(
 
             await helper.updateProgress(context.jobId, config.startProgress, config.name);
 
-            // Extract voice segments from script (using old StoryScript structure)
-            const voiceSegments = script.voiceSegments || [];
+            // Extract voice segments from script (using new track-based structure)
+            const voiceTrack = script.tracks.find((t) => t.type === 'voice');
+            const voiceSegments = voiceTrack?.segments || [];
 
             getLogger().info('Generating voice audio', {
                 jobId: context.jobId,
@@ -218,8 +422,13 @@ export async function voiceGenerationStep(
 
             const voiceAssetIds: string[] = [];
 
-            const generateVoiceSegment = async (segment: StoryScript['voiceSegments'][number], index: number) => {
+            const generateVoiceSegment = async (segment: typeof voiceSegments[number], index: number) => {
                 try {
+                    // Skip non-voice segments
+                    if (segment.content.type !== 'narration' && segment.content.type !== 'dialogue') {
+                        return null;
+                    }
+
                     // Check for existing asset (idempotency)
                     const cacheKey = `voice_${context.storyId}_${segment.id}`;
                     const existing = await audioAssetsStore.findByCacheKey(cacheKey);
@@ -230,17 +439,34 @@ export async function voiceGenerationStep(
                         getLogger().info('Using cached voice asset', { cacheKey });
                         assetId = existing.id;
                     } else {
+                        // Find voiceId from character mapping
+                        const characterName =
+                            segment.content.type === 'dialogue' || segment.content.type === 'narration'
+                                ? segment.content.characterName
+                                : undefined;
+                        const character = characterName
+                            ? script.characters.find((c) => c.characterName === characterName)
+                            : script.characters[0]; // Default to first character (narrator)
+
+                        if (!character?.voiceId) {
+                            getLogger().warn('No voiceId found for character, skipping segment', {
+                                segmentId: segment.id,
+                                characterName: segment.content.characterName,
+                            });
+                            return null;
+                        }
+
                         // Generate new voice audio
-                        const result = await ttsService.generateVoice({
-                            text: segment.text,
-                            voiceId: segment.voiceId,
+                        const result = await ttsService.generateSpeech({
+                            text: segment.content.text,
+                            voiceId: character.voiceId,
                         });
 
                         // Upload to storage
                         const storageService = getInstance<IStorageService>(IocService.STORAGE);
                         const voicePath = `stories/${context.storyId}/voice/${segment.id}.mp3`;
                         const uploadResult = await storageService.upload(
-                            result.audioBuffer,
+                            result.audio,
                             voicePath,
                             { contentType: 'audio/mpeg' }
                         );
@@ -250,7 +476,7 @@ export async function voiceGenerationStep(
                             storyId: context.storyId,
                             type: AudioAssetType.Voice,
                             url: uploadResult.url,
-                            duration: result.duration,
+                            duration: result.durationSeconds,
                             cacheKey,
                         });
 
@@ -268,11 +494,17 @@ export async function voiceGenerationStep(
 
                     return assetId;
                 } catch (error) {
-                    getLogger().error('Failed to generate voice segment', {
-                        jobId: context.jobId,
-                        segmentIndex: index,
-                        error: error instanceof Error ? error.message : String(error),
-                    });
+                    const errorMessage = error instanceof Error ? error.message : String(error);
+                    const errorStack = error instanceof Error ? error.stack : undefined;
+                    getLogger()
+                        .withMetadata({
+                            jobId: context.jobId,
+                            segmentIndex: index,
+                            segmentId: segment.id,
+                            errorMessage,
+                            errorStack,
+                        })
+                        .error('Failed to generate voice segment');
                     // Skip failed segments (partial success is OK)
                     return null;
                 }
@@ -330,8 +562,9 @@ export async function sfxGenerationStep(
 
             await helper.updateProgress(context.jobId, config.startProgress, config.name);
 
-            // Extract SFX segments from script (using old StoryScript structure)
-            const sfxSegments = script.sfxSegments || [];
+            // Extract SFX segments from script (using new track-based structure)
+            const sfxTrack = script.tracks.find((t) => t.type === 'sfx');
+            const sfxSegments = sfxTrack?.segments || [];
 
             getLogger().info('Generating SFX audio', {
                 jobId: context.jobId,
@@ -342,6 +575,11 @@ export async function sfxGenerationStep(
 
             for (const segment of sfxSegments) {
                 try {
+                    // Skip non-sfx segments
+                    if (segment.content.type !== 'sfx') {
+                        continue;
+                    }
+
                     // Check for existing asset (idempotency)
                     const cacheKey = `sfx_${context.storyId}_${segment.id}`;
                     const existing = await audioAssetsStore.findByCacheKey(cacheKey);
@@ -352,14 +590,14 @@ export async function sfxGenerationStep(
                     } else {
                         // Generate SFX audio
                         const result = await sfxService.generateSfx({
-                            description: segment.description,
-                            duration: segment.duration,
+                            text: segment.content.description,
+                            durationSeconds: segment.duration,
                         });
 
                         // Upload to storage
                         const sfxPath = `stories/${context.storyId}/sfx/${segment.id}.mp3`;
                         const uploadResult = await storageService.upload(
-                            result.audioBuffer,
+                            result.audio,
                             sfxPath,
                             { contentType: 'audio/mpeg' }
                         );
@@ -369,17 +607,23 @@ export async function sfxGenerationStep(
                             storyId: context.storyId,
                             type: AudioAssetType.Sfx,
                             url: uploadResult.url,
-                            duration: result.duration,
+                            duration: result.durationSeconds,
                             cacheKey,
                         });
 
                         sfxAssetIds.push(asset.id);
                     }
                 } catch (error) {
-                    getLogger().error('Failed to generate SFX segment', {
-                        jobId: context.jobId,
-                        error: error instanceof Error ? error.message : String(error),
-                    });
+                    const errorMessage = error instanceof Error ? error.message : String(error);
+                    const errorStack = error instanceof Error ? error.stack : undefined;
+                    getLogger()
+                        .withMetadata({
+                            jobId: context.jobId,
+                            segmentId: segment.id,
+                            errorMessage,
+                            errorStack,
+                        })
+                        .error('Failed to generate SFX segment');
                 }
             }
 
@@ -426,8 +670,9 @@ export async function musicGenerationStep(
 
             await helper.updateProgress(context.jobId, config.startProgress, config.name);
 
-            // Extract music segments from script (using old StoryScript structure)
-            const musicSegments = script.musicSegments || [];
+            // Extract music segments from script (using new track-based structure)
+            const musicTrack = script.tracks.find((t) => t.type === 'music');
+            const musicSegments = musicTrack?.segments || [];
 
             getLogger().info('Generating music audio', {
                 jobId: context.jobId,
@@ -438,6 +683,11 @@ export async function musicGenerationStep(
 
             for (const segment of musicSegments) {
                 try {
+                    // Skip non-music segments
+                    if (segment.content.type !== 'music') {
+                        continue;
+                    }
+
                     // Check for existing asset (idempotency)
                     const cacheKey = `music_${context.storyId}_${segment.id}`;
                     const existing = await audioAssetsStore.findByCacheKey(cacheKey);
@@ -447,16 +697,15 @@ export async function musicGenerationStep(
                         musicAssetIds.push(existing.id);
                     } else {
                         // Generate music audio
-                        const result = await musicService.generateMusic({
-                            description: segment.description,
-                            mood: segment.mood,
-                            duration: segment.duration,
+                        const result = await musicService.generate({
+                            mood: segment.content.mood as any, // FIXME: Type mismatch between script and service
+                            targetDurationSeconds: segment.duration,
                         });
 
                         // Upload to storage
                         const musicPath = `stories/${context.storyId}/music/${segment.id}.mp3`;
                         const uploadResult = await storageService.upload(
-                            result.audioBuffer,
+                            result.audio,
                             musicPath,
                             { contentType: 'audio/mpeg' }
                         );
@@ -466,17 +715,23 @@ export async function musicGenerationStep(
                             storyId: context.storyId,
                             type: AudioAssetType.Music,
                             url: uploadResult.url,
-                            duration: result.duration,
+                            duration: result.durationSeconds,
                             cacheKey,
                         });
 
                         musicAssetIds.push(asset.id);
                     }
                 } catch (error) {
-                    getLogger().error('Failed to generate music segment', {
-                        jobId: context.jobId,
-                        error: error instanceof Error ? error.message : String(error),
-                    });
+                    const errorMessage = error instanceof Error ? error.message : String(error);
+                    const errorStack = error instanceof Error ? error.stack : undefined;
+                    getLogger()
+                        .withMetadata({
+                            jobId: context.jobId,
+                            segmentId: segment.id,
+                            errorMessage,
+                            errorStack,
+                        })
+                        .error('Failed to generate music segment');
                 }
             }
 
@@ -523,20 +778,24 @@ export async function ambianceGenerationStep(
 
             await helper.updateProgress(context.jobId, config.startProgress, config.name);
 
-            // Extract ambiance config from script (using old StoryScript structure)
-            const ambianceConfig = script.ambianceConfig;
+            // Extract ambiance segments from script (using new track-based structure)
+            const ambianceTrack = script.tracks.find((t) => t.type === 'ambiance');
+            const ambianceSegments = ambianceTrack?.segments || [];
 
             getLogger().info('Generating ambiance audio', {
                 jobId: context.jobId,
-                ambianceConfig,
+                segmentCount: ambianceSegments.length,
             });
 
             const ambianceAssetIds: string[] = [];
 
-            if (ambianceConfig) {
+            // Generate ambiance for each segment
+            for (const segment of ambianceSegments) {
+                if (segment.content.type !== 'ambiance') continue;
+
                 try {
                     // Check for existing asset (idempotency)
-                    const cacheKey = `ambiance_${context.storyId}`;
+                    const cacheKey = `ambiance_${context.storyId}_${segment.id}`;
                     const existing = await audioAssetsStore.findByCacheKey(cacheKey);
 
                     if (existing) {
@@ -544,17 +803,16 @@ export async function ambianceGenerationStep(
                         ambianceAssetIds.push(existing.id);
                     } else {
                         // Generate ambiance audio
-                        const result = await ambianceService.generateAmbiance({
-                            description: ambianceConfig.description,
-                            mood: ambianceConfig.mood,
-                            intensity: ambianceConfig.intensity,
-                            duration: script.totalDuration,
+                        const result = await ambianceService.generate({
+                            description: segment.content.description,
+                            targetDurationSeconds: segment.duration || script.metadata.actualDuration,
+                            volume: segment.content.volume || 0.3,
                         });
 
                         // Upload to storage
-                        const ambiancePath = `stories/${context.storyId}/ambiance/ambiance.mp3`;
+                        const ambiancePath = `stories/${context.storyId}/ambiance/${segment.id}.mp3`;
                         const uploadResult = await storageService.upload(
-                            result.audioBuffer,
+                            result.audio,
                             ambiancePath,
                             { contentType: 'audio/mpeg' }
                         );
@@ -564,17 +822,23 @@ export async function ambianceGenerationStep(
                             storyId: context.storyId,
                             type: AudioAssetType.Ambiance,
                             url: uploadResult.url,
-                            duration: result.duration,
+                            duration: result.durationSeconds,
                             cacheKey,
                         });
 
                         ambianceAssetIds.push(asset.id);
                     }
                 } catch (error) {
-                    getLogger().error('Failed to generate ambiance', {
-                        jobId: context.jobId,
-                        error: error instanceof Error ? error.message : String(error),
-                    });
+                    const errorMessage = error instanceof Error ? error.message : String(error);
+                    const errorStack = error instanceof Error ? error.stack : undefined;
+                    getLogger()
+                        .withMetadata({
+                            jobId: context.jobId,
+                            segmentId: segment.id,
+                            errorMessage,
+                            errorStack,
+                        })
+                        .error('Failed to generate ambiance');
                 }
             }
 
@@ -647,47 +911,106 @@ export async function mixingStep(
             const validMusicAssets = musicAssets.filter((a): a is NonNullable<typeof a> => a !== null);
             const validAmbianceAssets = ambianceAssets.filter((a): a is NonNullable<typeof a> => a !== null);
 
-            // Build mixer input from assets and script
-            const voiceTracks = script.voiceSegments.map((segment, index) => ({
-                id: segment.id,
-                url: validVoiceAssets[index]?.url || '',
-                startTime: segment.startTime,
-                volume: 1.0,
-            }));
+            // Build mixer input from assets and script (using new track-based structure)
 
-            const sfxTracks = script.sfxSegments.map((segment, index) => ({
-                id: segment.id,
-                url: validSfxAssets[index]?.url || '',
-                startTime: segment.startTime,
-                volume: 0.7,
-            }));
+            // Create maps: segment ID -> asset for efficient lookup
+            // Cache keys are in format: {type}_{storyId}_{segmentId}
+            const voiceAssetMap = new Map(
+                validVoiceAssets
+                    .filter(asset => asset.cacheKey)
+                    .map(asset => [asset.cacheKey!.split('_').pop()!, asset])
+            );
+            const sfxAssetMap = new Map(
+                validSfxAssets
+                    .filter(asset => asset.cacheKey)
+                    .map(asset => [asset.cacheKey!.split('_').pop()!, asset])
+            );
 
-            const musicTracks = script.musicSegments.map((segment, index) => ({
-                id: segment.id,
-                url: validMusicAssets[index]?.url || '',
-                startTime: segment.startTime,
-                volume: 0.3,
-            }));
+            // Extract voice segments from voice tracks
+            const voiceTrack = script.tracks.find((t) => t.type === 'voice');
+            const voiceSegments = voiceTrack?.segments || [];
+            const voiceAudioFiles = voiceSegments
+                .map((segment) => {
+                    const asset = voiceAssetMap.get(segment.id);
+                    if (!asset) {
+                        getLogger().warn('Missing voice asset for segment', { segmentId: segment.id });
+                        return null;
+                    }
+                    return {
+                        path: asset.url,
+                        duration: segment.duration,
+                        startTime: segment.startTime,
+                        volume: 1.0,
+                    };
+                })
+                .filter((file): file is NonNullable<typeof file> => file !== null);
 
-            const ambianceTracks = validAmbianceAssets.map((asset) => ({
-                id: asset.id,
-                url: asset.url,
-                startTime: 0,
-                volume: 0.2,
-            }));
+            // Extract SFX segments from SFX tracks
+            const sfxTrack = script.tracks.find((t) => t.type === 'sfx');
+            const sfxSegments = sfxTrack?.segments || [];
+            const sfxAudioFiles = sfxSegments
+                .map((segment) => {
+                    const asset = sfxAssetMap.get(segment.id);
+                    if (!asset) {
+                        getLogger().warn('Missing SFX asset for segment', { segmentId: segment.id });
+                        return null;
+                    }
+                    return {
+                        path: asset.url,
+                        duration: segment.duration,
+                        startTime: segment.startTime,
+                        volume: 0.7,
+                    };
+                })
+                .filter((file): file is NonNullable<typeof file> => file !== null);
+
+            // Extract music segments from music tracks (take first one for now)
+            const musicTrack = script.tracks.find((t) => t.type === 'music');
+            const musicSegments = musicTrack?.segments || [];
+            const firstMusicAsset = validMusicAssets[0];
+            const firstMusicSegment = musicSegments[0];
+
+            // Extract ambiance segments from ambiance tracks (take first one for now)
+            const ambianceTrack = script.tracks.find((t) => t.type === 'ambiance');
+            const ambianceSegments = ambianceTrack?.segments || [];
+            const firstAmbianceAsset = validAmbianceAssets[0];
+            const firstAmbianceSegment = ambianceSegments[0];
 
             // Mix audio
             const result = await mixerService.mixStory({
-                voiceTracks,
-                sfxTracks,
-                musicTracks,
-                ambianceTracks,
+                storyId: context.storyId,
+                voice: {
+                    segments: voiceAudioFiles,
+                    pauses: new Map(), // No pauses for now
+                },
+                music: firstMusicAsset && firstMusicSegment ? {
+                    file: {
+                        path: firstMusicAsset.url,
+                        duration: firstMusicSegment.duration,
+                        startTime: firstMusicSegment.startTime,
+                    },
+                    volume: 0.3,
+                    enableDucking: true,
+                } : undefined,
+                ambiance: firstAmbianceAsset && firstAmbianceSegment ? {
+                    file: {
+                        path: firstAmbianceAsset.url,
+                        duration: firstAmbianceSegment.duration,
+                        startTime: firstAmbianceSegment.startTime,
+                    },
+                    volume: 0.2,
+                    loop: true,
+                } : undefined,
+                sfx: sfxAudioFiles.length > 0 ? {
+                    files: sfxAudioFiles,
+                    volume: 0.7,
+                } : undefined,
             });
 
             // Upload to S3 temp location
             const tempPath = S3_TEMP_PATHS.getMixedAudioPath(context.storyId);
             const tempUrl = await storageService.upload(
-                result.buffer,
+                result.audio,
                 tempPath,
                 { contentType: 'audio/mpeg' }
             );
@@ -713,10 +1036,15 @@ export async function mixingStep(
             try {
                 await storageService.delete(tempPath);
             } catch (err) {
-                getLogger().warn('Failed to delete temp file during rollback', {
-                    path: tempPath,
-                    error: err instanceof Error ? err.message : String(err),
-                });
+                const errorMessage = err instanceof Error ? err.message : String(err);
+                const errorStack = err instanceof Error ? err.stack : undefined;
+                getLogger()
+                    .withMetadata({
+                        path: tempPath,
+                        errorMessage,
+                        errorStack,
+                    })
+                    .warn('Failed to delete temp file during rollback');
             }
         },
         { retries: config.retries, timeout: config.timeout }

@@ -4,7 +4,7 @@
  * Defines the context and types used throughout the workflow execution.
  */
 
-import type { StoryScript } from '../../services/stories/script-generation.service.types';
+import type { StoryScript } from '@mio/shared/types';
 import type { EnrichedConcept } from '../../services/stories/stories.service.types';
 
 /**
@@ -58,6 +58,7 @@ export interface StoryGenerationWorkflowContext {
 export const WORKFLOW_STEPS = {
     ENRICHMENT: 'enrichment',
     SCRIPT_GENERATION: 'script_generation',
+    VOICE_ASSIGNMENT: 'voice_assignment',
     VOICE_GENERATION: 'voice_generation',
     SFX_GENERATION: 'sfx_generation',
     MUSIC_GENERATION: 'music_generation',

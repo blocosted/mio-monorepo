@@ -39,6 +39,8 @@ export const StoryResponseSchema = t.Object({
   childProfileId: t.String({ format: 'uuid' }),
   initialPrompt: t.String(),
   status: t.String(),
+  finalAudioUrl: t.Optional(t.Nullable(t.String())),
+  duration: t.Optional(t.Nullable(t.Number())),
   createdAt: t.String(),
   updatedAt: t.String(),
 });

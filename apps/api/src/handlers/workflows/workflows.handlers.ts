@@ -21,4 +21,6 @@ export const workflowsHandlers = new Elysia({ prefix: '/workflows', tags: ['work
      * This endpoint is called by QStash to execute the story generation workflow.
      * It receives the workflow context and orchestrates the 9-step generation process.
      */
-    .post('/story-generation', storyGenerationWorkflow);
+    .post('/story-generation', async ({ request }) => {
+        return await storyGenerationWorkflow.handler(request);
+    });

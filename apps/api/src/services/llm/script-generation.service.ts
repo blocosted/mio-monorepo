@@ -355,41 +355,66 @@ export class ScriptGenerationService extends AbstractService implements IScriptG
   }
 
   /**
+   * Clean JSON string by removing markdown code blocks
+   */
+  private cleanJsonString(jsonString: string): string {
+    // Remove markdown code blocks (```json ... ``` or ``` ... ```)
+    let cleaned = jsonString.trim();
+
+    // Check for markdown code block
+    if (cleaned.startsWith('```')) {
+      // Remove opening ```json or ```
+      cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '');
+      // Remove closing ```
+      cleaned = cleaned.replace(/\n?```\s*$/, '');
+    }
+
+    return cleaned.trim();
+  }
+
+  /**
    * Parse raw LLM response into StoryScript
    */
   parseScriptResponse(jsonString: string): StoryScript {
     let parsed: unknown;
 
     try {
-      parsed = JSON.parse(jsonString);
-    } catch {
+      const cleaned = this.cleanJsonString(jsonString);
+      parsed = JSON.parse(cleaned);
+    } catch (error) {
+      this.logger.error(`JSON parsing failed: ${error instanceof Error ? error.message : String(error)}`);
       throw new AppError(ErrorCodes.ValidationError, {
         name: 'LLMInvalidJSON',
       });
     }
 
     if (!parsed || typeof parsed !== 'object') {
+      this.logger.error('Parsed response is not an object');
       throw new AppError(ErrorCodes.ValidationError, {
         name: 'LLMResponseNotObject',
       });
     }
 
     const obj = parsed as Record<string, unknown>;
+    this.logger.info(`Parsed JSON keys: ${Object.keys(obj).join(', ')}`);
 
     // Validate required fields
     if (!obj.metadata || typeof obj.metadata !== 'object') {
+      this.logger.error('Missing or invalid metadata field');
       throw new AppError(ErrorCodes.ValidationError, {
         name: 'LLMMissingMetadata',
       });
     }
 
     if (!obj.tracks || !Array.isArray(obj.tracks)) {
+      this.logger.error(`Missing or invalid tracks field. Has tracks: ${!!obj.tracks}, Is array: ${Array.isArray(obj.tracks)}`);
       throw new AppError(ErrorCodes.ValidationError, {
         name: 'LLMMissingTracks',
       });
     }
 
     if (!obj.characters || !Array.isArray(obj.characters)) {
+      this.logger.error('Missing or invalid characters field');
       throw new AppError(ErrorCodes.ValidationError, {
         name: 'LLMMissingCharacters',
       });
@@ -457,8 +482,18 @@ export class ScriptGenerationService extends AbstractService implements IScriptG
           context.previousAttemptFeedback,
         );
 
-        // Call repository
-        const response = await provider.completeWithRetry(systemPrompt, userPrompt);
+        // Call repository with increased token limit for complete script generation
+        // Scripts can be large (2000+ tokens for a 2-minute story with all segments)
+        const response = await provider.completeWithRetry(systemPrompt, userPrompt, {
+          maxTokens: 8000,
+        });
+
+        // Log raw response for debugging (first 2000 chars to see full structure)
+        const logContent = response.content.length > 2000
+          ? `${response.content.substring(0, 2000)}... [truncated ${response.content.length - 2000} chars]`
+          : response.content;
+        this.logger.info(`Raw LLM response (attempt ${attempt}): ${logContent}`);
+
         const script = this.parseScriptResponse(response.content);
         const validation = this.validateScript(script, constraints);
 
@@ -489,8 +524,14 @@ export class ScriptGenerationService extends AbstractService implements IScriptG
         // Build feedback for retry
         previousFeedback = this.buildFeedbackFromValidation(validation);
       } catch (error) {
-        this.logger.error(`Script generation attempt ${attempt} failed`, {
-          error: error instanceof Error ? error.message : String(error),
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorName = error instanceof Error ? error.name : 'Unknown';
+
+        this.logger.error(`Script generation attempt ${attempt} failed: ${errorName} - ${errorMessage}`, {
+          errorName,
+          errorMessage,
+          attempt,
+          maxAttempts: this.maxAttempts,
         });
 
         if (attempt === this.maxAttempts) {

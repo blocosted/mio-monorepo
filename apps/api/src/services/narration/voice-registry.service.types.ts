@@ -105,8 +105,12 @@ export interface SyncOptions {
     pageSize?: number;
     /** Maximum pages to fetch (default: unlimited) */
     maxPages?: number;
-    /** Filter by use case (default: none) */
+    /** Filter by use case (default: narrative_story) */
     filterByUseCase?: VoiceUseCase;
+    /** Languages to sync (default: ['fr', 'en']) */
+    languages?: string[];
+    /** Use shared library instead of user voices (default: true) */
+    useSharedLibrary?: boolean;
     /** Include detailed logging */
     verbose?: boolean;
 }

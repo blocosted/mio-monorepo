@@ -24,6 +24,13 @@ export const STEP_CONFIGS: Record<string, WorkflowStepConfig> = {
         retries: 3,
         timeout: 180_000, // 3 minutes
         startProgress: 10,
+        endProgress: 18,
+    },
+    [WORKFLOW_STEPS.VOICE_ASSIGNMENT]: {
+        name: WORKFLOW_STEPS.VOICE_ASSIGNMENT,
+        retries: 2,
+        timeout: 30_000, // 30 seconds (DB lookup only)
+        startProgress: 18,
         endProgress: 20,
     },
     [WORKFLOW_STEPS.VOICE_GENERATION]: {

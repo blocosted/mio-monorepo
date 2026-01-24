@@ -111,16 +111,6 @@ export type CharacterArchetype =
     | 'magical';
 
 /**
- * Options for voice selection
- */
-export interface VoiceSelectionOptions {
-    /** Gender preference for the voice */
-    gender?: 'male' | 'female';
-    /** Language for voice selection (defaults to French) */
-    language?: Language;
-}
-
-/**
  * TTS Service Interface
  */
 export interface ITTSService {
@@ -139,13 +129,4 @@ export interface ITTSService {
      * @returns Results for all segments
      */
     generateBatch(input: BatchGenerateSpeechInput): Promise<BatchGenerateSpeechResult>;
-
-    /**
-     * Select appropriate voice ID for a character
-     *
-     * @param description - Character description or archetype
-     * @param options - Voice selection options (gender, language)
-     * @returns ElevenLabs voice ID
-     */
-    selectVoiceForCharacter(description: string, options?: VoiceSelectionOptions): string;
 }

@@ -41,6 +41,7 @@
     "postgres": "^3.4.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "redis": "^5.10.0",
     "reflect-metadata": "^0.2.2",
     "serialize-error": "^13.0.1",
     "tailwindcss": "^4.0.0"

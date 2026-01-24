@@ -148,6 +148,8 @@ export interface StoryRow {
     id: string;
     childProfileId: string;
     initialPrompt: string;
+    finalAudioUrl: string | null;
+    duration: number | null;
     status: StoryStatus;
     createdAt: Date;
     updatedAt: Date;

@@ -48,11 +48,7 @@ export type {
 
 // Constants
 export {
-    VOICE_IDS_BY_LANGUAGE,
-    DEFAULT_VOICE_IDS,
     EMOTION_AUDIO_TAGS,
     EMOTION_VOICE_SETTINGS,
     DEFAULT_VOICE_SETTINGS,
-    ARCHETYPE_PRIORITY,
-    ARCHETYPE_KEYWORDS,
 } from './tts.service.constants';

@@ -1,15 +1,16 @@
 /**
  * Redis Connection
  *
- * Single place where we encapsulate the Redis client (Bun).
+ * Single place where we encapsulate the Redis client.
  *
  * - The rest of the codebase should not depend on the Redis client directly.
  * - This module provides JSON (de)serialization so consumers can store objects safely.
  *
- * NOTE: Server-only module (Bun).
+ * NOTE: Server-only module.
+ * Uses npm redis package for better TLS support (Upstash compatibility).
  */
 
-import { RedisClient as BunRedisClient } from 'bun';
+import { createClient, type RedisClientType } from 'redis';
 
 import { environment } from '../../constants/environment.constants';
 import { AppError, ErrorCodes } from '../../constants/error.constants';
@@ -68,9 +69,10 @@ export function buildRedisUrl(config: {
 }
 
 export class RedisClient implements IRedisClient {
-    private readonly client: BunRedisClient;
+    private client: RedisClientType;
     private readonly logger?: ReturnType<Logger['withModule']>;
-    private hasConnected = false;
+    private readonly url: string;
+    private isConnected = false;
 
     constructor(config: RedisConfig, logger?: Logger) {
         const url =
@@ -90,21 +92,44 @@ export class RedisClient implements IRedisClient {
             );
         }
 
-        this.client = new BunRedisClient(url, {
-            // Let Bun pipeline automatically for performance
-            enableAutoPipelining: true,
-        });
-
+        this.url = url;
         this.logger = logger?.withModule('RedisClient');
 
-        this.client.onconnect = () => {
-            this.logger?.info('Redis connected');
-        };
+        // Log connection attempt (mask password if present)
+        const maskedUrl = url.replace(/:([^@]+)@/, ':***@');
+        this.logger?.info(`Creating Redis client with URL: ${maskedUrl}`);
 
-        this.client.onclose = () => {
+        this.client = this.createClient();
+    }
+
+    private createClient(): RedisClientType {
+        const client = createClient({
+            url: this.url,
+        });
+
+        client.on('connect', () => {
+            this.logger?.info('Redis connecting...');
+        });
+
+        client.on('ready', () => {
+            this.logger?.info('Redis connected and ready');
+            this.isConnected = true;
+        });
+
+        client.on('error', (err) => {
+            this.logger?.withError(err).error('Redis client error');
+        });
+
+        client.on('end', () => {
             this.logger?.info('Redis connection closed');
-            this.hasConnected = false;
-        };
+            this.isConnected = false;
+        });
+
+        client.on('reconnecting', () => {
+            this.logger?.info('Redis reconnecting...');
+        });
+
+        return client;
     }
 
     /**
@@ -112,11 +137,13 @@ export class RedisClient implements IRedisClient {
      */
     public async connect(): Promise<void> {
         try {
-            if (this.hasConnected && this.client.connected) {
+            if (this.client.isOpen) {
                 return;
             }
+
+            this.logger?.info('Connecting to Redis...');
             await this.client.connect();
-            this.hasConnected = true;
+            this.logger?.info('Redis connection established');
         } catch (error) {
             this.logger?.withError(error as Error).error('Redis connection failed');
             throw new AppError(ErrorCodes.CacheConnectionFailed);
@@ -124,30 +151,49 @@ export class RedisClient implements IRedisClient {
     }
 
     /**
+     * Execute operation with automatic reconnect on connection errors
+     */
+    private async withReconnect<T>(operation: () => Promise<T>): Promise<T> {
+        try {
+            await this.connect();
+            return await operation();
+        } catch (error) {
+            const err = error as Error;
+            this.logger?.withError(err).error('Redis operation failed');
+            throw error;
+        }
+    }
+
+    /**
      * Close Redis connection
      */
     public close(): void {
-        this.client.close();
+        if (this.client.isOpen) {
+            this.client.disconnect();
+        }
     }
 
     /**
      * Quit Redis connection gracefully
      */
     public async quit(): Promise<void> {
-        this.client.close();
+        if (this.client.isOpen) {
+            await this.client.quit();
+        }
     }
 
     public async get<T>(key: string): Promise<T | null> {
-        await this.connect();
-        const value = await this.client.get(key);
-        if (value === null) return null;
+        return await this.withReconnect(async () => {
+            const value = await this.client.get(key);
+            if (value === null) return null;
 
-        try {
-            return JSON.parse(value) as T;
-        } catch {
-            // If it wasn't JSON, treat as plain string
-            return value as unknown as T;
-        }
+            try {
+                return JSON.parse(value) as T;
+            } catch {
+                // If it wasn't JSON, treat as plain string
+                return value as unknown as T;
+            }
+        });
     }
 
     public async set<T>(
@@ -155,63 +201,73 @@ export class RedisClient implements IRedisClient {
         value: T,
         options: RedisSetOptions = {}
     ): Promise<void> {
-        await this.connect();
-        const serialized =
-            typeof value === 'string' ? value : JSON.stringify(value);
+        return await this.withReconnect(async () => {
+            const serialized =
+                typeof value === 'string' ? value : JSON.stringify(value);
 
-        if (options.ex) {
-            await this.client.set(key, serialized, 'EX', options.ex);
-        } else {
-            await this.client.set(key, serialized);
-        }
+            if (options.ex) {
+                await this.client.set(key, serialized, { EX: options.ex });
+            } else {
+                await this.client.set(key, serialized);
+            }
+        });
     }
 
     public async del(...keys: string[]): Promise<number> {
-        await this.connect();
         if (keys.length === 0) return 0;
-        return await this.client.del(...keys);
+        return await this.withReconnect(async () => {
+            return await this.client.del(keys);
+        });
     }
 
     public async exists(key: string): Promise<boolean> {
-        await this.connect();
-        return await this.client.exists(key);
+        return await this.withReconnect(async () => {
+            const result = await this.client.exists(key);
+            return result === 1;
+        });
     }
 
     public async keys(pattern: string): Promise<string[]> {
-        await this.connect();
-        return await this.client.keys(pattern);
+        return await this.withReconnect(async () => {
+            return await this.client.keys(pattern);
+        });
     }
 
     public async incr(key: string): Promise<number> {
-        await this.connect();
-        return await this.client.incr(key);
+        return await this.withReconnect(async () => {
+            return await this.client.incr(key);
+        });
     }
 
     public async expire(key: string, seconds: number): Promise<number> {
-        await this.connect();
-        return await this.client.expire(key, seconds);
+        return await this.withReconnect(async () => {
+            const result = await this.client.expire(key, seconds);
+            return result ? 1 : 0;
+        });
     }
 
     /**
      * Optional stats (useful for health endpoints)
      */
     public async getStats(): Promise<RedisStats> {
-        await this.connect();
-        const info = (await this.client.send('INFO', [])) as string;
-        const keys = await this.client.keys('*');
-        return {
-            connected: this.client.connected,
-            keyCount: keys.length,
-            info,
-        };
+        return await this.withReconnect(async () => {
+            const info = await this.client.info();
+            const keys = await this.client.keys('*');
+            return {
+                connected: this.client.isOpen,
+                keyCount: keys.length,
+                info,
+            };
+        });
     }
 
     /**
      * Publish a message to a Redis channel (Pub/Sub)
      */
     public async publish(channel: string, message: string): Promise<number> {
-        await this.connect();
-        return (await this.client.send('PUBLISH', [channel, message])) as number;
+        return await this.withReconnect(async () => {
+            return await this.client.publish(channel, message);
+        });
     }
 
     /**
@@ -221,39 +277,45 @@ export class RedisClient implements IRedisClient {
         channel: string,
         callback: (message: string) => void
     ): Promise<void> {
-        await this.connect();
-        await this.client.subscribe(channel, callback);
+        return await this.withReconnect(async () => {
+            await this.client.subscribe(channel, callback);
+        });
     }
 
     /**
      * Unsubscribe from a Redis channel
      */
     public async unsubscribe(channel: string): Promise<void> {
-        await this.client.unsubscribe(channel);
+        if (this.client.isOpen) {
+            await this.client.unsubscribe(channel);
+        }
     }
 
     /**
      * Create a duplicate Redis connection (for Pub/Sub)
      */
     public duplicate(): IRedisClient {
-        // Create a new client with the same URL
-        // Note: BunRedisClient doesn't expose its URL, so we reconstruct from environment
-        const { environment } = require('../../constants/environment.constants');
         const config: RedisConfig = {
-            url: environment.REDIS_URL,
+            url: this.url,
         };
-        return new RedisClient(config);
+        return new RedisClient(config, this.logger ? { withModule: () => this.logger } as Logger : undefined);
     }
 }
 
 /**
  * Create a Redis client from environment variables
+ * Note: Returns a RedisClient instance that will connect lazily on first operation
  */
 export function redisConnectionFactory(logger: Logger): RedisClient {
     const url = environment.REDIS_URL;
 
     if (url) {
-        return new RedisClient({ url }, logger);
+        const client = new RedisClient({ url }, logger);
+        // Connect immediately to ensure client is ready
+        client.connect().catch(err => {
+            logger.withError(err).error('Failed to connect to Redis during initialization');
+        });
+        return client;
     }
 
     const host = environment.REDIS_HOST;
@@ -264,7 +326,7 @@ export function redisConnectionFactory(logger: Logger): RedisClient {
         throw new Error('REDIS_HOST and REDIS_PORT (or REDIS_URL) environment variables must be set');
     }
 
-    return new RedisClient(
+    const client = new RedisClient(
         {
             host,
             port: parseInt(port, 10),
@@ -272,5 +334,12 @@ export function redisConnectionFactory(logger: Logger): RedisClient {
         },
         logger
     );
+
+    // Connect immediately to ensure client is ready
+    client.connect().catch(err => {
+        logger.withError(err).error('Failed to connect to Redis during initialization');
+    });
+
+    return client;
 }
 

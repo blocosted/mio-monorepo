@@ -10,9 +10,11 @@
 import 'reflect-metadata';
 import { injectable, inject } from 'inversify';
 import { eq, desc, and, type SQL } from 'drizzle-orm';
+import { ElevenLabsClient } from 'elevenlabs';
 
 import { elevenLabsVoices } from '@mio/db/schema';
 import { Logger } from '@mio/shared/server/logger';
+import { environment } from '@mio/shared/constants/environment.constants';
 import {
     VoiceGender,
     VoiceAge,
@@ -39,7 +41,9 @@ import type {
 const DEFAULT_SYNC_OPTIONS: Required<SyncOptions> = {
     pageSize: 100,
     maxPages: Infinity,
-    filterByUseCase: undefined as unknown as VoiceUseCase,
+    filterByUseCase: VoiceUseCase.NarrativeStory,
+    languages: ['fr', 'en'],
+    useSharedLibrary: true,
     verbose: false,
 };
 
@@ -279,47 +283,150 @@ export class VoiceRegistryService implements IVoiceRegistryService {
     }
 
     /**
+     * Fetch voices from the shared library for a specific language
+     */
+    private async fetchSharedVoices(
+        client: ElevenLabsClient,
+        language: string,
+        useCase: string,
+        pageSize: number,
+        maxPages: number,
+    ): Promise<ApiVoice[]> {
+        const voices: ApiVoice[] = [];
+        let page = 0;
+        let hasMore = true;
+
+        while (hasMore && page < maxPages) {
+            const result = await client.voices.getShared({
+                page_size: pageSize,
+                page,
+                use_cases: useCase,
+                language,
+            });
+
+            if (result.voices) {
+                for (const voice of result.voices) {
+                    // Shared voices have fields at top level, not in labels
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const v = voice as any;
+
+                    // Build labels from top-level fields for compatibility
+                    const labels: Record<string, string> = {};
+                    if (v.gender) labels['gender'] = v.gender;
+                    if (v.age) labels['age'] = v.age;
+                    if (v.accent) labels['accent'] = v.accent;
+                    if (v.language) labels['language'] = v.language;
+                    if (v.locale) labels['locale'] = v.locale;
+                    if (v.use_case) labels['use_case'] = v.use_case;
+                    if (v.descriptive) labels['descriptive'] = v.descriptive;
+
+                    voices.push({
+                        voiceId: voice.voice_id,
+                        name: voice.name,
+                        category: voice.category,
+                        labels: Object.keys(labels).length > 0 ? labels : voice.labels,
+                        description: voice.description,
+                        previewUrl: voice.preview_url,
+                        highQualityBaseModelIds: voice.high_quality_base_model_ids,
+                    });
+                }
+            }
+
+            hasMore = result.has_more ?? false;
+            page++;
+
+            this.logger.debug('Fetched shared voices page', {
+                language,
+                useCase,
+                page,
+                count: result.voices?.length ?? 0,
+                hasMore,
+            });
+        }
+
+        return voices;
+    }
+
+    /**
      * Synchronize voices from ElevenLabs API to database
      */
     async syncFromApi(options?: SyncOptions): Promise<SyncResult> {
         const opts = { ...DEFAULT_SYNC_OPTIONS, ...options };
-        const repository = this.getRepository();
 
         this.logger.info('Starting voice sync from ElevenLabs API', {
             pageSize: opts.pageSize,
             maxPages: opts.maxPages,
             filterByUseCase: opts.filterByUseCase,
+            languages: opts.languages,
+            useSharedLibrary: opts.useSharedLibrary,
         });
 
-        // Fetch voices from API
-        const apiVoices = await repository.listVoices();
+        let apiVoices: ApiVoice[] = [];
 
-        this.logger.debug('Fetched voices from API', { count: apiVoices.length });
+        if (opts.useSharedLibrary) {
+            // Create ElevenLabs client for shared library access
+            const apiKey = environment.ELEVENLABS_API_KEY;
+            if (!apiKey) {
+                throw new Error('ELEVENLABS_API_KEY is not configured');
+            }
+            const client = new ElevenLabsClient({ apiKey });
 
-        // Parse and optionally filter voices
-        let parsedVoices = apiVoices.map((voice) =>
-            parseApiVoice({
+            // Map our use case enum to ElevenLabs API format
+            const useCaseMap: Record<VoiceUseCase, string> = {
+                [VoiceUseCase.NarrativeStory]: 'narrative_story',
+                [VoiceUseCase.Conversational]: 'conversational',
+                [VoiceUseCase.Characters]: 'characters_animation',
+                [VoiceUseCase.Informative]: 'informative_educational',
+                [VoiceUseCase.Advertisement]: 'advertisement',
+            };
+            const useCase = opts.filterByUseCase
+                ? useCaseMap[opts.filterByUseCase] ?? 'narrative_story'
+                : 'narrative_story';
+
+            // Fetch voices for each language
+            for (const language of opts.languages) {
+                this.logger.info('Fetching shared voices', { language, useCase });
+                const languageVoices = await this.fetchSharedVoices(
+                    client,
+                    language,
+                    useCase,
+                    opts.pageSize,
+                    opts.maxPages,
+                );
+                this.logger.info('Fetched voices for language', {
+                    language,
+                    count: languageVoices.length,
+                });
+                apiVoices.push(...languageVoices);
+            }
+        } else {
+            // Fallback to user's voice library
+            const repository = this.getRepository();
+            const userVoices = await repository.listVoices();
+            apiVoices = userVoices.map((voice) => ({
                 voiceId: voice.voiceId,
                 name: voice.name,
                 labels: voice.labels,
-            })
-        );
-
-        let filtered = 0;
-        if (opts.filterByUseCase) {
-            const beforeCount = parsedVoices.length;
-            parsedVoices = parsedVoices.filter(
-                (voice) => voice.useCase === opts.filterByUseCase
-            );
-            filtered = beforeCount - parsedVoices.length;
-
-            this.logger.info('Filtered voices by use case', {
-                useCase: opts.filterByUseCase,
-                before: beforeCount,
-                after: parsedVoices.length,
-                filtered,
-            });
+            }));
         }
+
+        // Deduplicate voices by voiceId (same voice can appear in multiple languages)
+        const uniqueVoices = new Map<string, ApiVoice>();
+        for (const voice of apiVoices) {
+            if (!uniqueVoices.has(voice.voiceId)) {
+                uniqueVoices.set(voice.voiceId, voice);
+            }
+        }
+        const deduplicatedVoices = Array.from(uniqueVoices.values());
+
+        this.logger.debug('Total voices fetched from API', {
+            total: apiVoices.length,
+            unique: deduplicatedVoices.length,
+            duplicates: apiVoices.length - deduplicatedVoices.length,
+        });
+
+        // Parse voices
+        const parsedVoices = deduplicatedVoices.map((voice) => parseApiVoice(voice));
 
         // Get existing voices from DB
         const existingVoices = await this.db
@@ -377,20 +484,18 @@ export class VoiceRegistryService implements IVoiceRegistryService {
                 added++;
             }
 
-            if (opts.verbose && (added + updated) % 10 === 0) {
+            if (opts.verbose && (added + updated) % 50 === 0) {
                 this.logger.debug('Sync progress', { added, updated });
             }
         }
 
-        // Remove voices no longer in API (only if not filtering)
-        if (!opts.filterByUseCase) {
-            for (const existing of existingVoices) {
-                if (!apiVoiceIds.has(existing.voiceId)) {
-                    await this.db
-                        .delete(elevenLabsVoices)
-                        .where(eq(elevenLabsVoices.voiceId, existing.voiceId));
-                    removed++;
-                }
+        // Remove voices no longer in API
+        for (const existing of existingVoices) {
+            if (!apiVoiceIds.has(existing.voiceId)) {
+                await this.db
+                    .delete(elevenLabsVoices)
+                    .where(eq(elevenLabsVoices.voiceId, existing.voiceId));
+                removed++;
             }
         }
 
@@ -399,7 +504,6 @@ export class VoiceRegistryService implements IVoiceRegistryService {
             updated,
             removed,
             total: parsedVoices.length,
-            filtered,
         };
 
         this.logger.info('Voice sync complete', result);

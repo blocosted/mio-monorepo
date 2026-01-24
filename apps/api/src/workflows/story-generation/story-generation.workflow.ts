@@ -5,11 +5,12 @@
  * This workflow is HTTP-triggered and can run for 5-30+ minutes.
  */
 
-import { serve } from '@upstash/workflow/nextjs';
+import { serve } from '@upstash/workflow';
 import type { StoryGenerationWorkflowContext } from './story-generation.workflow.types';
 import {
     enrichmentStep,
     scriptGenerationStep,
+    voiceAssignmentStep,
     voiceGenerationStep,
     sfxGenerationStep,
     musicGenerationStep,
@@ -48,9 +49,14 @@ export const storyGenerationWorkflow = serve<StoryGenerationWorkflowContext>(
             return scriptGenerationStep(enrichedContext);
         });
 
+        // Step 2.5: Voice Assignment (assign voiceIds from database)
+        const voiceAssignedContext = await context.run('voice-assignment', async () => {
+            return voiceAssignmentStep(scriptContext);
+        });
+
         // Step 3: Voice Generation
         const voiceContext = await context.run('voice-generation', async () => {
-            return voiceGenerationStep(scriptContext);
+            return voiceGenerationStep(voiceAssignedContext);
         });
 
         // Step 4: SFX Generation

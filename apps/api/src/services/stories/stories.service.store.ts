@@ -103,7 +103,7 @@ export class StoriesStore implements IStoriesStore {
             .update(stories)
             .set({
                 finalAudioUrl: input.finalAudioUrl,
-                duration: input.duration,
+                duration: Math.round(input.duration),
                 status: StoryStatus.Ready,
                 updatedAt: new Date(),
             })

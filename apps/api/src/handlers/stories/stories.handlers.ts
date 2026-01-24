@@ -33,21 +33,16 @@ export const storiesHandlers = new Elysia({ prefix: '/stories', tags: ['stories'
   // Get a story by ID
   .get(
     '/:id',
-    async ({ params }) => {
-      // TODO: Implement with database
-      return {
-        id: params.id,
-        childProfileId: crypto.randomUUID(),
-        initialPrompt: 'Un dragon qui a peur du noir',
-        enrichedConcept: null,
-        script: null,
-        finalAudioUrl: null,
-        duration: null,
-        status: 'draft',
-        segments: [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+    async ({ params, set }) => {
+      const service = getInstance<IStoriesService>(IocService.STORIES);
+      const story = await service.findById(params.id);
+
+      if (!story) {
+        set.status = 404;
+        return { error: 'Story not found' };
+      }
+
+      return mapStoryToResponse(story);
     },
     {
       params: StoryIdParamsSchema,

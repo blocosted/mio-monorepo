@@ -67,8 +67,10 @@ export class StorageService implements IStorageService {
 
     /**
      * Download a file from storage
+     * Accepts either a relative path or a full URL (extracts path automatically)
      */
-    async download(path: string): Promise<Buffer> {
+    async download(pathOrUrl: string): Promise<Buffer> {
+        const path = this.extractPathFromUrl(pathOrUrl);
         try {
             return await this.client.download(BUCKETS.AUDIO, path);
         } catch (error) {
@@ -163,6 +165,30 @@ export class StorageService implements IStorageService {
 
         // Public bucket URL format for Supabase Storage
         return `${base}/storage/v1/object/public/${BUCKETS.AUDIO}/${encodedPath}`;
+    }
+
+    /**
+     * Extract relative path from a full URL or return path as-is if already relative
+     * URL format: {SUPABASE_URL}/storage/v1/object/public/{bucket}/{path}
+     */
+    private extractPathFromUrl(pathOrUrl: string): string {
+        // If it's not a URL, return as-is
+        if (!pathOrUrl.startsWith('http://') && !pathOrUrl.startsWith('https://')) {
+            return pathOrUrl;
+        }
+
+        // Extract path from Supabase Storage URL
+        // Format: https://{project}.supabase.co/storage/v1/object/public/{bucket}/{path}
+        const urlPattern = /\/storage\/v1\/object\/public\/[^/]+\/(.+)$/;
+        const match = pathOrUrl.match(urlPattern);
+
+        if (match?.[1]) {
+            // Decode URL-encoded path segments
+            return decodeURIComponent(match[1]);
+        }
+
+        // Fallback: return original (will likely fail, but provides better error message)
+        return pathOrUrl;
     }
 
     /**

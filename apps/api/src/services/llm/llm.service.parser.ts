@@ -19,13 +19,32 @@ const VALID_TONES = new Set<string>(Object.values(Tone));
 const VALID_AMBIANCES = new Set<string>(Object.values(Ambiance));
 
 /**
+ * Clean JSON string by removing markdown code blocks
+ */
+function cleanJsonString(jsonString: string): string {
+  // Remove markdown code blocks (```json ... ``` or ``` ... ```)
+  let cleaned = jsonString.trim();
+
+  // Check for markdown code block
+  if (cleaned.startsWith('```')) {
+    // Remove opening ```json or ```
+    cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '');
+    // Remove closing ```
+    cleaned = cleaned.replace(/\n?```\s*$/, '');
+  }
+
+  return cleaned.trim();
+}
+
+/**
  * Parse and validate an enriched concept from LLM response
  */
 export function parseEnrichedConcept(jsonString: string): EnrichedConcept {
   let parsed: unknown;
 
   try {
-    parsed = JSON.parse(jsonString);
+    const cleaned = cleanJsonString(jsonString);
+    parsed = JSON.parse(cleaned);
   } catch {
     throw new AppError(ErrorCodes.ValidationError, {
       name: 'LLMInvalidJSON',

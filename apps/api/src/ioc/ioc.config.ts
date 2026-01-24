@@ -99,12 +99,18 @@ import {
 import {
     AmbianceLibraryStore,
     AmbianceLibraryService,
+    AmbianceGeneratorService,
     type IAmbianceLibraryService,
+    type IAmbianceGeneratorService,
 } from '../services/ambiance';
 import {
     MusicLibraryStore,
     MusicLibraryService,
+    MusicGeneratorService,
+    MusicStrategyService,
     type IMusicLibraryService,
+    type IMusicGeneratorService,
+    type IMusicStrategyService,
 } from '../services/music';
 import {
     WorkflowOrchestratorService,
@@ -172,9 +178,13 @@ export async function initializeContainer(): Promise<void> {
         [IocService.FFMPEG_MIXER]: () => container.get(FFmpegMixerService, { autobind: true }),
         [IocService.SFX_CACHE]: () => container.get(SfxCacheService, { autobind: true }),
         [IocService.SOUND_EFFECTS]: () => container.get(SfxService, { autobind: true }),
+        [IocService.SFX]: () => container.get(SfxService, { autobind: true }), // Alias for SOUND_EFFECTS
         [IocService.SFX_LIBRARY]: () => container.get(SfxLibraryService, { autobind: true }),
         [IocService.MUSIC_LIBRARY]: () => container.get(MusicLibraryService, { autobind: true }),
+        [IocService.MUSIC_GENERATOR]: () => container.get(MusicGeneratorService, { autobind: true }),
+        [IocService.MUSIC_STRATEGY]: () => container.get(MusicStrategyService, { autobind: true }),
         [IocService.AMBIANCE_LIBRARY]: () => container.get(AmbianceLibraryService, { autobind: true }),
+        [IocService.AMBIANCE_GENERATOR]: () => container.get(AmbianceGeneratorService, { autobind: true }),
         [IocService.WORKFLOW_ORCHESTRATOR]: () => container.get(WorkflowOrchestratorService, { autobind: true }),
 
     } as const;
@@ -233,7 +243,10 @@ export type {
     ISfxService,
     ISfxLibraryService,
     IMusicLibraryService,
+    IMusicGeneratorService,
+    IMusicStrategyService,
     IAmbianceLibraryService,
+    IAmbianceGeneratorService,
     IWorkflowOrchestratorService,
 };
 export type { RedisClient, DatabaseConnection, Logger };
