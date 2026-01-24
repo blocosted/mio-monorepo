@@ -12,7 +12,7 @@ import type { CreateStoryInput, Story } from '../../services/stories';
 /**
  * Map API request body to service input for creation
  */
-export function mapCreateBodyToInput(body: CreateStoryBody): CreateStoryInput {
+export function mapCreateStoryBodyToInput(body: CreateStoryBody): CreateStoryInput {
   return {
     childProfileId: body.childProfileId,
     prompt: body.prompt

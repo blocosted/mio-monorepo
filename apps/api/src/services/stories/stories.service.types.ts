@@ -105,7 +105,22 @@ export interface IStoriesService {
   /**
    * Find a story by ID
    */
-  findById(id: string): Promise<any>;
+  findById(id: string): Promise<Story | null>;
+
+  /**
+   * Find all stories for a profile
+   */
+  findByProfileId(profileId: string): Promise<Story[]>;
+
+  /**
+   * Enrich a story with LLM-generated content
+   */
+  enrichStory(id: string): Promise<EnrichedConcept>;
+
+  /**
+   * Delete a story and cleanup associated resources
+   */
+  delete(id: string): Promise<boolean>;
 
   /**
    * Create a generation job for a story
@@ -131,6 +146,21 @@ export interface IStoriesStore {
    * Find a story by ID
    */
   findById(id: string): Promise<StoryRow | null>;
+
+  /**
+   * Find all stories for a child profile
+   */
+  findByChildProfileId(childProfileId: string): Promise<StoryRow[]>;
+
+  /**
+   * Update enriched concept for a story
+   */
+  updateEnrichedConcept(id: string, enrichedConcept: EnrichedConcept): Promise<void>;
+
+  /**
+   * Delete a story by ID
+   */
+  delete(id: string): Promise<boolean>;
 }
 
 /**

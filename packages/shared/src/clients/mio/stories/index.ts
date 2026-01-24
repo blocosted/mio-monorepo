@@ -51,6 +51,3 @@ export type CreateStoryBody = typeof CreateStoryBodySchema.static;
 export type EnrichStoryBody = typeof EnrichStoryBodySchema.static;
 export type GenerateStoryBody = typeof GenerateStoryBodySchema.static;
 export type StoryResponse = typeof StoryResponseSchema.static;
-
-// Backward-compatible aliases for client-facing naming
-export type CreateStoryParams = CreateStoryBody;

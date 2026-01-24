@@ -1,5 +1,5 @@
 import type { MioApiClient } from '..';
-import type { CreateStoryBody as CreateStoryParams, StoryResponse } from './index';
+import type { CreateStoryBody, StoryResponse } from './index';
 
 export class MioApiStoriesClient {
   public readonly client: MioApiClient;
@@ -8,7 +8,7 @@ export class MioApiStoriesClient {
     this.client = client;
   }
 
-  public async createStory(params: CreateStoryParams): Promise<StoryResponse> {
+  public async createStory(params: CreateStoryBody): Promise<StoryResponse> {
     const res = await this.client.api.stories.post(params, { headers: this.client.headers });
 
     if (res.status === 201 && res.data) {

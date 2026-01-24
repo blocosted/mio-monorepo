@@ -13,6 +13,9 @@ import type { ICacheService } from '../services/cache';
 import type { IStorageService } from '../services/storage';
 import { DEFAULT_TEST_CONFIG } from './test-utils';
 import { expect, mock } from 'bun:test';
+import { treaty } from '@elysiajs/eden';
+import { createApiApp } from '@mio/api';
+import { MioApiClient } from '@mio/shared/clients/mio';
 
 /**
  * Generate a random test ID
@@ -351,4 +354,13 @@ export function mockSoundEffectsProvider() {
       };
     })
   };
+}
+
+/**
+ * Create a test Mio API client
+ */
+export function createTestMioApiClient(): MioApiClient {
+  const app = createApiApp();
+  const api = treaty(app);
+  return new MioApiClient({ apiClient: api });
 }

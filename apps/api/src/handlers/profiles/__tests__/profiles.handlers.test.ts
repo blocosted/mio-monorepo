@@ -6,7 +6,7 @@
 
 import type { MioApiClient } from '@mio/shared/clients/mio';
 import type { DatabaseConnection } from '@mio/shared/server/connections/db';
-import { createMioApiClient } from '@mio/api/tests/test-utils';
+import { createTestMioApiClient } from '@mio/api/tests/test.helpers';
 import { Gender } from '@mio/shared/types';
 
 import { IocConnection } from '../../../ioc/ioc.types';
@@ -20,7 +20,7 @@ describe('profilesHandlers', () => {
 
   beforeAll(() => {
     db = getInstance<DatabaseConnection>(IocConnection.DATABASE);
-    mio = createMioApiClient();
+    mio = createTestMioApiClient();
   });
 
   beforeEach(async () => {

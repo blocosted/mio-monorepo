@@ -7,7 +7,7 @@ import type { MioApiClient } from '@mio/shared/clients/mio';
 import type { DatabaseConnection } from '@mio/shared/server/connections/db';
 import { IocConnection, IocStore } from '@mio/api/ioc/ioc.types';
 import { getInstance } from '@mio/api/ioc/ioc.config';
-import { createMioApiClient } from '@mio/api/tests/test-utils';
+import { createTestMioApiClient } from '@mio/api/tests/test.helpers';
 import { Gender } from '@mio/shared/types';
 
 import { beforeAll, describe, expect, it } from 'bun:test';
@@ -18,7 +18,7 @@ describe('jobsHandlers', () => {
   let jobsStore: GenerationJobsStore;
 
   beforeAll(() => {
-    mio = createMioApiClient();
+    mio = createTestMioApiClient();
     db = getInstance<DatabaseConnection>(IocConnection.DATABASE);
     jobsStore = getInstance<GenerationJobsStore>(IocStore.GENERATION_JOBS_STORE);
   });
@@ -28,7 +28,7 @@ describe('jobsHandlers', () => {
     const res = await mio.api.jobs({ id }).get();
 
     expect(res.status).toBe(404);
-    expect((res.error?.value as { error: string })?.error).toBe('Job not found');
+    expect((res.error?.value as unknown as { error: string })?.error).toBe('Job not found');
   });
 
   it('gets job status for existing job', async () => {
@@ -109,6 +109,6 @@ describe('jobsHandlers', () => {
     const res = await mio.api.jobs({ id }).delete();
 
     expect(res.status).toBe(404);
-    expect((res.error?.value as { error: string })?.error).toBe('Job not found');
+    expect((res.error?.value as unknown as { error: string })?.error).toBe('Job not found');
   });
 });

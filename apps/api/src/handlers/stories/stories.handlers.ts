@@ -8,11 +8,12 @@ import {
   StoryProfileIdParamsSchema
 } from '@mio/shared/clients/mio/stories';
 
+import { AppError, ErrorCodes } from '@mio/shared';
+
 import type { IStoriesService } from '../../services/stories';
 import type { IWorkflowOrchestratorService } from '../../services/workflows/workflow-orchestrator.service.types';
-import { IocService } from '../../ioc/ioc.types';
-import { getInstance } from '../../ioc/ioc.config';
-import { mapCreateBodyToInput, mapStoryToResponse } from './stories.handlers.map';
+import { IocService, getInstance } from '../../ioc';
+import { mapCreateStoryBodyToInput, mapStoryToResponse } from './stories.handlers.map';
 
 export const storiesHandlers = new Elysia({ prefix: '/stories', tags: ['stories'] })
   // Create a new story
@@ -20,7 +21,7 @@ export const storiesHandlers = new Elysia({ prefix: '/stories', tags: ['stories'
     '/',
     async ({ body, set }) => {
       const service = getInstance<IStoriesService>(IocService.STORIES);
-      const input = mapCreateBodyToInput(body);
+      const input = mapCreateStoryBodyToInput(body);
       const story = await service.create(input);
 
       set.status = 201;
@@ -34,13 +35,12 @@ export const storiesHandlers = new Elysia({ prefix: '/stories', tags: ['stories'
   // Get a story by ID
   .get(
     '/:id',
-    async ({ params, set }) => {
+    async ({ params }) => {
       const service = getInstance<IStoriesService>(IocService.STORIES);
       const story = await service.findById(params.id);
 
       if (!story) {
-        set.status = 404;
-        return { error: 'Story not found' };
+        throw new AppError(ErrorCodes.NotFound, { name: 'StoryNotFound' });
       }
 
       return mapStoryToResponse(story);
@@ -53,9 +53,11 @@ export const storiesHandlers = new Elysia({ prefix: '/stories', tags: ['stories'
   // List stories for a profile
   .get(
     '/profile/:profileId',
-    async () => {
-      // TODO: Implement with database
-      return [];
+    async ({ params }) => {
+      const service = getInstance<IStoriesService>(IocService.STORIES);
+      const stories = await service.findByProfileId(params.profileId);
+
+      return stories.map(mapStoryToResponse);
     },
     {
       params: StoryProfileIdParamsSchema
@@ -65,22 +67,9 @@ export const storiesHandlers = new Elysia({ prefix: '/stories', tags: ['stories'
   // Enrich a story
   .post(
     '/:id/enrich',
-    async () => {
-      // TODO: Implement with LLM service
-      return {
-        title: 'Le Dragon Timide',
-        mainCharacter: {
-          name: 'Flamme',
-          description: 'Un petit dragon rouge qui a peur du noir'
-        },
-        setting: {
-          location: 'Une grotte enchantée',
-          era: 'Il y a très longtemps',
-          ambiance: 'magical_realm'
-        },
-        tone: 'heartwarming',
-        themes: ['courage', 'friendship']
-      };
+    async ({ params }) => {
+      const service = getInstance<IStoriesService>(IocService.STORIES);
+      return service.enrichStory(params.id);
     },
     {
       params: StoryIdParamsSchema,
@@ -98,8 +87,7 @@ export const storiesHandlers = new Elysia({ prefix: '/stories', tags: ['stories'
       // Verify story exists
       const story = await storiesService.findById(params.id);
       if (!story) {
-        set.status = 404;
-        return { error: 'Story not found' };
+        throw new AppError(ErrorCodes.NotFound, { name: 'StoryNotFound' });
       }
 
       // Create generation job
@@ -132,8 +120,14 @@ export const storiesHandlers = new Elysia({ prefix: '/stories', tags: ['stories'
   // Delete a story
   .delete(
     '/:id',
-    async ({ set }) => {
-      // TODO: Implement with database and storage cleanup
+    async ({ params, set }) => {
+      const service = getInstance<IStoriesService>(IocService.STORIES);
+      const deleted = await service.delete(params.id);
+
+      if (!deleted) {
+        throw new AppError(ErrorCodes.NotFound, { name: 'StoryNotFound' });
+      }
+
       set.status = 204;
       return null;
     },

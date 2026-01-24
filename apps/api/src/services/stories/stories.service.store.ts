@@ -6,7 +6,7 @@
 
 import 'reflect-metadata';
 
-import { eq } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 import { inject, injectable } from 'inversify';
 
 import type { DatabaseConnection } from '@mio/shared/server/connections/db';
@@ -102,5 +102,36 @@ export class StoriesStore implements IStoriesStore {
         updatedAt: new Date()
       })
       .where(eq(stories.id, id));
+  }
+
+  /**
+   * Find all stories for a child profile
+   */
+  async findByChildProfileId(childProfileId: string): Promise<StoryRow[]> {
+    const rows = await this.db
+      .select()
+      .from(stories)
+      .where(eq(stories.childProfileId, childProfileId))
+      .orderBy(desc(stories.createdAt));
+
+    return rows.map((row) => ({
+      id: row.id,
+      childProfileId: row.childProfileId,
+      initialPrompt: row.initialPrompt,
+      finalAudioUrl: row.finalAudioUrl,
+      duration: row.duration,
+      status: row.status,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt
+    }));
+  }
+
+  /**
+   * Delete a story by ID
+   */
+  async delete(id: string): Promise<boolean> {
+    const result = await this.db.delete(stories).where(eq(stories.id, id)).returning({ id: stories.id });
+
+    return result.length > 0;
   }
 }

@@ -295,8 +295,3 @@ export async function cleanTestData(
   await cleanTestRedisData(redisContainerName, redisPassword);
 }
 
-export function createMioApiClient(): MioApiClient {
-  const app = createApiApp();
-  const api = treaty(app);
-  return new MioApiClient({ apiClient: api });
-}
