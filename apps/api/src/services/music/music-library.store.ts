@@ -8,11 +8,11 @@
 
 import 'reflect-metadata';
 
-import { and, desc, eq, type SQL, sql } from 'drizzle-orm';
+import { and, desc, eq, gt, ilike, type SQL, sql } from 'drizzle-orm';
 import { inject, injectable } from 'inversify';
 
 import type { DatabaseConnection } from '@mio/shared/server/connections/db';
-import type { MusicIntensity, MusicMood, MusicTempo } from '@mio/shared/types';
+import { clampLimit, type MusicIntensity, type MusicMood, type MusicTempo } from '@mio/shared/types';
 import { audioLibraryMusic } from '@mio/db/schema';
 
 import { IocConnection } from '../../ioc/ioc.types';
@@ -94,6 +94,33 @@ export interface MusicLibraryStats {
   byMood: Record<string, number>;
   byIntensity: Record<string, number>;
   topUsed: StoredMusic[];
+}
+
+/**
+ * Cursor pagination options for Music
+ */
+export interface MusicPaginationOptions {
+  cursor?: string;
+  limit?: number;
+}
+
+/**
+ * Filter options for Music pagination
+ */
+export interface MusicFilterOptions {
+  mood?: MusicMood;
+  intensity?: MusicIntensity;
+  tempo?: MusicTempo;
+  search?: string;
+}
+
+/**
+ * Paginated result for Music
+ */
+export interface PaginatedMusicResult {
+  rows: StoredMusic[];
+  nextCursor: string | null;
+  hasMore: boolean;
 }
 
 /**
@@ -252,4 +279,54 @@ export class MusicLibraryStore {
     };
   }
 
+  /**
+   * Find Music with cursor-based pagination
+   */
+  async findPaginated(filters: MusicFilterOptions, pagination: MusicPaginationOptions): Promise<PaginatedMusicResult> {
+    const limit = clampLimit(pagination.limit);
+    const conditions: SQL[] = [];
+
+    if (filters.mood) {
+      conditions.push(eq(audioLibraryMusic.mood, filters.mood));
+    }
+
+    if (filters.intensity) {
+      conditions.push(eq(audioLibraryMusic.intensity, filters.intensity));
+    }
+
+    if (filters.tempo) {
+      conditions.push(eq(audioLibraryMusic.tempo, filters.tempo));
+    }
+
+    if (filters.search) {
+      conditions.push(ilike(audioLibraryMusic.canonicalKey, `%${filters.search}%`));
+    }
+
+    // Add cursor condition
+    if (pagination.cursor) {
+      conditions.push(gt(audioLibraryMusic.id, pagination.cursor));
+    }
+
+    let query = this.db
+      .select()
+      .from(audioLibraryMusic)
+      .orderBy(audioLibraryMusic.id)
+      .limit(limit + 1)
+      .$dynamic();
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    const rows = await query;
+    const hasMore = rows.length > limit;
+    const resultRows = hasMore ? rows.slice(0, limit) : rows;
+    const lastRow = resultRows[resultRows.length - 1];
+
+    return {
+      rows: resultRows.map(this.mapRow),
+      nextCursor: hasMore && lastRow ? lastRow.id : null,
+      hasMore
+    };
+  }
 }

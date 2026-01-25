@@ -65,3 +65,32 @@ export interface ProfileRow {
   createdAt: Date;
   updatedAt: Date;
 }
+
+// =============================================================================
+// Pagination Types
+// =============================================================================
+
+/**
+ * Cursor pagination options for Profiles
+ */
+export interface ProfilePaginationOptions {
+  cursor?: string;
+  limit?: number;
+}
+
+/**
+ * Filter options for Profiles pagination
+ */
+export interface ProfileFilterOptions {
+  gender?: Gender;
+  search?: string;
+}
+
+/**
+ * Paginated result for Profiles
+ */
+export interface PaginatedProfilesResult {
+  rows: ProfileRow[];
+  nextCursor: string | null;
+  hasMore: boolean;
+}

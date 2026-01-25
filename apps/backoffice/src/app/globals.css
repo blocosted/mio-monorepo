@@ -1,0 +1,104 @@
+@import 'tailwindcss';
+@config '../../tailwind.config.ts';
+
+@source '../../**/*.{ts,tsx}';
+@source '../../../../packages/shared/src/ui/**/*.{ts,tsx}';
+
+:root {
+  --background: #fafafa;
+  --foreground: #0a0a0a;
+  --card: #ffffff;
+  --card-foreground: #0a0a0a;
+  --popover: #ffffff;
+  --popover-foreground: #0a0a0a;
+  --primary: #0ea5e9;
+  --primary-foreground: #ffffff;
+  --secondary: #f3f4f6;
+  --secondary-foreground: #1f2937;
+  --muted: #f3f4f6;
+  --muted-foreground: #6b7280;
+  --accent: #ec4899;
+  --accent-foreground: #ffffff;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #e5e7eb;
+  --input: #e5e7eb;
+  --ring: #0ea5e9;
+  --radius: 0.625rem;
+  --sidebar-active-bg: #e0f2fe;
+  --sidebar-active-text: #0369a1;
+
+  /* Table column group backgrounds (Zaant style) */
+  --table-col-blue: #dbeafe;
+  --table-col-cyan: #cffafe;
+  --table-col-pink: #fce7f3;
+
+  /* Gradient colors */
+  --gradient-start: #3b82f6;
+  --gradient-middle: #06b6d4;
+  --gradient-end: #ec4899;
+}
+
+.dark {
+  --background: #0a0a0a;
+  --foreground: #fafafa;
+  --card: #171717;
+  --card-foreground: #fafafa;
+  --popover: #171717;
+  --popover-foreground: #fafafa;
+  --primary: #38bdf8;
+  --primary-foreground: #0c4a6e;
+  --secondary: #27272a;
+  --secondary-foreground: #fafafa;
+  --muted: #27272a;
+  --muted-foreground: #a1a1aa;
+  --accent: #f472b6;
+  --accent-foreground: #831843;
+  --destructive: #7f1d1d;
+  --destructive-foreground: #fafafa;
+  --border: #27272a;
+  --input: #27272a;
+  --ring: #38bdf8;
+  --sidebar-active-bg: #164e63;
+  --sidebar-active-text: #38bdf8;
+
+  /* Table column group backgrounds (Zaant style - dark mode) */
+  --table-col-blue: #1e3a5f;
+  --table-col-cyan: #164e63;
+  --table-col-pink: #4a1942;
+
+  /* Gradient colors (dark mode) */
+  --gradient-start: #2563eb;
+  --gradient-middle: #0891b2;
+  --gradient-end: #db2777;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}

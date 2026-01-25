@@ -6,13 +6,14 @@
 
 import 'reflect-metadata';
 
-import { eq } from 'drizzle-orm';
+import { and, eq, gt, ilike, type SQL } from 'drizzle-orm';
 import { inject, injectable } from 'inversify';
 
 import type { DatabaseConnection } from '@mio/shared/server/connections/db';
 import { childProfiles } from '@mio/db/schema';
 
-import type { CreateChildProfileInput, ProfileRow, UpdateChildProfileInput } from './profiles.service.types';
+import type { CreateChildProfileInput, PaginatedProfilesResult, ProfileFilterOptions, ProfilePaginationOptions, ProfileRow, UpdateChildProfileInput } from './profiles.service.types';
+import { clampLimit } from '@mio/shared/types';
 import { IocConnection } from '../../ioc/ioc.types';
 
 @injectable()
@@ -135,5 +136,56 @@ export class ProfilesStore {
     const result = await this.db.delete(childProfiles).where(eq(childProfiles.id, id)).returning({ id: childProfiles.id });
 
     return result.length > 0;
+  }
+
+  /**
+   * Find profiles with cursor-based pagination
+   */
+  async findPaginated(filters: ProfileFilterOptions, pagination: ProfilePaginationOptions): Promise<PaginatedProfilesResult> {
+    const limit = clampLimit(pagination.limit);
+    const conditions: SQL[] = [];
+
+    if (filters.gender) {
+      conditions.push(eq(childProfiles.gender, filters.gender));
+    }
+
+    if (filters.search) {
+      conditions.push(ilike(childProfiles.firstName, `%${filters.search}%`));
+    }
+
+    // Add cursor condition
+    if (pagination.cursor) {
+      conditions.push(gt(childProfiles.id, pagination.cursor));
+    }
+
+    let query = this.db
+      .select()
+      .from(childProfiles)
+      .orderBy(childProfiles.id)
+      .limit(limit + 1)
+      .$dynamic();
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    const rows = await query;
+    const hasMore = rows.length > limit;
+    const resultRows = hasMore ? rows.slice(0, limit) : rows;
+    const lastRow = resultRows[resultRows.length - 1];
+
+    return {
+      rows: resultRows.map((row) => ({
+        id: row.id,
+        firstName: row.firstName,
+        age: row.age,
+        gender: row.gender,
+        preferences: row.preferences ?? {},
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt
+      })),
+      nextCursor: hasMore && lastRow ? lastRow.id : null,
+      hasMore
+    };
   }
 }

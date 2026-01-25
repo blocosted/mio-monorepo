@@ -1,4 +1,8 @@
 @import 'tailwindcss';
+@config '../../tailwind.config.ts';
+
+@source '../../**/*.{ts,tsx}';
+@source '../../../../packages/shared/src/ui/**/*.{ts,tsx}';
 
 :root {
   --background: #fafafa;
@@ -13,6 +17,14 @@
   --muted-foreground: #6b7280;
   --border: #e5e7eb;
   --radius: 0.75rem;
+  --card: #ffffff;
+  --card-foreground: #171717;
+  --popover: #ffffff;
+  --popover-foreground: #171717;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --input: #e5e7eb;
+  --ring: #6366f1;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -24,6 +36,14 @@
     --secondary: #1f2937;
     --secondary-foreground: #e5e7eb;
     --border: #374151;
+    --card: #1c1c1c;
+    --card-foreground: #ededed;
+    --popover: #1c1c1c;
+    --popover-foreground: #ededed;
+    --destructive: #dc2626;
+    --destructive-foreground: #ffffff;
+    --input: #374151;
+    --ring: #818cf8;
   }
 }
 

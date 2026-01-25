@@ -6,14 +6,14 @@
 
 import 'reflect-metadata';
 
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq, gt, ilike, type SQL } from 'drizzle-orm';
 import { inject, injectable } from 'inversify';
 
 import type { DatabaseConnection } from '@mio/shared/server/connections/db';
 import { stories } from '@mio/db/schema';
-import { StoryStatus } from '@mio/shared/types';
+import { clampLimit, StoryStatus } from '@mio/shared/types';
 
-import type { CreateStoryRowInput, EnrichedConcept, StoryRow } from './stories.service.types';
+import type { CreateStoryRowInput, EnrichedConcept, PaginatedStoriesResult, StoryFilterOptions, StoryPaginationOptions, StoryRow } from './stories.service.types';
 import { IocConnection } from '../../ioc/ioc.types';
 
 @injectable()
@@ -133,5 +133,61 @@ export class StoriesStore {
     const result = await this.db.delete(stories).where(eq(stories.id, id)).returning({ id: stories.id });
 
     return result.length > 0;
+  }
+
+  /**
+   * Find stories with cursor-based pagination
+   */
+  async findPaginated(filters: StoryFilterOptions, pagination: StoryPaginationOptions): Promise<PaginatedStoriesResult> {
+    const limit = clampLimit(pagination.limit);
+    const conditions: SQL[] = [];
+
+    if (filters.status) {
+      conditions.push(eq(stories.status, filters.status));
+    }
+
+    if (filters.childProfileId) {
+      conditions.push(eq(stories.childProfileId, filters.childProfileId));
+    }
+
+    if (filters.search) {
+      conditions.push(ilike(stories.initialPrompt, `%${filters.search}%`));
+    }
+
+    // Add cursor condition
+    if (pagination.cursor) {
+      conditions.push(gt(stories.id, pagination.cursor));
+    }
+
+    let query = this.db
+      .select()
+      .from(stories)
+      .orderBy(stories.id)
+      .limit(limit + 1)
+      .$dynamic();
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    const rows = await query;
+    const hasMore = rows.length > limit;
+    const resultRows = hasMore ? rows.slice(0, limit) : rows;
+    const lastRow = resultRows[resultRows.length - 1];
+
+    return {
+      rows: resultRows.map((row) => ({
+        id: row.id,
+        childProfileId: row.childProfileId,
+        initialPrompt: row.initialPrompt,
+        finalAudioUrl: row.finalAudioUrl,
+        duration: row.duration,
+        status: row.status,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt
+      })),
+      nextCursor: hasMore && lastRow ? lastRow.id : null,
+      hasMore
+    };
   }
 }

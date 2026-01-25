@@ -192,3 +192,33 @@ export interface CreateAudioAssetInput {
   duration: number;
   cacheKey?: string;
 }
+
+// =============================================================================
+// Pagination Types
+// =============================================================================
+
+/**
+ * Cursor pagination options for Stories
+ */
+export interface StoryPaginationOptions {
+  cursor?: string;
+  limit?: number;
+}
+
+/**
+ * Filter options for Stories pagination
+ */
+export interface StoryFilterOptions {
+  status?: StoryStatus;
+  childProfileId?: string;
+  search?: string;
+}
+
+/**
+ * Paginated result for Stories
+ */
+export interface PaginatedStoriesResult {
+  rows: StoryRow[];
+  nextCursor: string | null;
+  hasMore: boolean;
+}

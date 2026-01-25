@@ -8,11 +8,11 @@
 
 import 'reflect-metadata';
 
-import { and, desc, eq, type SQL, sql } from 'drizzle-orm';
+import { and, desc, eq, gt, ilike, type SQL, sql } from 'drizzle-orm';
 import { inject, injectable } from 'inversify';
 
 import type { DatabaseConnection } from '@mio/shared/server/connections/db';
-import type { AmbianceEnvironment, AudioMood, TimeOfDay, WeatherCondition } from '@mio/shared/types';
+import { clampLimit, type AmbianceEnvironment, type AudioMood, type TimeOfDay, type WeatherCondition } from '@mio/shared/types';
 import { audioLibraryAmbiance } from '@mio/db/schema';
 
 import { IocConnection } from '../../ioc/ioc.types';
@@ -101,6 +101,35 @@ export interface AmbianceLibraryStats {
   byEnvironment: Record<string, number>;
   byMood: Record<string, number>;
   topUsed: StoredAmbiance[];
+}
+
+/**
+ * Cursor pagination options for Ambiance
+ */
+export interface AmbiancePaginationOptions {
+  cursor?: string;
+  limit?: number;
+}
+
+/**
+ * Filter options for Ambiance pagination
+ */
+export interface AmbianceFilterOptions {
+  environment?: AmbianceEnvironment;
+  subEnvironment?: string;
+  timeOfDay?: TimeOfDay;
+  weather?: WeatherCondition;
+  mood?: AudioMood;
+  search?: string;
+}
+
+/**
+ * Paginated result for Ambiance
+ */
+export interface PaginatedAmbianceResult {
+  rows: StoredAmbiance[];
+  nextCursor: string | null;
+  hasMore: boolean;
 }
 
 /**
@@ -269,4 +298,62 @@ export class AmbianceLibraryStore {
     };
   }
 
+  /**
+   * Find Ambiance with cursor-based pagination
+   */
+  async findPaginated(filters: AmbianceFilterOptions, pagination: AmbiancePaginationOptions): Promise<PaginatedAmbianceResult> {
+    const limit = clampLimit(pagination.limit);
+    const conditions: SQL[] = [];
+
+    if (filters.environment) {
+      conditions.push(eq(audioLibraryAmbiance.environment, filters.environment));
+    }
+
+    if (filters.subEnvironment) {
+      conditions.push(eq(audioLibraryAmbiance.subEnvironment, filters.subEnvironment));
+    }
+
+    if (filters.timeOfDay) {
+      conditions.push(eq(audioLibraryAmbiance.timeOfDay, filters.timeOfDay));
+    }
+
+    if (filters.weather) {
+      conditions.push(eq(audioLibraryAmbiance.weather, filters.weather));
+    }
+
+    if (filters.mood) {
+      conditions.push(eq(audioLibraryAmbiance.mood, filters.mood));
+    }
+
+    if (filters.search) {
+      conditions.push(ilike(audioLibraryAmbiance.canonicalKey, `%${filters.search}%`));
+    }
+
+    // Add cursor condition
+    if (pagination.cursor) {
+      conditions.push(gt(audioLibraryAmbiance.id, pagination.cursor));
+    }
+
+    let query = this.db
+      .select()
+      .from(audioLibraryAmbiance)
+      .orderBy(audioLibraryAmbiance.id)
+      .limit(limit + 1)
+      .$dynamic();
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    const rows = await query;
+    const hasMore = rows.length > limit;
+    const resultRows = hasMore ? rows.slice(0, limit) : rows;
+    const lastRow = resultRows[resultRows.length - 1];
+
+    return {
+      rows: resultRows.map(this.mapRow),
+      nextCursor: hasMore && lastRow ? lastRow.id : null,
+      hasMore
+    };
+  }
 }

@@ -7,11 +7,11 @@
 
 import 'reflect-metadata';
 
-import { and, desc, eq, ilike, or, type SQL, sql } from 'drizzle-orm';
+import { and, desc, eq, gt, ilike, lt, or, type SQL, sql } from 'drizzle-orm';
 import { inject, injectable } from 'inversify';
 
 import type { DatabaseConnection } from '@mio/shared/server/connections/db';
-import type { VoiceAge, VoiceGender, VoiceUseCase } from '@mio/shared/types';
+import { clampLimit, type VoiceAge, type VoiceGender, type VoiceUseCase } from '@mio/shared/types';
 import { elevenLabsVoices } from '@mio/db/schema';
 
 import { IocConnection } from '../../ioc/ioc.types';
@@ -51,6 +51,23 @@ export interface VoiceFilterOptions {
   accent?: string;
   isHighQuality?: boolean;
   search?: string;
+}
+
+/**
+ * Cursor pagination options
+ */
+export interface VoicePaginationOptions {
+  cursor?: string;
+  limit?: number;
+}
+
+/**
+ * Paginated result
+ */
+export interface PaginatedVoicesResult {
+  rows: VoiceRow[];
+  nextCursor: string | null;
+  hasMore: boolean;
 }
 
 /**
@@ -233,5 +250,68 @@ export class VoiceRegistryStore {
   async countByUseCase(useCase: VoiceUseCase): Promise<number> {
     const voices = await this.findByUseCase(useCase);
     return voices.length;
+  }
+
+  /**
+   * Find voices with cursor-based pagination
+   */
+  async findPaginated(filters: VoiceFilterOptions, pagination: VoicePaginationOptions): Promise<PaginatedVoicesResult> {
+    const limit = clampLimit(pagination.limit);
+    const conditions: SQL[] = [];
+
+    if (filters.gender) {
+      conditions.push(eq(elevenLabsVoices.gender, filters.gender));
+    }
+
+    if (filters.age) {
+      conditions.push(eq(elevenLabsVoices.age, filters.age));
+    }
+
+    if (filters.useCase) {
+      conditions.push(eq(elevenLabsVoices.useCase, filters.useCase));
+    }
+
+    if (filters.language) {
+      conditions.push(eq(elevenLabsVoices.language, filters.language));
+    }
+
+    if (filters.accent) {
+      conditions.push(eq(elevenLabsVoices.accent, filters.accent));
+    }
+
+    if (filters.isHighQuality !== undefined) {
+      conditions.push(eq(elevenLabsVoices.isHighQuality, filters.isHighQuality));
+    }
+
+    if (filters.search) {
+      conditions.push(or(ilike(elevenLabsVoices.name, `%${filters.search}%`), ilike(elevenLabsVoices.description, `%${filters.search}%`))!);
+    }
+
+    // Add cursor condition
+    if (pagination.cursor) {
+      conditions.push(gt(elevenLabsVoices.id, pagination.cursor));
+    }
+
+    let query = this.db
+      .select()
+      .from(elevenLabsVoices)
+      .orderBy(elevenLabsVoices.id)
+      .limit(limit + 1)
+      .$dynamic();
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    const rows = await query;
+    const hasMore = rows.length > limit;
+    const resultRows = hasMore ? rows.slice(0, limit) : rows;
+    const lastRow = resultRows[resultRows.length - 1];
+
+    return {
+      rows: resultRows,
+      nextCursor: hasMore && lastRow ? lastRow.id : null,
+      hasMore
+    };
   }
 }

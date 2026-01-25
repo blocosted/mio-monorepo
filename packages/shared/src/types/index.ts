@@ -16,3 +16,5 @@ export * from './profiles.types';
 export * from './script.types';
 // Story types and enums
 export * from './stories.types';
+// Pagination types
+export * from './pagination.types';

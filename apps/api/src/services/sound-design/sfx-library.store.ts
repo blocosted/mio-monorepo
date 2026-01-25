@@ -8,11 +8,11 @@
 
 import 'reflect-metadata';
 
-import { and, desc, eq, type SQL, sql } from 'drizzle-orm';
+import { and, desc, eq, gt, ilike, type SQL, sql } from 'drizzle-orm';
 import { inject, injectable } from 'inversify';
 
 import type { DatabaseConnection } from '@mio/shared/server/connections/db';
-import type { AudioIntensity, SfxEnvironment, SfxLibraryCategory } from '@mio/shared/types';
+import { clampLimit, type AudioIntensity, type SfxEnvironment, type SfxLibraryCategory } from '@mio/shared/types';
 import { audioLibrarySfx } from '@mio/db/schema';
 
 import { IocConnection } from '../../ioc/ioc.types';
@@ -95,6 +95,34 @@ export interface SfxLibraryStats {
   byCategory: Record<string, number>;
   byEnvironment: Record<string, number>;
   topUsed: StoredSfx[];
+}
+
+/**
+ * Cursor pagination options for SFX
+ */
+export interface SfxPaginationOptions {
+  cursor?: string;
+  limit?: number;
+}
+
+/**
+ * Filter options for SFX pagination
+ */
+export interface SfxFilterOptions {
+  category?: SfxLibraryCategory;
+  subcategory?: string;
+  environment?: SfxEnvironment;
+  intensity?: AudioIntensity;
+  search?: string;
+}
+
+/**
+ * Paginated result for SFX
+ */
+export interface PaginatedSfxResult {
+  rows: StoredSfx[];
+  nextCursor: string | null;
+  hasMore: boolean;
 }
 
 /**
@@ -255,4 +283,58 @@ export class SfxLibraryStore {
     };
   }
 
+  /**
+   * Find SFX with cursor-based pagination
+   */
+  async findPaginated(filters: SfxFilterOptions, pagination: SfxPaginationOptions): Promise<PaginatedSfxResult> {
+    const limit = clampLimit(pagination.limit);
+    const conditions: SQL[] = [];
+
+    if (filters.category) {
+      conditions.push(eq(audioLibrarySfx.category, filters.category));
+    }
+
+    if (filters.subcategory) {
+      conditions.push(eq(audioLibrarySfx.subcategory, filters.subcategory));
+    }
+
+    if (filters.environment) {
+      conditions.push(eq(audioLibrarySfx.environment, filters.environment));
+    }
+
+    if (filters.intensity) {
+      conditions.push(eq(audioLibrarySfx.intensity, filters.intensity));
+    }
+
+    if (filters.search) {
+      conditions.push(ilike(audioLibrarySfx.canonicalKey, `%${filters.search}%`));
+    }
+
+    // Add cursor condition
+    if (pagination.cursor) {
+      conditions.push(gt(audioLibrarySfx.id, pagination.cursor));
+    }
+
+    let query = this.db
+      .select()
+      .from(audioLibrarySfx)
+      .orderBy(audioLibrarySfx.id)
+      .limit(limit + 1)
+      .$dynamic();
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    const rows = await query;
+    const hasMore = rows.length > limit;
+    const resultRows = hasMore ? rows.slice(0, limit) : rows;
+    const lastRow = resultRows[resultRows.length - 1];
+
+    return {
+      rows: resultRows.map(this.mapRow),
+      nextCursor: hasMore && lastRow ? lastRow.id : null,
+      hasMore
+    };
+  }
 }

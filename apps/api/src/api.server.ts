@@ -17,6 +17,17 @@ import { Elysia } from 'elysia';
 import { ENV_DEFAULTS, environment } from '@mio/shared/constants/environment.constants';
 
 import { jobsHandlers, profilesHandlers, storiesHandlers } from './handlers';
+
+/**
+ * Parse CORS origin configuration
+ * Supports: single origin, comma-separated origins, or 'true' for all origins
+ */
+function parseCorsOrigin(origin: string): string | string[] | boolean {
+  if (origin === 'true') return true;
+  if (origin.includes(',')) return origin.split(',').map((o) => o.trim());
+  return origin;
+}
+import { adminHandlers } from './handlers/admin/admin.handlers';
 import { workflowsHandlers } from './handlers/workflows';
 import { errorHandler } from './plugins/errorHandler';
 
@@ -34,14 +45,15 @@ export function createApiApp() {
             { name: 'profiles', description: 'Child profile management' },
             { name: 'stories', description: 'Story generation and management' },
             { name: 'jobs', description: 'Generation job tracking' },
-            { name: 'workflows', description: 'Upstash Workflow execution (QStash callbacks)' }
+            { name: 'workflows', description: 'Upstash Workflow execution (QStash callbacks)' },
+            { name: 'admin', description: 'Admin backoffice endpoints' }
           ]
         }
       })
     )
     .use(
       cors({
-        origin: environment.CORS_ORIGIN ?? ENV_DEFAULTS.CORS_ORIGIN,
+        origin: parseCorsOrigin(environment.CORS_ORIGIN ?? ENV_DEFAULTS.CORS_ORIGIN),
         credentials: true
       })
     )
@@ -50,6 +62,7 @@ export function createApiApp() {
     .use(storiesHandlers)
     .use(jobsHandlers)
     .use(workflowsHandlers)
+    .use(adminHandlers)
     .get('/health', () => ({ status: 'ok', timestamp: new Date().toISOString() }));
 }
 
