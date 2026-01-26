@@ -7,7 +7,10 @@
 'use client';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api/client';
+
+import type { GenerateStoryBody } from '@mio/shared/clients/mio';
+
+import { getMioApiClient } from '@/lib/api/mio-client';
 
 // Enrich Story
 export function useEnrichStory() {
@@ -15,15 +18,13 @@ export function useEnrichStory() {
 
   return useMutation({
     mutationFn: async (storyId: string) => {
-      return apiClient<{ id: string; status: string }>(`/stories/${storyId}/enrich`, {
-        method: 'POST',
-        body: JSON.stringify({}),
-      });
+      const client = getMioApiClient();
+      return client.stories.enrichStory(storyId);
     },
     onSuccess: (_, storyId) => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'stories', storyId] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'stories'] });
-    },
+    }
   });
 }
 
@@ -34,26 +35,19 @@ interface GenerateStoryInput {
   targetDurationMinutes?: number;
 }
 
-interface GenerateStoryResponse {
-  jobId: string;
-  workflowRunId: string;
-  message: string;
-}
-
 export function useGenerateStory() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ storyId, answers = [], targetDurationMinutes = 5 }: GenerateStoryInput) => {
-      return apiClient<GenerateStoryResponse>(`/stories/${storyId}/generate`, {
-        method: 'POST',
-        body: JSON.stringify({ answers, targetDurationMinutes }),
-      });
+      const client = getMioApiClient();
+      const body: GenerateStoryBody = { answers, targetDurationMinutes };
+      return client.stories.generateStory(storyId, body);
     },
     onSuccess: (_, { storyId }) => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'stories', storyId] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'stories'] });
-    },
+    }
   });
 }
 
@@ -63,13 +57,12 @@ export function useDeleteStory() {
 
   return useMutation({
     mutationFn: async (storyId: string) => {
-      return apiClient<null>(`/stories/${storyId}`, {
-        method: 'DELETE',
-      });
+      const client = getMioApiClient();
+      return client.stories.deleteStory(storyId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'stories'] });
-    },
+    }
   });
 }
 
@@ -84,14 +77,12 @@ export function useUpdateStoryPrompt() {
 
   return useMutation({
     mutationFn: async ({ storyId, prompt }: UpdateStoryInput) => {
-      return apiClient<{ id: string; prompt: string }>(`/admin/stories/${storyId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ prompt }),
-      });
+      const client = getMioApiClient();
+      return client.admin.updateStoryPrompt(storyId, prompt);
     },
     onSuccess: (_, { storyId }) => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'stories', storyId] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'stories'] });
-    },
+    }
   });
 }

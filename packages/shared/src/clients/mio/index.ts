@@ -5,6 +5,7 @@ import type { MioApi } from '@mio/api/api.server';
 
 import { type Diagnose, DiagnoseSeverity, ErrorCodes, errorFromCode } from '../../constants/error.constants';
 import { publicEnvironment } from '../../constants/public-environment.constants';
+import { MioApiAdminClient } from './admin/admin.client';
 import { MioApiJobsClient } from './jobs/jobs.client';
 import { MioApiProfilesClient } from './profiles/profiles.client';
 import { MioApiStoriesClient } from './stories/stories.client';
@@ -101,6 +102,7 @@ export class MioApiClient {
   public readonly api: MioTreatyClient;
   private _headers: Record<string, string> = {};
 
+  public readonly admin: MioApiAdminClient;
   public readonly stories: MioApiStoriesClient;
   public readonly profiles: MioApiProfilesClient;
   public readonly jobs: MioApiJobsClient;
@@ -112,6 +114,7 @@ export class MioApiClient {
       this.api = createApiClient(options?.apiUrl);
     }
 
+    this.admin = new MioApiAdminClient(this);
     this.stories = new MioApiStoriesClient(this);
     this.profiles = new MioApiProfilesClient(this);
     this.jobs = new MioApiJobsClient(this);
@@ -130,6 +133,8 @@ export class MioApiClient {
   }
 }
 
+export * from './admin/index';
+export * from './admin/admin.client';
 export * from './jobs/index';
 export * from './jobs/jobs.client';
 export * from './profiles/index';

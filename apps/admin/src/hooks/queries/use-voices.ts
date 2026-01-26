@@ -7,56 +7,24 @@
 'use client';
 
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api/client';
 
-export interface Voice {
-  id: string;
-  voiceId: string;
-  name: string;
-  gender: string;
-  age: string;
-  language: string;
-  locale: string;
-  accent: string;
-  useCase: string;
-  category: string;
-  description: string;
-  previewUrl: string;
-  isHighQuality: boolean;
-  labels: Record<string, string>;
-  lastSyncedAt: string;
-  createdAt: string;
-}
+import type { VoiceFilters, Voice, PaginatedResponse } from '@mio/shared/clients/mio';
 
-interface VoicesResponse {
-  data: Voice[];
-  nextCursor: string | null;
-  prevCursor: string | null;
-  hasMore: boolean;
-}
+import { getMioApiClient } from '@/lib/api/mio-client';
 
-export interface VoiceFilters {
-  search?: string;
-  gender?: string;
-  age?: string;
-  language?: string;
-  useCase?: string;
-  isHighQuality?: boolean;
-}
+export type { Voice, VoiceFilters };
 
 export function useVoices(filters: VoiceFilters = {}) {
   return useInfiniteQuery({
     queryKey: ['admin', 'voices', filters],
     queryFn: async ({ pageParam }) => {
-      return apiClient<VoicesResponse>('/admin/voices', {
-        params: {
-          ...filters,
-          cursor: pageParam,
-          limit: 20
-        }
+      const client = getMioApiClient();
+      return client.admin.getVoices(filters, {
+        cursor: pageParam,
+        limit: 20
       });
     },
     initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined
+    getNextPageParam: (lastPage: PaginatedResponse<Voice>) => lastPage.nextCursor ?? undefined
   });
 }

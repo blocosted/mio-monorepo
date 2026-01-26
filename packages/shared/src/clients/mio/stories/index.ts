@@ -45,9 +45,22 @@ export const StoryResponseSchema = t.Object({
   updatedAt: t.String()
 });
 
+export const EnrichStoryResponseSchema = t.Object({
+  id: t.String({ format: 'uuid' }),
+  status: t.String()
+});
+
+export const GenerateStoryResponseSchema = t.Object({
+  jobId: t.String({ format: 'uuid' }),
+  workflowRunId: t.String(),
+  message: t.String()
+});
+
 export type StoryIdParams = typeof StoryIdParamsSchema.static;
 export type StoryProfileIdParams = typeof StoryProfileIdParamsSchema.static;
 export type CreateStoryBody = typeof CreateStoryBodySchema.static;
 export type EnrichStoryBody = typeof EnrichStoryBodySchema.static;
 export type GenerateStoryBody = typeof GenerateStoryBodySchema.static;
 export type StoryResponse = typeof StoryResponseSchema.static;
+export type EnrichStoryResponse = typeof EnrichStoryResponseSchema.static;
+export type GenerateStoryResponse = typeof GenerateStoryResponseSchema.static;

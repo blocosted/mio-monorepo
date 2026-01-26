@@ -7,52 +7,24 @@
 'use client';
 
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api/client';
 
-export interface Story {
-  id: string;
-  childProfileId: string;
-  initialPrompt: string;
-  enrichedConcept: {
-    title?: string;
-    theme?: string;
-    [key: string]: unknown;
-  } | null;
-  script: unknown | null;
-  answers: unknown | null;
-  finalAudioUrl: string | null;
-  duration: number | null;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
-}
+import type { StoryFilters, AdminStory, PaginatedResponse } from '@mio/shared/clients/mio';
 
-interface StoriesResponse {
-  data: Story[];
-  nextCursor: string | null;
-  prevCursor: string | null;
-  hasMore: boolean;
-}
+import { getMioApiClient } from '@/lib/api/mio-client';
 
-export interface StoryFilters {
-  search?: string;
-  status?: string;
-  childProfileId?: string;
-}
+export type { AdminStory as Story, StoryFilters };
 
 export function useStories(filters: StoryFilters = {}) {
   return useInfiniteQuery({
     queryKey: ['admin', 'stories', filters],
     queryFn: async ({ pageParam }) => {
-      return apiClient<StoriesResponse>('/admin/stories', {
-        params: {
-          ...filters,
-          cursor: pageParam,
-          limit: 20
-        }
+      const client = getMioApiClient();
+      return client.admin.getStories(filters, {
+        cursor: pageParam,
+        limit: 20
       });
     },
     initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined
+    getNextPageParam: (lastPage: PaginatedResponse<AdminStory>) => lastPage.nextCursor ?? undefined
   });
 }

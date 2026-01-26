@@ -7,55 +7,24 @@
 'use client';
 
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api/client';
 
-export interface SfxTrack {
-  id: string;
-  canonicalKey: string;
-  category: string;
-  subcategory: string;
-  environment: string | null;
-  intensity: string | null;
-  prompt: string;
-  promptInfluence: number;
-  s3Url: string;
-  durationSeconds: number;
-  format: string;
-  tags: string[];
-  storyUniverses: string[];
-  usageCount: number;
-  lastUsedAt: string | null;
-  createdAt: string;
-}
+import type { SfxFilters, SfxTrack, PaginatedResponse } from '@mio/shared/clients/mio';
 
-interface SfxResponse {
-  data: SfxTrack[];
-  nextCursor: string | null;
-  prevCursor: string | null;
-  hasMore: boolean;
-}
+import { getMioApiClient } from '@/lib/api/mio-client';
 
-export interface SfxFilters {
-  search?: string;
-  category?: string;
-  subcategory?: string;
-  environment?: string;
-  intensity?: string;
-}
+export type { SfxTrack, SfxFilters };
 
 export function useSfx(filters: SfxFilters = {}) {
   return useInfiniteQuery({
     queryKey: ['admin', 'audio-library', 'sfx', filters],
     queryFn: async ({ pageParam }) => {
-      return apiClient<SfxResponse>('/admin/audio-library/sfx', {
-        params: {
-          ...filters,
-          cursor: pageParam,
-          limit: 20
-        }
+      const client = getMioApiClient();
+      return client.admin.getSfx(filters, {
+        cursor: pageParam,
+        limit: 20
       });
     },
     initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined
+    getNextPageParam: (lastPage: PaginatedResponse<SfxTrack>) => lastPage.nextCursor ?? undefined
   });
 }
