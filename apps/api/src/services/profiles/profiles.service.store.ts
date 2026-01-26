@@ -6,7 +6,7 @@
 
 import 'reflect-metadata';
 
-import { and, eq, gt, ilike, type SQL } from 'drizzle-orm';
+import { and, desc, eq, ilike, lt, or, type SQL } from 'drizzle-orm';
 import { inject, injectable } from 'inversify';
 
 import type { DatabaseConnection } from '@mio/shared/server/connections/db';
@@ -162,15 +162,27 @@ export class ProfilesStore {
       conditions.push(eq(childProfiles.isTest, filters.isTest));
     }
 
-    // Add cursor condition
+    // Add cursor condition (cursor is the ID of the last seen row)
     if (pagination.cursor) {
-      conditions.push(gt(childProfiles.id, pagination.cursor));
+      const cursorRow = await this.db
+        .select({ createdAt: childProfiles.createdAt, id: childProfiles.id })
+        .from(childProfiles)
+        .where(eq(childProfiles.id, pagination.cursor))
+        .limit(1);
+
+      const cursor = cursorRow[0];
+      if (cursor) {
+        // For DESC order: (createdAt < cursor) OR (createdAt = cursor AND id < cursorId)
+        conditions.push(
+          or(lt(childProfiles.createdAt, cursor.createdAt), and(eq(childProfiles.createdAt, cursor.createdAt), lt(childProfiles.id, cursor.id)))!
+        );
+      }
     }
 
     let query = this.db
       .select()
       .from(childProfiles)
-      .orderBy(childProfiles.id)
+      .orderBy(desc(childProfiles.createdAt), desc(childProfiles.id))
       .limit(limit + 1)
       .$dynamic();
 

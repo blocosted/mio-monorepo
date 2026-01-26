@@ -287,15 +287,27 @@ export class VoiceRegistryStore {
       conditions.push(or(ilike(elevenLabsVoices.name, `%${filters.search}%`), ilike(elevenLabsVoices.description, `%${filters.search}%`))!);
     }
 
-    // Add cursor condition
+    // Add cursor condition (cursor is the ID of the last seen row)
     if (pagination.cursor) {
-      conditions.push(gt(elevenLabsVoices.id, pagination.cursor));
+      const cursorRow = await this.db
+        .select({ createdAt: elevenLabsVoices.createdAt, id: elevenLabsVoices.id })
+        .from(elevenLabsVoices)
+        .where(eq(elevenLabsVoices.id, pagination.cursor))
+        .limit(1);
+
+      const cursor = cursorRow[0];
+      if (cursor) {
+        // For DESC order: (createdAt < cursor) OR (createdAt = cursor AND id < cursorId)
+        conditions.push(
+          or(lt(elevenLabsVoices.createdAt, cursor.createdAt), and(eq(elevenLabsVoices.createdAt, cursor.createdAt), lt(elevenLabsVoices.id, cursor.id)))!
+        );
+      }
     }
 
     let query = this.db
       .select()
       .from(elevenLabsVoices)
-      .orderBy(elevenLabsVoices.id)
+      .orderBy(desc(elevenLabsVoices.createdAt), desc(elevenLabsVoices.id))
       .limit(limit + 1)
       .$dynamic();
 

@@ -22,7 +22,7 @@ const columns: ColumnDef<Voice>[] = [
     accessorKey: "name",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Name" />,
     cell: ({ row }) => (
-      <div className="flex max-w-xs items-center gap-2">
+      <div className="flex w-32 items-center gap-2 lg:w-48">
         <span className="truncate font-medium">{row.getValue("name")}</span>
         {row.original.isHighQuality && (
           <Star className="h-3 w-3 shrink-0 fill-yellow-400 text-yellow-400" />
@@ -34,33 +34,37 @@ const columns: ColumnDef<Voice>[] = [
     accessorKey: "gender",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Gender" />,
     cell: ({ row }) => (
-      <Badge variant="outline" className="capitalize">
-        {row.getValue("gender")}
-      </Badge>
+      <div className="w-20">
+        <Badge variant="outline" className="capitalize">
+          {row.getValue("gender")}
+        </Badge>
+      </div>
     ),
   },
   {
     accessorKey: "age",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Age" />,
-    cell: ({ row }) => <span className="capitalize">{row.getValue("age")}</span>,
+    cell: ({ row }) => <span className="block w-16 capitalize">{row.getValue("age")}</span>,
   },
   {
     accessorKey: "language",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Language" />,
-    cell: ({ row }) => row.getValue("language"),
+    cell: ({ row }) => <span className="block w-20">{row.getValue("language")}</span>,
   },
   {
     accessorKey: "accent",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Accent" />,
-    cell: ({ row }) => <span className="block max-w-32 truncate">{row.getValue("accent") || "-"}</span>,
+    cell: ({ row }) => <span className="block w-24 truncate lg:w-32">{row.getValue("accent") || "-"}</span>,
   },
   {
     accessorKey: "useCase",
     header: "Use Case",
     cell: ({ row }) => (
-      <Badge variant="secondary" className="capitalize">
-        {row.getValue("useCase")}
-      </Badge>
+      <div className="w-24">
+        <Badge variant="secondary" className="capitalize">
+          {row.getValue("useCase")}
+        </Badge>
+      </div>
     ),
   },
   {
@@ -68,16 +72,18 @@ const columns: ColumnDef<Voice>[] = [
     header: "Preview",
     cell: ({ row }) => {
       const previewUrl = row.original.previewUrl;
-      if (!previewUrl) return "-";
+      if (!previewUrl) return <span className="block w-12">-</span>;
       return (
-        <PlayButton
-          track={{
-            id: row.original.id,
-            name: row.original.name,
-            url: previewUrl,
-            type: "voice",
-          }}
-        />
+        <div className="w-12">
+          <PlayButton
+            track={{
+              id: row.original.id,
+              name: row.original.name,
+              url: previewUrl,
+              type: "voice",
+            }}
+          />
+        </div>
       );
     },
   },
@@ -86,7 +92,7 @@ const columns: ColumnDef<Voice>[] = [
     header: ({ column }) => <DataTableColumnHeader column={column} title="Last Synced" />,
     cell: ({ row }) => {
       const date = row.getValue("lastSyncedAt") as string;
-      return date ? format(new Date(date), "MMM d, yyyy") : "-";
+      return <span className="block w-24">{date ? format(new Date(date), "MMM d, yyyy") : "-"}</span>;
     },
   },
 ];

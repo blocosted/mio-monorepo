@@ -42,7 +42,7 @@ const columns: ColumnDef<Story>[] = [
       return (
         <Link
           href={`/dashboard/stories/${row.original.id}`}
-          className="block max-w-xs truncate font-medium hover:underline"
+          className="block w-40 truncate font-medium hover:underline lg:w-64"
         >
           {title}
         </Link>
@@ -55,9 +55,11 @@ const columns: ColumnDef<Story>[] = [
     cell: ({ row }) => {
       const status = row.getValue("status") as string;
       return (
-        <Badge className={statusColors[status] ?? "bg-gray-100 text-gray-800"}>
-          {status}
-        </Badge>
+        <div className="w-24">
+          <Badge className={statusColors[status] ?? "bg-gray-100 text-gray-800"}>
+            {status}
+          </Badge>
+        </div>
       );
     },
   },
@@ -66,35 +68,39 @@ const columns: ColumnDef<Story>[] = [
     header: ({ column }) => <DataTableColumnHeader column={column} title="Theme" />,
     cell: ({ row }) => {
       const themes = row.original.enrichedConcept?.themes;
-      if (!themes || themes.length === 0) return "-";
+      if (!themes || themes.length === 0) return <span className="block w-24">-</span>;
       return (
-        <Badge variant="outline" className="capitalize">
-          {themes[0]}
-        </Badge>
+        <div className="w-24">
+          <Badge variant="outline" className="truncate capitalize">
+            {themes[0]}
+          </Badge>
+        </div>
       );
     },
   },
   {
     accessorKey: "duration",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Duration" />,
-    cell: ({ row }) => formatDuration(row.getValue("duration")),
+    cell: ({ row }) => <span className="block w-16">{formatDuration(row.getValue("duration"))}</span>,
   },
   {
     id: "audio",
     header: "Audio",
     cell: ({ row }) => {
       const url = row.original.finalAudioUrl;
-      if (!url) return "-";
+      if (!url) return <span className="block w-12">-</span>;
       const title = row.original.enrichedConcept?.title || row.original.initialPrompt;
       return (
-        <PlayButton
-          track={{
-            id: row.original.id,
-            name: title,
-            url,
-            type: "story",
-          }}
-        />
+        <div className="w-12">
+          <PlayButton
+            track={{
+              id: row.original.id,
+              name: title,
+              url,
+              type: "story",
+            }}
+          />
+        </div>
       );
     },
   },
@@ -103,18 +109,20 @@ const columns: ColumnDef<Story>[] = [
     header: ({ column }) => <DataTableColumnHeader column={column} title="Created" />,
     cell: ({ row }) => {
       const date = row.getValue("createdAt") as string;
-      return date ? format(new Date(date), "MMM d, yyyy HH:mm") : "-";
+      return <span className="block w-32">{date ? format(new Date(date), "MMM d, yyyy HH:mm") : "-"}</span>;
     },
   },
   {
     id: "actions",
     header: "",
     cell: ({ row }) => (
-      <Button asChild variant="ghost" size="sm">
-        <Link href={`/dashboard/stories/${row.original.id}`}>
-          <ExternalLink className="h-4 w-4" />
-        </Link>
-      </Button>
+      <div className="w-10">
+        <Button asChild variant="ghost" size="sm">
+          <Link href={`/dashboard/stories/${row.original.id}`}>
+            <ExternalLink className="h-4 w-4" />
+          </Link>
+        </Button>
+      </div>
     ),
   },
 ];

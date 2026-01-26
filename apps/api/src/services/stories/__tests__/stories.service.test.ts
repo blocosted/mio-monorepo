@@ -272,6 +272,55 @@ describe('StoriesService', () => {
       expect(secondPage.rows.length).toBe(1);
       expect(secondPage.hasMore).toBe(false);
     });
+
+    it('returns stories ordered by createdAt DESC (newest first)', async () => {
+      const profile = await profilesStore.insert({
+        firstName: 'Emma',
+        age: 7,
+        gender: Gender.Girl
+      });
+
+      // Create stories with small delays to ensure different timestamps
+      const story1 = await service.create({ childProfileId: profile.id, prompt: 'First story' });
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      const story2 = await service.create({ childProfileId: profile.id, prompt: 'Second story' });
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      const story3 = await service.create({ childProfileId: profile.id, prompt: 'Third story' });
+
+      const result = await service.findPaginated({}, { limit: 10 });
+
+      // Newest story should be first
+      expect(result.rows[0].id).toBe(story3.id);
+      expect(result.rows[1].id).toBe(story2.id);
+      expect(result.rows[2].id).toBe(story1.id);
+    });
+
+    it('cursor pagination maintains DESC order across pages', async () => {
+      const profile = await profilesStore.insert({
+        firstName: 'Emma',
+        age: 7,
+        gender: Gender.Girl
+      });
+
+      // Create 4 stories with delays
+      const story1 = await service.create({ childProfileId: profile.id, prompt: 'Story 1' });
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      const story2 = await service.create({ childProfileId: profile.id, prompt: 'Story 2' });
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      const story3 = await service.create({ childProfileId: profile.id, prompt: 'Story 3' });
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      const story4 = await service.create({ childProfileId: profile.id, prompt: 'Story 4' });
+
+      // First page: should get newest 2 (story4, story3)
+      const firstPage = await service.findPaginated({}, { limit: 2 });
+      expect(firstPage.rows[0].id).toBe(story4.id);
+      expect(firstPage.rows[1].id).toBe(story3.id);
+
+      // Second page: should get older 2 (story2, story1)
+      const secondPage = await service.findPaginated({}, { limit: 2, cursor: firstPage.nextCursor! });
+      expect(secondPage.rows[0].id).toBe(story2.id);
+      expect(secondPage.rows[1].id).toBe(story1.id);
+    });
   });
 
   describe('updatePrompt()', () => {

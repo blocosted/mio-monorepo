@@ -21,23 +21,25 @@ const columns: ColumnDef<Profile>[] = [
   {
     accessorKey: "firstName",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Name" />,
-    cell: ({ row }) => <span className="block max-w-xs truncate font-medium">{row.getValue("firstName")}</span>,
+    cell: ({ row }) => <span className="block w-32 truncate font-medium lg:w-48">{row.getValue("firstName")}</span>,
   },
   {
     accessorKey: "age",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Age" />,
     cell: ({ row }) => {
       const age = row.getValue("age") as number;
-      return age ? `${age} years` : "-";
+      return <span className="block w-20">{age ? `${age} years` : "-"}</span>;
     },
   },
   {
     accessorKey: "gender",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Gender" />,
     cell: ({ row }) => (
-      <Badge variant="outline" className="capitalize">
-        {row.getValue("gender")}
-      </Badge>
+      <div className="w-20">
+        <Badge variant="outline" className="capitalize">
+          {row.getValue("gender")}
+        </Badge>
+      </div>
     ),
   },
   {
@@ -46,9 +48,9 @@ const columns: ColumnDef<Profile>[] = [
     cell: ({ row }) => {
       const preferences = row.original.preferences as { favoriteThemes?: string[] } | null;
       const themes = preferences?.favoriteThemes ?? [];
-      if (themes.length === 0) return "-";
+      if (themes.length === 0) return <span className="block w-32 lg:w-48">-</span>;
       return (
-        <div className="flex flex-wrap gap-1">
+        <div className="flex w-32 flex-wrap gap-1 lg:w-48">
           {themes.slice(0, 3).map((theme: string) => (
             <Badge key={theme} variant="secondary" className="text-xs">
               {theme}
@@ -68,7 +70,7 @@ const columns: ColumnDef<Profile>[] = [
     header: ({ column }) => <DataTableColumnHeader column={column} title="Created" />,
     cell: ({ row }) => {
       const date = row.getValue("createdAt") as string;
-      return date ? format(new Date(date), "MMM d, yyyy") : "-";
+      return <span className="block w-28">{date ? format(new Date(date), "MMM d, yyyy") : "-"}</span>;
     },
   },
 ];

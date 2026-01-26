@@ -6,7 +6,7 @@
 
 import 'reflect-metadata';
 
-import { and, desc, eq, gt, ilike, type SQL } from 'drizzle-orm';
+import { and, desc, eq, ilike, lt, or, type SQL } from 'drizzle-orm';
 import { inject, injectable } from 'inversify';
 
 import type { DatabaseConnection } from '@mio/shared/server/connections/db';
@@ -167,15 +167,27 @@ export class StoriesStore {
       conditions.push(ilike(stories.initialPrompt, `%${filters.search}%`));
     }
 
-    // Add cursor condition
+    // Add cursor condition (cursor is the ID of the last seen row)
     if (pagination.cursor) {
-      conditions.push(gt(stories.id, pagination.cursor));
+      const cursorRow = await this.db
+        .select({ createdAt: stories.createdAt, id: stories.id })
+        .from(stories)
+        .where(eq(stories.id, pagination.cursor))
+        .limit(1);
+
+      const cursor = cursorRow[0];
+      if (cursor) {
+        // For DESC order: (createdAt < cursor) OR (createdAt = cursor AND id < cursorId)
+        conditions.push(
+          or(lt(stories.createdAt, cursor.createdAt), and(eq(stories.createdAt, cursor.createdAt), lt(stories.id, cursor.id)))!
+        );
+      }
     }
 
     let query = this.db
       .select()
       .from(stories)
-      .orderBy(stories.id)
+      .orderBy(desc(stories.createdAt), desc(stories.id))
       .limit(limit + 1)
       .$dynamic();
 
