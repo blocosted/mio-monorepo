@@ -16,7 +16,7 @@ import type { ProfilesService } from '../profiles';
 import type { StorageService } from '../storage';
 import type { AudioAssetsService } from './audio-assets.service';
 import type { GenerationJobsService } from './generation-jobs.service';
-import type { CreateStoryInput, EnrichedConcept, GenerationJob, Story } from './stories.service.types';
+import type { CreateStoryInput, EnrichedConcept, GenerationJob, PaginatedStoriesResult, Story, StoryFilterOptions, StoryPaginationOptions } from './stories.service.types';
 import type { StoriesStore } from './stories.service.store';
 import { getInstance, IocService, IocStore } from '../../ioc';
 import { mapRowToStory } from './stories.service.map';
@@ -166,5 +166,26 @@ export class StoriesService {
    */
   async updateJobWorkflowRunId(jobId: string, workflowRunId: string): Promise<void> {
     await this.jobsService.updateWorkflowRunId(jobId, workflowRunId);
+  }
+
+  /**
+   * Find stories with cursor-based pagination (delegates to store)
+   */
+  async findPaginated(filters: StoryFilterOptions, pagination: StoryPaginationOptions): Promise<PaginatedStoriesResult> {
+    return this.store.findPaginated(filters, pagination);
+  }
+
+  /**
+   * Update the initial prompt for a story (only for draft stories)
+   */
+  async updatePrompt(id: string, prompt: string): Promise<void> {
+    const story = await this.store.findById(id);
+    if (!story) {
+      throw new AppError(ErrorCodes.NotFound, { name: 'StoryNotFound' });
+    }
+    if (story.status !== 'draft') {
+      throw new AppError(ErrorCodes.ValidationError, { name: 'StoryNotDraft' });
+    }
+    await this.store.updatePrompt(id, prompt);
   }
 }

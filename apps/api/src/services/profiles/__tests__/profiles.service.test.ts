@@ -259,4 +259,64 @@ describe('ProfilesService', () => {
       expect(deleted).toBe(false);
     });
   });
+
+  describe('findPaginated()', () => {
+    it('returns empty result when no profiles', async () => {
+      const result = await service.findPaginated({}, { limit: 10 });
+
+      expect(result.rows).toEqual([]);
+      expect(result.nextCursor).toBeNull();
+      expect(result.hasMore).toBe(false);
+    });
+
+    it('returns paginated profiles', async () => {
+      await service.create({ firstName: 'Emma', age: 7, gender: Gender.Girl });
+      await service.create({ firstName: 'Lucas', age: 5, gender: Gender.Boy });
+      await service.create({ firstName: 'Alex', age: 8, gender: Gender.Neutral });
+
+      const result = await service.findPaginated({}, { limit: 10 });
+
+      expect(result.rows.length).toBe(3);
+      expect(result.hasMore).toBe(false);
+    });
+
+    it('filters by gender', async () => {
+      await service.create({ firstName: 'Emma', age: 7, gender: Gender.Girl });
+      await service.create({ firstName: 'Lucas', age: 5, gender: Gender.Boy });
+      await service.create({ firstName: 'Sophie', age: 6, gender: Gender.Girl });
+
+      const result = await service.findPaginated({ gender: Gender.Girl }, { limit: 10 });
+
+      expect(result.rows.length).toBe(2);
+      expect(result.rows.every((p) => p.gender === Gender.Girl)).toBe(true);
+    });
+
+    it('filters by search term', async () => {
+      await service.create({ firstName: 'Emma', age: 7, gender: Gender.Girl });
+      await service.create({ firstName: 'Emilie', age: 5, gender: Gender.Girl });
+      await service.create({ firstName: 'Lucas', age: 8, gender: Gender.Boy });
+
+      const result = await service.findPaginated({ search: 'Em' }, { limit: 10 });
+
+      expect(result.rows.length).toBe(2);
+      expect(result.rows.every((p) => p.firstName.includes('Em'))).toBe(true);
+    });
+
+    it('paginates with cursor', async () => {
+      await service.create({ firstName: 'A', age: 5, gender: Gender.Girl });
+      await service.create({ firstName: 'B', age: 6, gender: Gender.Boy });
+      await service.create({ firstName: 'C', age: 7, gender: Gender.Neutral });
+
+      const firstPage = await service.findPaginated({}, { limit: 2 });
+
+      expect(firstPage.rows.length).toBe(2);
+      expect(firstPage.hasMore).toBe(true);
+      expect(firstPage.nextCursor).not.toBeNull();
+
+      const secondPage = await service.findPaginated({}, { limit: 2, cursor: firstPage.nextCursor! });
+
+      expect(secondPage.rows.length).toBe(1);
+      expect(secondPage.hasMore).toBe(false);
+    });
+  });
 });

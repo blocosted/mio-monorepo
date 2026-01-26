@@ -11,7 +11,7 @@ import { inject, injectable } from 'inversify';
 
 import type { CacheService } from '../cache/cache.service';
 import type { FindMusicParams, MusicLookupResult, StoredMusic, StoreMusicParams } from './music-library.service.types';
-import type { MusicLibraryStore } from './music-library.store';
+import type { MusicFilterOptions, MusicLibraryStore, MusicPaginationOptions, PaginatedMusicResult } from './music-library.store';
 import { IocService, IocStore } from '../../ioc/ioc.types';
 
 /** Redis cache TTL for music lookups (1 hour) */
@@ -83,5 +83,12 @@ export class MusicLibraryService {
   private buildCacheKey(params: FindMusicParams): string {
     const parts = [CACHE_PREFIX, params.mood, params.intensity ?? 'any', params.tempo ?? 'any'];
     return parts.join(':');
+  }
+
+  /**
+   * Find music with cursor-based pagination (delegates to store)
+   */
+  async findPaginated(filters: MusicFilterOptions, pagination: MusicPaginationOptions): Promise<PaginatedMusicResult> {
+    return this.store.findPaginated(filters, pagination);
   }
 }

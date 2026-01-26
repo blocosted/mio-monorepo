@@ -62,6 +62,7 @@ export enum IocService {
   JOB_PROGRESS = 'JobProgressService',
   PROFILES = 'ProfilesService',
   STORIES = 'StoriesService',
+  STORY_SEGMENTS = 'StorySegmentsService',
   AUDIO_ASSETS = 'AudioAssetsService',
   GENERATION_JOBS = 'GenerationJobsService',
   ENRICHMENT = 'EnrichmentService',

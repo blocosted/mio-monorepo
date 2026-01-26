@@ -68,6 +68,7 @@ import {
   StoriesStore,
   StoryContextService,
   StoryFinalizationService,
+  StorySegmentsService,
   StorySegmentsStore
 } from '../services/stories';
 import { WorkflowOrchestratorService } from '../services/workflows';
@@ -125,6 +126,7 @@ export async function initializeContainer(): Promise<void> {
     [IocService.JOB_PROGRESS]: () => container.get(JobProgressService, { autobind: true }),
     [IocService.PROFILES]: () => container.get(ProfilesService, { autobind: true }),
     [IocService.STORIES]: () => container.get(StoriesService, { autobind: true }),
+    [IocService.STORY_SEGMENTS]: () => container.get(StorySegmentsService, { autobind: true }),
     [IocService.AUDIO_ASSETS]: () => container.get(AudioAssetsService, { autobind: true }),
     [IocService.GENERATION_JOBS]: () => container.get(GenerationJobsService, { autobind: true }),
     [IocService.ENRICHMENT]: () => container.get(EnrichmentService, { autobind: true }),

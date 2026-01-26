@@ -8,7 +8,7 @@ import 'reflect-metadata';
 
 import { inject, injectable } from 'inversify';
 
-import type { ChildProfile, CreateChildProfileInput, UpdateChildProfileInput } from './profiles.service.types';
+import type { ChildProfile, CreateChildProfileInput, PaginatedProfilesResult, ProfileFilterOptions, ProfilePaginationOptions, UpdateChildProfileInput } from './profiles.service.types';
 import type { ProfilesStore } from './profiles.service.store';
 import { IocStore } from '../../ioc/ioc.types';
 import { mapRowsToProfiles, mapRowToProfile } from './profiles.service.map';
@@ -63,5 +63,12 @@ export class ProfilesService {
    */
   async delete(id: string): Promise<boolean> {
     return this.store.delete(id);
+  }
+
+  /**
+   * Find profiles with cursor-based pagination (delegates to store)
+   */
+  async findPaginated(filters: ProfileFilterOptions, pagination: ProfilePaginationOptions): Promise<PaginatedProfilesResult> {
+    return this.store.findPaginated(filters, pagination);
   }
 }

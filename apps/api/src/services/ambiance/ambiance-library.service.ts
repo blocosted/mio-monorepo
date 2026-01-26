@@ -11,7 +11,7 @@ import { inject, injectable } from 'inversify';
 
 import type { CacheService } from '../cache/cache.service';
 import type { AmbianceLookupResult, FindAmbianceParams, StoreAmbianceParams, StoredAmbiance } from './ambiance-library.service.types';
-import type { AmbianceLibraryStore } from './ambiance-library.store';
+import type { AmbianceFilterOptions, AmbianceLibraryStore, AmbiancePaginationOptions, PaginatedAmbianceResult } from './ambiance-library.store';
 import { IocService, IocStore } from '../../ioc/ioc.types';
 
 /** Redis cache TTL for ambiance lookups (1 hour) */
@@ -93,5 +93,12 @@ export class AmbianceLibraryService {
       Bun.hash(params.description).toString(36)
     ];
     return parts.join(':');
+  }
+
+  /**
+   * Find ambiance with cursor-based pagination (delegates to store)
+   */
+  async findPaginated(filters: AmbianceFilterOptions, pagination: AmbiancePaginationOptions): Promise<PaginatedAmbianceResult> {
+    return this.store.findPaginated(filters, pagination);
   }
 }

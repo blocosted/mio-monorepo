@@ -21,7 +21,8 @@ import { type VoiceAge, VoiceAgeValues, type VoiceGender, VoiceGenderValues, Voi
 
 import type { IAudioRepository } from '../../repositories/audio/audio-repository.types';
 import type { ApiVoice, ParsedVoice, StoredVoice, SyncOptions, SyncResult, VoiceFilterOptions } from './voice-registry.service.types';
-import { IocConnection, IocRepository } from '../../ioc/ioc.types';
+import type { PaginatedVoicesResult, VoiceFilterOptions as StoreVoiceFilterOptions, VoicePaginationOptions, VoiceRegistryStore } from './voice-registry.store';
+import { IocConnection, IocRepository, IocStore } from '../../ioc/ioc.types';
 import { getInstance } from '../../ioc/ioc.config';
 
 /** Default sync options */
@@ -176,7 +177,9 @@ export class VoiceRegistryService {
     @inject(IocConnection.DATABASE)
     private readonly db: DatabaseConnection,
     @inject(IocConnection.LOGGER)
-    private readonly logger: Logger
+    private readonly logger: Logger,
+    @inject(IocStore.VOICE_REGISTRY_STORE)
+    private readonly store: VoiceRegistryStore
   ) {}
 
   /**
@@ -473,5 +476,12 @@ export class VoiceRegistryService {
       .limit(1);
 
     return row?.lastSyncedAt ?? null;
+  }
+
+  /**
+   * Find voices with cursor-based pagination (delegates to store)
+   */
+  async findPaginated(filters: StoreVoiceFilterOptions, pagination: VoicePaginationOptions): Promise<PaginatedVoicesResult> {
+    return this.store.findPaginated(filters, pagination);
   }
 }

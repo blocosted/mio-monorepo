@@ -170,4 +170,157 @@ describe('StoriesService', () => {
       await expect(service.updateJobWorkflowRunId(nonExistentJobId, workflowRunId)).resolves.toBeUndefined();
     });
   });
+
+  describe('findPaginated()', () => {
+    it('returns empty result when no stories', async () => {
+      const result = await service.findPaginated({}, { limit: 10 });
+
+      expect(result.rows).toEqual([]);
+      expect(result.nextCursor).toBeNull();
+      expect(result.hasMore).toBe(false);
+    });
+
+    it('returns paginated stories', async () => {
+      const profile = await profilesStore.insert({
+        firstName: 'Emma',
+        age: 7,
+        gender: Gender.Girl
+      });
+
+      await service.create({ childProfileId: profile.id, prompt: 'Story 1' });
+      await service.create({ childProfileId: profile.id, prompt: 'Story 2' });
+      await service.create({ childProfileId: profile.id, prompt: 'Story 3' });
+
+      const result = await service.findPaginated({}, { limit: 10 });
+
+      expect(result.rows.length).toBe(3);
+      expect(result.hasMore).toBe(false);
+    });
+
+    it('filters by status', async () => {
+      const profile = await profilesStore.insert({
+        firstName: 'Emma',
+        age: 7,
+        gender: Gender.Girl
+      });
+
+      await service.create({ childProfileId: profile.id, prompt: 'Draft story' });
+
+      const result = await service.findPaginated({ status: StoryStatus.Draft }, { limit: 10 });
+
+      expect(result.rows.length).toBe(1);
+      expect(result.rows[0].status).toBe(StoryStatus.Draft);
+    });
+
+    it('filters by childProfileId', async () => {
+      const profile1 = await profilesStore.insert({
+        firstName: 'Emma',
+        age: 7,
+        gender: Gender.Girl
+      });
+      const profile2 = await profilesStore.insert({
+        firstName: 'Lucas',
+        age: 5,
+        gender: Gender.Boy
+      });
+
+      await service.create({ childProfileId: profile1.id, prompt: 'Emma story 1' });
+      await service.create({ childProfileId: profile1.id, prompt: 'Emma story 2' });
+      await service.create({ childProfileId: profile2.id, prompt: 'Lucas story' });
+
+      const result = await service.findPaginated({ childProfileId: profile1.id }, { limit: 10 });
+
+      expect(result.rows.length).toBe(2);
+      expect(result.rows.every((s) => s.childProfileId === profile1.id)).toBe(true);
+    });
+
+    it('filters by search term', async () => {
+      const profile = await profilesStore.insert({
+        firstName: 'Emma',
+        age: 7,
+        gender: Gender.Girl
+      });
+
+      await service.create({ childProfileId: profile.id, prompt: 'A dragon adventure' });
+      await service.create({ childProfileId: profile.id, prompt: 'A pirate story' });
+      await service.create({ childProfileId: profile.id, prompt: 'Dragon in the forest' });
+
+      const result = await service.findPaginated({ search: 'dragon' }, { limit: 10 });
+
+      expect(result.rows.length).toBe(2);
+    });
+
+    it('paginates with cursor', async () => {
+      const profile = await profilesStore.insert({
+        firstName: 'Emma',
+        age: 7,
+        gender: Gender.Girl
+      });
+
+      await service.create({ childProfileId: profile.id, prompt: 'Story 1' });
+      await service.create({ childProfileId: profile.id, prompt: 'Story 2' });
+      await service.create({ childProfileId: profile.id, prompt: 'Story 3' });
+
+      const firstPage = await service.findPaginated({}, { limit: 2 });
+
+      expect(firstPage.rows.length).toBe(2);
+      expect(firstPage.hasMore).toBe(true);
+      expect(firstPage.nextCursor).not.toBeNull();
+
+      const secondPage = await service.findPaginated({}, { limit: 2, cursor: firstPage.nextCursor! });
+
+      expect(secondPage.rows.length).toBe(1);
+      expect(secondPage.hasMore).toBe(false);
+    });
+  });
+
+  describe('updatePrompt()', () => {
+    it('updates prompt for a draft story', async () => {
+      const profile = await profilesStore.insert({
+        firstName: 'Emma',
+        age: 7,
+        gender: Gender.Girl
+      });
+
+      const story = await service.create({
+        childProfileId: profile.id,
+        prompt: 'Original prompt'
+      });
+
+      await service.updatePrompt(story.id, 'Updated prompt');
+
+      const updated = await service.findById(story.id);
+      expect(updated?.initialPrompt).toBe('Updated prompt');
+    });
+
+    it('throws NotFound when story does not exist', async () => {
+      await expect(service.updatePrompt('00000000-0000-0000-0000-000000000000', 'New prompt')).rejects.toMatchObject({
+        code: ErrorCodes.NotFound,
+        name: 'StoryNotFound'
+      });
+    });
+
+    it('throws ValidationError when story is not in draft status', async () => {
+      const profile = await profilesStore.insert({
+        firstName: 'Emma',
+        age: 7,
+        gender: Gender.Girl
+      });
+
+      const story = await service.create({
+        childProfileId: profile.id,
+        prompt: 'Original prompt'
+      });
+
+      // Manually update story status to 'generating' to simulate non-draft state
+      const { IocStore, getInstance } = await import('../../../ioc');
+      const storiesStore = getInstance<any>(IocStore.STORIES_STORE);
+      await storiesStore.updateScript(story.id, { scenes: [] });
+
+      await expect(service.updatePrompt(story.id, 'New prompt')).rejects.toMatchObject({
+        code: ErrorCodes.ValidationError,
+        name: 'StoryNotDraft'
+      });
+    });
+  });
 });

@@ -11,7 +11,7 @@ import { inject, injectable } from 'inversify';
 
 import type { CacheService } from '../cache/cache.service';
 import type { FindSfxParams, SfxLookupResult, StoredSfx, StoreSfxParams } from './sfx-library.service.types';
-import type { SfxLibraryStore } from './sfx-library.store';
+import type { PaginatedSfxResult, SfxFilterOptions, SfxLibraryStore, SfxPaginationOptions } from './sfx-library.store';
 import { IocService, IocStore } from '../../ioc/ioc.types';
 
 /** Redis cache TTL for SFX lookups (1 hour) */
@@ -91,5 +91,12 @@ export class SfxLibraryService {
       Bun.hash(params.text).toString(36)
     ];
     return parts.join(':');
+  }
+
+  /**
+   * Find SFX with cursor-based pagination (delegates to store)
+   */
+  async findPaginated(filters: SfxFilterOptions, pagination: SfxPaginationOptions): Promise<PaginatedSfxResult> {
+    return this.store.findPaginated(filters, pagination);
   }
 }
