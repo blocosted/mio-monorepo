@@ -16,6 +16,12 @@
     ],
     "paths": {
       "@/*": ["./src/*"],
+      "@mio/api": ["../../apps/api/src/api.server.ts"],
+      "@mio/api/*": ["../../apps/api/src/*"],
+      "@mio/db": ["../../packages/db/src/index.ts"],
+      "@mio/db/*": ["../../packages/db/src/*"],
+      "@mio/helpers": ["../../packages/helpers/index.ts"],
+      "@mio/helpers/*": ["../../packages/helpers/*"],
       "@mio/shared": ["../../packages/shared/src/index.ts"],
       "@mio/shared/*": ["../../packages/shared/src/*"],
       "@mio/ui": ["../../packages/shared/src/ui/index.ts"],

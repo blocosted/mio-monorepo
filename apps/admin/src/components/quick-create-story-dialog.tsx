@@ -36,7 +36,7 @@ export function QuickCreateStoryDialog({ open, onOpenChange }: QuickCreateStoryD
   const [profileId, setProfileId] = useState<string>("");
   const [prompt, setPrompt] = useState<string>("");
 
-  const { data: profilesData, isLoading: isLoadingProfiles } = useProfiles({});
+  const { data: profilesData, isLoading: isLoadingProfiles } = useProfiles({ isTest: true });
   const profiles = profilesData?.pages.flatMap((page) => page.data) ?? [];
 
   const createStory = useCreateStory();

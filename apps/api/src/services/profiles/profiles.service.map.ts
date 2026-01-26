@@ -16,6 +16,7 @@ export function mapRowToProfile(row: ProfileRow): ChildProfile {
     age: row.age,
     gender: row.gender,
     preferences: row.preferences,
+    isTest: row.isTest,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt
   };

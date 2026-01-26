@@ -1,0 +1,1 @@
+ALTER TABLE "child_profiles" ADD COLUMN "is_test" boolean DEFAULT false NOT NULL;

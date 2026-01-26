@@ -14,7 +14,7 @@ import type { SfxFilters, SfxTrack, AmbianceFilters, AmbianceTrack, MusicFilters
 import { StoriesAdminClient } from './stories';
 import type { StoryFilters, AdminStory, StorySegment, AudioAsset, UpdateStoryPromptResponse } from './stories';
 import { ProfilesAdminClient } from './profiles';
-import type { ProfileFilters, AdminProfile } from './profiles';
+import type { ProfileFilters, AdminProfile, CreateAdminProfileBody } from './profiles';
 
 export class MioApiAdminClient {
   public readonly client: MioApiClient;
@@ -103,5 +103,9 @@ export class MioApiAdminClient {
     pagination?: CursorPagination
   ): Promise<PaginatedResponse<AdminProfile>> {
     return this.profiles.getProfiles(filters, pagination);
+  }
+
+  public async createProfile(input: CreateAdminProfileBody): Promise<AdminProfile> {
+    return this.profiles.createProfile(input);
   }
 }

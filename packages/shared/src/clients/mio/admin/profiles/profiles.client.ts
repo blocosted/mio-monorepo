@@ -6,7 +6,7 @@
 
 import type { MioApiClient } from '../..';
 import type { PaginatedResponse, CursorPagination } from '../common';
-import type { ProfileFilters, AdminProfile } from './profiles.client.types';
+import type { ProfileFilters, AdminProfile, CreateAdminProfileBody } from './profiles.client.types';
 
 const DEFAULT_LIMIT = 20;
 
@@ -35,5 +35,21 @@ export class ProfilesAdminClient {
     }
 
     throw new Error(`Failed to fetch profiles: ${res.status}`);
+  }
+
+  public async createProfile(input: CreateAdminProfileBody): Promise<AdminProfile> {
+    const res = await this.client.api.admin.profiles.post(input, {
+      headers: this.client.headers
+    });
+
+    if (res.status === 200 && res.data) {
+      return res.data as unknown as AdminProfile;
+    }
+
+    if (res.error) {
+      this.client.throwFromTreatyError(res.error);
+    }
+
+    throw new Error(`Failed to create profile: ${res.status}`);
   }
 }

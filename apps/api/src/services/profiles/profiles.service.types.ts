@@ -29,6 +29,7 @@ export interface ChildProfile {
   age: number;
   gender: Gender;
   preferences: ChildPreferences;
+  isTest: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -41,6 +42,7 @@ export interface CreateChildProfileInput {
   age: number;
   gender: Gender;
   preferences?: ChildPreferences;
+  isTest?: boolean;
 }
 
 /**
@@ -62,6 +64,7 @@ export interface ProfileRow {
   age: number;
   gender: Gender;
   preferences: ChildPreferences;
+  isTest: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -84,6 +87,7 @@ export interface ProfilePaginationOptions {
 export interface ProfileFilterOptions {
   gender?: Gender;
   search?: string;
+  isTest?: boolean;
 }
 
 /**

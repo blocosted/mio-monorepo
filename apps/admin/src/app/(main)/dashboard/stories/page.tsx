@@ -66,11 +66,11 @@ const columns: ColumnDef<Story>[] = [
     id: "theme",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Theme" />,
     cell: ({ row }) => {
-      const theme = row.original.enrichedConcept?.theme;
-      if (!theme) return "-";
+      const themes = row.original.enrichedConcept?.themes;
+      if (!themes || themes.length === 0) return "-";
       return (
         <Badge variant="outline" className="capitalize">
-          {theme}
+          {themes[0]}
         </Badge>
       );
     },

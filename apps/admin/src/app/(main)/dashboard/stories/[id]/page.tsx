@@ -229,7 +229,7 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
           <div className="min-w-0">
             <h1 className="text-2xl font-bold tracking-tight truncate">{title}</h1>
             <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-              <Badge className={status.color}>{status.label}</Badge>
+              <Badge className={status?.color ?? "bg-gray-100 text-gray-800"}>{status?.label ?? story.status}</Badge>
               {story.duration && (
                 <span className="flex items-center gap-1">
                   <Clock className="h-3 w-3" />
@@ -241,7 +241,7 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
                 {format(new Date(story.createdAt), "MMM d, yyyy HH:mm")}
               </span>
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">{status.description}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{status?.description ?? ""}</p>
           </div>
         </div>
 
@@ -656,19 +656,21 @@ function SegmentCard({ segment, index }: { segment: StorySegment; index: number 
 
 // Audio Asset Card Component
 function AudioAssetCard({ asset, storyTitle }: { asset: AudioAsset; storyTitle: string }) {
-  const config = assetTypeConfig[asset.type] || assetTypeConfig.voice;
-  const Icon = config.icon;
+  const config = assetTypeConfig[asset.type] ?? assetTypeConfig.voice;
+  const Icon = config?.icon ?? Volume2;
+  const label = config?.label ?? asset.type;
+  const color = config?.color ?? "bg-gray-100 text-gray-800";
 
   return (
     <Card>
       <CardContent className="pt-6">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className={`rounded-md p-2 ${config.color}`}>
+            <div className={`rounded-md p-2 ${color}`}>
               <Icon className="h-4 w-4" />
             </div>
             <div>
-              <p className="font-medium">{config.label}</p>
+              <p className="font-medium">{label}</p>
               <p className="text-xs text-muted-foreground">
                 {formatDuration(asset.duration)}
               </p>
@@ -677,7 +679,7 @@ function AudioAssetCard({ asset, storyTitle }: { asset: AudioAsset; storyTitle: 
           <PlayButton
             track={{
               id: asset.id,
-              name: `${storyTitle} - ${config.label}`,
+              name: `${storyTitle} - ${label}`,
               url: asset.url,
               type: asset.type === "final_mix" ? "story" : asset.type as "voice" | "sfx" | "music" | "ambiance",
             }}

@@ -99,6 +99,7 @@ export const childProfiles = pgTable('child_profiles', {
     enum: [Gender.Boy, Gender.Girl, Gender.Neutral]
   }).notNull(),
   preferences: jsonb('preferences').$type<ChildPreferencesDb>().default({}),
+  isTest: boolean('is_test').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull()
 });

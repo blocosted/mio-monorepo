@@ -21,7 +21,8 @@ function enumValues<const T extends readonly [string, ...string[]]>(values: T) {
 
 export const ProfileFiltersSchema = t.Object({
   search: t.Optional(t.String()),
-  gender: t.Optional(t.String())
+  gender: t.Optional(t.String()),
+  isTest: t.Optional(t.Boolean())
 });
 
 export type ProfileFilters = typeof ProfileFiltersSchema.static;
@@ -32,8 +33,21 @@ export const AdminProfileSchema = t.Object({
   age: t.Number(),
   gender: enumValues(GenderValues),
   preferences: t.Nullable(t.Unknown()),
+  isTest: t.Boolean(),
   createdAt: t.String(),
   updatedAt: t.String()
 });
 
 export type AdminProfile = typeof AdminProfileSchema.static;
+
+// =============================================================================
+// Create Profile
+// =============================================================================
+
+export const CreateAdminProfileBodySchema = t.Object({
+  firstName: t.String({ minLength: 1, maxLength: 50 }),
+  age: t.Number({ minimum: 3, maximum: 12 }),
+  gender: enumValues(GenderValues)
+});
+
+export type CreateAdminProfileBody = typeof CreateAdminProfileBodySchema.static;

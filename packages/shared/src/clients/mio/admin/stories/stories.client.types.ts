@@ -27,11 +27,39 @@ export const StoryFiltersSchema = t.Object({
 
 export type StoryFilters = typeof StoryFiltersSchema.static;
 
+// =============================================================================
+// Enriched Concept Schema
+// =============================================================================
+
+export const StoryCharacterSchema = t.Object({
+  name: t.String(),
+  description: t.String(),
+  voiceType: t.Optional(t.String())
+});
+
+export const StorySettingSchema = t.Object({
+  location: t.String(),
+  era: t.String(),
+  ambiance: t.String()
+});
+
+export const EnrichedConceptSchema = t.Object({
+  title: t.String(),
+  mainCharacter: StoryCharacterSchema,
+  secondaryCharacters: t.Optional(t.Array(StoryCharacterSchema)),
+  setting: StorySettingSchema,
+  tone: t.String(),
+  themes: t.Array(t.String()),
+  synopsis: t.Optional(t.String())
+});
+
+export type EnrichedConcept = typeof EnrichedConceptSchema.static;
+
 export const AdminStorySchema = t.Object({
   id: t.String({ format: 'uuid' }),
   childProfileId: t.String({ format: 'uuid' }),
   initialPrompt: t.String(),
-  enrichedConcept: t.Nullable(t.Unknown()),
+  enrichedConcept: t.Nullable(EnrichedConceptSchema),
   script: t.Nullable(t.Unknown()),
   answers: t.Nullable(t.Unknown()),
   finalAudioUrl: t.Nullable(t.String()),

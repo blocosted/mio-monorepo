@@ -50,7 +50,9 @@ export {
   ProfileFiltersSchema,
   type ProfileFilters,
   AdminProfileSchema,
-  type AdminProfile
+  type AdminProfile,
+  CreateAdminProfileBodySchema,
+  type CreateAdminProfileBody
 } from './profiles';
 
 // Main Client

@@ -114,7 +114,7 @@ export function InsightCards() {
               />
               <XAxis dataKey="actual" type="number" hide />
               <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
-              <Bar stackId="a" dataKey="actual" layout="vertical" fill="var(--color-actual)">
+              <Bar stackId="a" dataKey="actual" fill="var(--color-actual)">
                 <LabelList
                   dataKey="name"
                   position="insideLeft"
@@ -131,7 +131,6 @@ export function InsightCards() {
               <Bar
                 stackId="a"
                 dataKey="remaining"
-                layout="vertical"
                 fill="var(--color-remaining)"
                 radius={[0, 6, 6, 0]}
               >

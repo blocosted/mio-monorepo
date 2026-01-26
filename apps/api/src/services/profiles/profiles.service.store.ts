@@ -33,7 +33,8 @@ export class ProfilesStore {
         firstName: input.firstName,
         age: input.age,
         gender: input.gender,
-        preferences: input.preferences ?? {}
+        preferences: input.preferences ?? {},
+        isTest: input.isTest ?? false
       })
       .returning();
 
@@ -48,6 +49,7 @@ export class ProfilesStore {
       age: row.age,
       gender: row.gender,
       preferences: row.preferences ?? {},
+      isTest: row.isTest,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt
     };
@@ -69,6 +71,7 @@ export class ProfilesStore {
       age: row.age,
       gender: row.gender,
       preferences: row.preferences ?? {},
+      isTest: row.isTest,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt
     };
@@ -86,6 +89,7 @@ export class ProfilesStore {
       age: row.age,
       gender: row.gender,
       preferences: row.preferences ?? {},
+      isTest: row.isTest,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt
     }));
@@ -124,6 +128,7 @@ export class ProfilesStore {
       age: row.age,
       gender: row.gender,
       preferences: row.preferences ?? {},
+      isTest: row.isTest,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt
     };
@@ -151,6 +156,10 @@ export class ProfilesStore {
 
     if (filters.search) {
       conditions.push(ilike(childProfiles.firstName, `%${filters.search}%`));
+    }
+
+    if (filters.isTest !== undefined) {
+      conditions.push(eq(childProfiles.isTest, filters.isTest));
     }
 
     // Add cursor condition
@@ -181,6 +190,7 @@ export class ProfilesStore {
         age: row.age,
         gender: row.gender,
         preferences: row.preferences ?? {},
+        isTest: row.isTest,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt
       })),
