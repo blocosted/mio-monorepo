@@ -90,6 +90,19 @@ export class StoriesStore {
   }
 
   /**
+   * Update the initial prompt for a story (only for draft stories)
+   */
+  async updatePrompt(id: string, prompt: string): Promise<void> {
+    await this.db
+      .update(stories)
+      .set({
+        initialPrompt: prompt,
+        updatedAt: new Date()
+      })
+      .where(eq(stories.id, id));
+  }
+
+  /**
    * Finalize a story with final audio URL and duration
    */
   async finalize(id: string, input: { finalAudioUrl: string; duration: number }): Promise<void> {

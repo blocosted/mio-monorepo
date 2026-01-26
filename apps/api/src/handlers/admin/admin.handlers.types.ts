@@ -87,3 +87,17 @@ export const ProfileFilterQuerySchema = t.Object({
   gender: t.Optional(t.String()),
   search: t.Optional(t.String())
 });
+
+/**
+ * Story ID parameter
+ */
+export const StoryIdParamSchema = t.Object({
+  id: t.String({ format: 'uuid' })
+});
+
+/**
+ * Update story prompt body
+ */
+export const UpdateStoryPromptBodySchema = t.Object({
+  prompt: t.String({ minLength: 3, maxLength: 500 })
+});

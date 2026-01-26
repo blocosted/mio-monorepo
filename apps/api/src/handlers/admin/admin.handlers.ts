@@ -17,13 +17,17 @@ import type { AmbianceLibraryStore } from '../../services/ambiance/ambiance-libr
 import type { MusicLibraryStore } from '../../services/music/music-library.store';
 import type { StoriesStore } from '../../services/stories/stories.service.store';
 import type { ProfilesStore } from '../../services/profiles/profiles.service.store';
+import type { AudioAssetsStore } from '../../services/stories/audio-assets.store';
+import type { StorySegmentsStore } from '../../services/stories/story-segments.store';
 import {
   VoiceFilterQuerySchema,
   SfxFilterQuerySchema,
   AmbianceFilterQuerySchema,
   MusicFilterQuerySchema,
   StoryFilterQuerySchema,
-  ProfileFilterQuerySchema
+  ProfileFilterQuerySchema,
+  StoryIdParamSchema,
+  UpdateStoryPromptBodySchema
 } from './admin.handlers.types';
 
 export const adminHandlers = new Elysia({ prefix: '/admin', tags: ['admin'] })
@@ -201,5 +205,75 @@ export const adminHandlers = new Elysia({ prefix: '/admin', tags: ['admin'] })
     },
     {
       query: ProfileFilterQuerySchema
+    }
+  )
+  // Get a single story with full details
+  .get(
+    '/stories/:id',
+    async ({ params, set }) => {
+      const storiesStore = getInstance<StoriesStore>(IocStore.STORIES_STORE);
+      const story = await storiesStore.findById(params.id);
+
+      if (!story) {
+        set.status = 404;
+        return { error: 'Story not found' };
+      }
+
+      return story;
+    },
+    {
+      params: StoryIdParamSchema
+    }
+  )
+  // Get story segments
+  .get(
+    '/stories/:id/segments',
+    async ({ params }) => {
+      const segmentsStore = getInstance<StorySegmentsStore>(IocStore.STORY_SEGMENTS_STORE);
+      const segments = await segmentsStore.findByStoryId(params.id);
+
+      return { data: segments };
+    },
+    {
+      params: StoryIdParamSchema
+    }
+  )
+  // Get story audio assets
+  .get(
+    '/stories/:id/audio-assets',
+    async ({ params }) => {
+      const audioAssetsStore = getInstance<AudioAssetsStore>(IocStore.AUDIO_ASSETS_STORE);
+      const assets = await audioAssetsStore.findByStoryId(params.id);
+
+      return { data: assets };
+    },
+    {
+      params: StoryIdParamSchema
+    }
+  )
+  // Update story prompt
+  .patch(
+    '/stories/:id',
+    async ({ params, body, set }) => {
+      const storiesStore = getInstance<StoriesStore>(IocStore.STORIES_STORE);
+
+      const story = await storiesStore.findById(params.id);
+      if (!story) {
+        set.status = 404;
+        return { error: 'Story not found' };
+      }
+
+      if (story.status !== 'draft') {
+        set.status = 400;
+        return { error: 'Can only edit prompt for draft stories' };
+      }
+
+      await storiesStore.updatePrompt(params.id, body.prompt);
+
+      return { id: params.id, prompt: body.prompt };
+    },
+    {
+      params: StoryIdParamSchema,
+      body: UpdateStoryPromptBodySchema
     }
   );

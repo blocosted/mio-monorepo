@@ -197,59 +197,55 @@ services:
       - "traefik.http.routers.mio-api-secure.service=mio-api"
 
   # Web container (Next.js development mode)
+  
+  # Admin container (Next.js development mode)
   mio-web:
-    image: node:22-alpine
+    image: oven/bun:1.2-alpine
     container_name: mio-web
     restart: always
     tty: true
     stdin_open: true
     volumes:
       - '${MIO_WORKSPACE_FOLDER}:${MIO_WORKSPACE_FOLDER}'
-      - mio_web_modules:/home/ted/dev/mio/node_modules
       - mio_web_cache:/home/ted/dev/mio/apps/web/.next
-    working_dir: ${MIO_WORKSPACE_FOLDER}
+    working_dir: ${MIO_WORKSPACE_FOLDER}/apps/web
     expose:
       - 3000
-    ports:
-      - 3000:3000
-    command: ["sh", "-c", "cd apps/web && npm install && npm run dev"]
+    command: ["sh", "-c", "bunx next dev --turbopack -p 3000"]
     environment:
       - NODE_ENV=development
       - NEXT_TELEMETRY_DISABLED=1
-      - WATCHPACK_POLLING=false
-      - CHOKIDAR_USEPOLLING=false
     env_file:
       - .env.local
     networks:
       - mio-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.mio-web.rule=Host(`app.mio.local`)"
+      - "traefik.http.routers.mio-web.rule=Host(`web.mio.local`)"
       - "traefik.http.routers.mio-web.priority=100"
       - "traefik.http.routers.mio-web.entrypoints=web"
       - "traefik.http.routers.mio-web.middlewares=redirect-to-https"
-      - "traefik.http.routers.mio-web-secure.rule=Host(`app.mio.local`)"
+      - "traefik.http.routers.mio-web-secure.rule=Host(`web.mio.local`)"
       - "traefik.http.services.mio-web.loadbalancer.server.port=3000"
       - "traefik.http.services.mio-web.loadbalancer.server.scheme=http"
       - "traefik.http.routers.mio-web-secure.entrypoints=websecure"
       - "traefik.http.routers.mio-web-secure.tls=true"
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      - "traefik.http.routers.mio-web-secure.service=mio-web"
 
-  # Backoffice container (Next.js development mode)
-  mio-backoffice:
-    image: node:22-alpine
-    container_name: mio-backoffice
+  # Admin container (Next.js development mode)
+  mio-admin:
+    image: oven/bun:1.2-alpine
+    container_name: mio-admin
     restart: always
     tty: true
     stdin_open: true
     volumes:
       - '${MIO_WORKSPACE_FOLDER}:${MIO_WORKSPACE_FOLDER}'
-      - mio_backoffice_modules:/home/ted/dev/mio/node_modules
-      - mio_backoffice_cache:/home/ted/dev/mio/apps/backoffice/.next
-    working_dir: ${MIO_WORKSPACE_FOLDER}
+      - mio_admin_cache:/home/ted/dev/mio/apps/admin/.next
+    working_dir: ${MIO_WORKSPACE_FOLDER}/apps/admin
     expose:
-      - 3002
-    command: ["sh", "-c", "cd apps/backoffice && npm install && npm run dev"]
+      - 3003
+    command: ["sh", "-c", "bunx next dev --turbopack -p 3003"]
     environment:
       - NODE_ENV=development
       - NEXT_TELEMETRY_DISABLED=1
@@ -259,16 +255,16 @@ services:
       - mio-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.mio-backoffice.rule=Host(`backoffice.mio.local`)"
-      - "traefik.http.routers.mio-backoffice.priority=100"
-      - "traefik.http.routers.mio-backoffice.entrypoints=web"
-      - "traefik.http.routers.mio-backoffice.middlewares=redirect-to-https"
-      - "traefik.http.routers.mio-backoffice-secure.rule=Host(`backoffice.mio.local`)"
-      - "traefik.http.services.mio-backoffice.loadbalancer.server.port=3002"
-      - "traefik.http.services.mio-backoffice.loadbalancer.server.scheme=http"
-      - "traefik.http.routers.mio-backoffice-secure.entrypoints=websecure"
-      - "traefik.http.routers.mio-backoffice-secure.tls=true"
-      - "traefik.http.routers.mio-backoffice-secure.service=mio-backoffice"
+      - "traefik.http.routers.mio-admin.rule=Host(`admin.mio.local`)"
+      - "traefik.http.routers.mio-admin.priority=100"
+      - "traefik.http.routers.mio-admin.entrypoints=web"
+      - "traefik.http.routers.mio-admin.middlewares=redirect-to-https"
+      - "traefik.http.routers.mio-admin-secure.rule=Host(`admin.mio.local`)"
+      - "traefik.http.services.mio-admin.loadbalancer.server.port=3003"
+      - "traefik.http.services.mio-admin.loadbalancer.server.scheme=http"
+      - "traefik.http.routers.mio-admin-secure.entrypoints=websecure"
+      - "traefik.http.routers.mio-admin-secure.tls=true"
+      - "traefik.http.routers.mio-admin-secure.service=mio-admin"
 
 networks:
   mio-network:
@@ -282,3 +278,4 @@ volumes:
   mio_web_cache:
   mio_backoffice_modules:
   mio_backoffice_cache:
+  mio_admin_cache:

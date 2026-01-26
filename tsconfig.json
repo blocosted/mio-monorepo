@@ -26,6 +26,8 @@
       "@mio/api/*": ["apps/api/src/*"],
       "@mio/shared": ["packages/shared/src/index.ts"],
       "@mio/shared/*": ["packages/shared/src/*"],
+      "@mio/ui": ["packages/shared/src/ui/index.ts"],
+      "@mio/ui/*": ["packages/shared/src/ui/*"],
       "@mio/helpers": ["packages/helpers/index.ts"],
       "@mio/helpers/*": ["packages/helpers/*"],
       "@mio/db": ["packages/db/src/index.ts"],
