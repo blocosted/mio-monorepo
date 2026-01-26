@@ -19,23 +19,29 @@ type UseDataTableInstanceProps<TData, TValue> = {
   data: TData[];
   columns: ColumnDef<TData, TValue>[];
   enableRowSelection?: boolean;
+  enablePagination?: boolean;
   defaultPageIndex?: number;
   defaultPageSize?: number;
+  defaultSorting?: SortingState;
   getRowId?: (row: TData, index: number) => string;
 };
+
+const DEFAULT_SORTING: SortingState = [{ id: 'createdAt', desc: true }];
 
 export function useDataTableInstance<TData, TValue>({
   data,
   columns,
   enableRowSelection = true,
+  enablePagination = true,
   defaultPageIndex,
   defaultPageSize,
+  defaultSorting = DEFAULT_SORTING,
   getRowId,
 }: UseDataTableInstanceProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [sorting, setSorting] = React.useState<SortingState>(defaultSorting);
   const [pagination, setPagination] = React.useState({
     pageIndex: defaultPageIndex ?? 0,
     pageSize: defaultPageSize ?? 10,
@@ -49,7 +55,7 @@ export function useDataTableInstance<TData, TValue>({
       columnVisibility,
       rowSelection,
       columnFilters,
-      pagination,
+      ...(enablePagination && { pagination }),
     },
     enableRowSelection,
     getRowId: getRowId ?? ((row) => (row as any).id.toString()),
@@ -57,10 +63,10 @@ export function useDataTableInstance<TData, TValue>({
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
-    onPaginationChange: setPagination,
+    ...(enablePagination && { onPaginationChange: setPagination }),
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
+    ...(enablePagination && { getPaginationRowModel: getPaginationRowModel() }),
     getSortedRowModel: getSortedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),

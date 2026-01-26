@@ -181,7 +181,7 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
 
   if (isLoading) {
     return (
-      <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
+      <div className="flex flex-1 flex-col gap-6 min-w-0">
         <div className="flex items-center gap-4">
           <Skeleton className="h-10 w-10" />
           <div>
@@ -196,7 +196,7 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
 
   if (error || !story) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-4 p-4 md:p-6">
+      <div className="flex flex-1 flex-col items-center justify-center gap-4 min-w-0">
         <AlertTriangle className="h-12 w-12 text-muted-foreground" />
         <p className="text-muted-foreground">Story not found</p>
         <Button asChild variant="outline">
@@ -217,17 +217,17 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
   const isReady = story.status === "ready";
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
+    <div className="flex flex-1 flex-col gap-6 min-w-0">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-start gap-4">
+      <div className="flex flex-col gap-4 overflow-hidden sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex min-w-0 flex-1 items-start gap-4 overflow-hidden">
           <Button asChild variant="outline" size="icon" className="shrink-0">
             <Link href="/dashboard/stories">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
-          <div className="min-w-0">
-            <h1 className="text-2xl font-bold tracking-tight truncate">{title}</h1>
+          <div className="w-0 min-w-0 flex-1">
+            <h1 className="truncate text-2xl font-bold tracking-tight">{title}</h1>
             <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
               <Badge className={status?.color ?? "bg-gray-100 text-gray-800"}>{status?.label ?? story.status}</Badge>
               {story.duration && (
@@ -246,7 +246,7 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           {story.finalAudioUrl && (
             <PlayButton
               track={{
@@ -321,7 +321,7 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
       <Separator />
 
       {/* Tabs */}
-      <Tabs defaultValue="overview" className="flex-1">
+      <Tabs defaultValue="overview" className="min-w-0 flex-1">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="script" disabled={!story.script}>
@@ -336,7 +336,7 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
         </TabsList>
 
         {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-6">
+        <TabsContent value="overview" className="min-w-0 space-y-6">
           <div className="grid gap-6 lg:grid-cols-2">
             {/* Original Prompt */}
             <Card>
@@ -354,7 +354,7 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
                 )}
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">{story.initialPrompt}</p>
+                <p className="text-muted-foreground break-words">{story.initialPrompt}</p>
               </CardContent>
             </Card>
 
@@ -367,7 +367,7 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
                     Story Concept
                   </CardTitle>
                   {story.enrichedConcept.synopsis && (
-                    <CardDescription>{story.enrichedConcept.synopsis}</CardDescription>
+                    <CardDescription className="break-words">{story.enrichedConcept.synopsis}</CardDescription>
                   )}
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -405,8 +405,8 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="font-medium">{story.enrichedConcept.mainCharacter.name}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
+                  <p className="font-medium break-words">{story.enrichedConcept.mainCharacter.name}</p>
+                  <p className="mt-1 text-sm text-muted-foreground break-words">
                     {story.enrichedConcept.mainCharacter.description}
                   </p>
                   {story.enrichedConcept.mainCharacter.voiceType && (
@@ -431,8 +431,8 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
                   <CardContent className="space-y-4">
                     {story.enrichedConcept.secondaryCharacters.map((character, index) => (
                       <div key={index} className={index > 0 ? "pt-4 border-t" : ""}>
-                        <p className="font-medium">{character.name}</p>
-                        <p className="mt-1 text-sm text-muted-foreground">
+                        <p className="font-medium break-words">{character.name}</p>
+                        <p className="mt-1 text-sm text-muted-foreground break-words">
                           {character.description}
                         </p>
                         {character.voiceType && (
@@ -458,19 +458,19 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
                 <CardContent className="space-y-2">
                   <div>
                     <p className="text-sm font-medium">Location</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground break-words">
                       {story.enrichedConcept.setting.location}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm font-medium">Era</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground break-words">
                       {story.enrichedConcept.setting.era}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm font-medium">Ambiance</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground break-words">
                       {story.enrichedConcept.setting.ambiance}
                     </p>
                   </div>
@@ -508,7 +508,7 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
         </TabsContent>
 
         {/* Script Tab */}
-        <TabsContent value="script" className="space-y-4">
+        <TabsContent value="script" className="min-w-0 space-y-4">
           {segments.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
@@ -526,7 +526,7 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
         </TabsContent>
 
         {/* Audio Tab */}
-        <TabsContent value="audio" className="space-y-4">
+        <TabsContent value="audio" className="min-w-0 space-y-4">
           {audioAssets.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
@@ -544,7 +544,7 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
         </TabsContent>
 
         {/* Timeline Tab */}
-        <TabsContent value="timeline" className="space-y-4">
+        <TabsContent value="timeline" className="min-w-0 space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Audio Timeline</CardTitle>
@@ -647,7 +647,7 @@ function SegmentCard({ segment, index }: { segment: StorySegment; index: number 
       </CardHeader>
       {text && (
         <CardContent className="pt-0">
-          <p className="text-sm text-muted-foreground line-clamp-3">{text}</p>
+          <p className="text-sm text-muted-foreground break-words line-clamp-3">{text}</p>
         </CardContent>
       )}
     </Card>

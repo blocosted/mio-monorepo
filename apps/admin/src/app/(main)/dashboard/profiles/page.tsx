@@ -7,9 +7,8 @@ import { format } from "date-fns";
 import { Loader2, Plus, Search } from "lucide-react";
 
 import { CreateProfileDialog } from "@/components/create-profile-dialog";
-import { DataTable } from "@/components/data-table/data-table";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
-import { DataTablePagination } from "@/components/data-table/data-table-pagination";
+import { InfiniteDataTable } from "@/components/data-table/infinite-data-table";
 import { Badge } from "@mio/ui/badge";
 import { Button } from "@mio/ui/button";
 import { Input } from "@mio/ui/input";
@@ -22,7 +21,7 @@ const columns: ColumnDef<Profile>[] = [
   {
     accessorKey: "firstName",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Name" />,
-    cell: ({ row }) => <span className="font-medium">{row.getValue("firstName")}</span>,
+    cell: ({ row }) => <span className="block max-w-xs truncate font-medium">{row.getValue("firstName")}</span>,
   },
   {
     accessorKey: "age",
@@ -79,7 +78,14 @@ export default function ProfilesPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const debouncedSearch = useDebounce(search, 300);
 
-  const { data, isLoading, isFetching, fetchNextPage, hasNextPage, isFetchingNextPage } = useProfiles({
+  const {
+    data,
+    isLoading,
+    isFetching,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useProfiles({
     search: debouncedSearch,
   });
 
@@ -91,6 +97,7 @@ export default function ProfilesPage() {
     data: profiles,
     columns,
     getRowId: (row) => row.id,
+    enablePagination: false,
   });
 
   const showSkeleton = isLoading && !data;
@@ -138,22 +145,13 @@ export default function ProfilesPage() {
         onOpenChange={setIsCreateDialogOpen}
       />
 
-      <div className="overflow-hidden rounded-lg border">
-        <DataTable table={table} columns={columns} />
-      </div>
-
-      <DataTablePagination table={table} />
-
-      {hasNextPage && (
-        <button
-          type="button"
-          onClick={() => fetchNextPage()}
-          disabled={isFetchingNextPage}
-          className="mx-auto text-sm text-muted-foreground hover:text-foreground"
-        >
-          {isFetchingNextPage ? "Loading more..." : "Load more"}
-        </button>
-      )}
+      <InfiniteDataTable
+        table={table}
+        columns={columns}
+        hasNextPage={hasNextPage ?? false}
+        isFetchingNextPage={isFetchingNextPage}
+        fetchNextPage={fetchNextPage}
+      />
     </div>
   );
 }

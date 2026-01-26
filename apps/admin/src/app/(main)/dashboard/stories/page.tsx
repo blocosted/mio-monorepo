@@ -7,9 +7,8 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { ExternalLink, Loader2, Search } from "lucide-react";
 
-import { DataTable } from "@/components/data-table/data-table";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
-import { DataTablePagination } from "@/components/data-table/data-table-pagination";
+import { InfiniteDataTable } from "@/components/data-table/infinite-data-table";
 import { PlayButton } from "@/components/play-button";
 import { Badge } from "@mio/ui/badge";
 import { Button } from "@mio/ui/button";
@@ -43,7 +42,7 @@ const columns: ColumnDef<Story>[] = [
       return (
         <Link
           href={`/dashboard/stories/${row.original.id}`}
-          className="font-medium line-clamp-1 hover:underline"
+          className="block max-w-xs truncate font-medium hover:underline"
         >
           {title}
         </Link>
@@ -125,7 +124,14 @@ export default function StoriesPage() {
   const [status, setStatus] = useState<string>("");
   const debouncedSearch = useDebounce(search, 300);
 
-  const { data, isLoading, isFetching } = useStories({
+  const {
+    data,
+    isLoading,
+    isFetching,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useStories({
     search: debouncedSearch,
     status: status === "all" ? undefined : status || undefined,
   });
@@ -138,9 +144,9 @@ export default function StoriesPage() {
     data: stories,
     columns,
     getRowId: (row) => row.id,
+    enablePagination: false,
   });
 
-  // Only show full skeleton on initial load (no data yet)
   const showSkeleton = isLoading && !data;
 
   if (showSkeleton) {
@@ -171,7 +177,7 @@ export default function StoriesPage() {
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
           />
-          {isFetching && (
+          {isFetching && !isFetchingNextPage && (
             <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
           )}
         </div>
@@ -189,11 +195,13 @@ export default function StoriesPage() {
         </Select>
       </div>
 
-      <div className="overflow-hidden rounded-lg border">
-        <DataTable table={table} columns={columns} />
-      </div>
-
-      <DataTablePagination table={table} />
+      <InfiniteDataTable
+        table={table}
+        columns={columns}
+        hasNextPage={hasNextPage ?? false}
+        isFetchingNextPage={isFetchingNextPage}
+        fetchNextPage={fetchNextPage}
+      />
     </div>
   );
 }

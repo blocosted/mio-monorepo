@@ -55,7 +55,7 @@ export default async function Layout({ children }: Readonly<{ children: ReactNod
             </div>
           </div>
         </header>
-        <div className="h-full p-4 md:p-6 pb-20">{children}</div>
+        <div className="h-full min-w-0 overflow-x-hidden p-4 md:p-6 pb-20">{children}</div>
         <AudioPlayer />
       </SidebarInset>
     </SidebarProvider>

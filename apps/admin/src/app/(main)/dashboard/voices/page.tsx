@@ -6,9 +6,8 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { Loader2, Search, Star } from "lucide-react";
 
-import { DataTable } from "@/components/data-table/data-table";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
-import { DataTablePagination } from "@/components/data-table/data-table-pagination";
+import { InfiniteDataTable } from "@/components/data-table/infinite-data-table";
 import { PlayButton } from "@/components/play-button";
 import { Badge } from "@mio/ui/badge";
 import { Input } from "@mio/ui/input";
@@ -23,10 +22,10 @@ const columns: ColumnDef<Voice>[] = [
     accessorKey: "name",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Name" />,
     cell: ({ row }) => (
-      <div className="flex items-center gap-2">
-        <span className="font-medium">{row.getValue("name")}</span>
+      <div className="flex max-w-xs items-center gap-2">
+        <span className="truncate font-medium">{row.getValue("name")}</span>
         {row.original.isHighQuality && (
-          <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+          <Star className="h-3 w-3 shrink-0 fill-yellow-400 text-yellow-400" />
         )}
       </div>
     ),
@@ -53,7 +52,7 @@ const columns: ColumnDef<Voice>[] = [
   {
     accessorKey: "accent",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Accent" />,
-    cell: ({ row }) => row.getValue("accent") || "-",
+    cell: ({ row }) => <span className="block max-w-32 truncate">{row.getValue("accent") || "-"}</span>,
   },
   {
     accessorKey: "useCase",
@@ -98,7 +97,14 @@ export default function VoicesPage() {
   const [language, setLanguage] = useState<string>("");
   const debouncedSearch = useDebounce(search, 300);
 
-  const { data, isLoading, isFetching, fetchNextPage, hasNextPage, isFetchingNextPage } = useVoices({
+  const {
+    data,
+    isLoading,
+    isFetching,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useVoices({
     search: debouncedSearch,
     gender: gender === "all" ? undefined : gender || undefined,
     language: language === "all" ? undefined : language || undefined,
@@ -112,6 +118,8 @@ export default function VoicesPage() {
     data: voices,
     columns,
     getRowId: (row) => row.id,
+    enablePagination: false,
+    defaultSorting: [{ id: 'lastSyncedAt', desc: true }],
   });
 
   const showSkeleton = isLoading && !data;
@@ -181,22 +189,13 @@ export default function VoicesPage() {
         </Select>
       </div>
 
-      <div className="overflow-hidden rounded-lg border">
-        <DataTable table={table} columns={columns} />
-      </div>
-
-      <DataTablePagination table={table} />
-
-      {hasNextPage && (
-        <button
-          type="button"
-          onClick={() => fetchNextPage()}
-          disabled={isFetchingNextPage}
-          className="mx-auto text-sm text-muted-foreground hover:text-foreground"
-        >
-          {isFetchingNextPage ? "Loading more..." : "Load more"}
-        </button>
-      )}
+      <InfiniteDataTable
+        table={table}
+        columns={columns}
+        hasNextPage={hasNextPage ?? false}
+        isFetchingNextPage={isFetchingNextPage}
+        fetchNextPage={fetchNextPage}
+      />
     </div>
   );
 }
