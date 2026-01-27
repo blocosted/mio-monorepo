@@ -1,0 +1,23 @@
+{
+  "name": "storybook",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/storybook/src",
+  "targets": {
+    "storybook": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "storybook dev -p 6006",
+        "cwd": "apps/storybook"
+      }
+    },
+    "build-storybook": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "storybook build -o dist",
+        "cwd": "apps/storybook"
+      },
+      "outputs": ["{projectRoot}/dist"]
+    }
+  }
+}

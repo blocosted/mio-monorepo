@@ -20,7 +20,9 @@
     "db:studio": "nx run db:studio",
     "s3": "nx run scripts:s3 --",
     "s3:setup": "nx run scripts:s3:setup",
-    "s3:list": "nx run scripts:s3:list"
+    "s3:list": "nx run scripts:s3:list",
+    "storybook": "nx storybook storybook",
+    "build:storybook": "nx build-storybook storybook"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
@@ -41,6 +43,7 @@
     "@tailwindcss/postcss": "^4.1.18",
     "@tanstack/react-query": "^5.90.20",
     "@tanstack/react-table": "^8.21.3",
+    "@tanstack/react-virtual": "^3.13.18",
     "@upstash/qstash": "^2.9.0",
     "@upstash/workflow": "^1.1.0",
     "class-variance-authority": "^0.7.1",
@@ -82,6 +85,15 @@
   "devDependencies": {
     "@biomejs/biome": "^2.3.13",
     "@nx/js": "^22.4.1",
+    "@storybook/addon-a11y": "^8.6.14",
+    "@storybook/addon-essentials": "^8.6.14",
+    "@storybook/addon-interactions": "^8.6.14",
+    "@storybook/addon-links": "^8.6.14",
+    "@storybook/addon-themes": "^8.6.14",
+    "@storybook/blocks": "^8.6.14",
+    "@storybook/react": "^8.6.14",
+    "@storybook/react-vite": "^8.6.14",
+    "@storybook/test": "^8.6.15",
     "@swc-node/register": "~1.9.2",
     "@swc/core": "~1.5.29",
     "@swc/helpers": "~0.5.18",
@@ -94,6 +106,7 @@
     "dotenv": "^17.2.3",
     "drizzle-kit": "0.31.8",
     "nx": "22.3.3",
+    "storybook": "^8.6.14",
     "tslib": "^2.8.1",
     "tw-animate-css": "^1.4.0",
     "typescript": "~5.9.3",

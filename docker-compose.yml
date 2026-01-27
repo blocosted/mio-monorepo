@@ -266,6 +266,41 @@ services:
       - "traefik.http.routers.mio-admin-secure.tls=true"
       - "traefik.http.routers.mio-admin-secure.service=mio-admin"
 
+  # Storybook container (component documentation)
+  mio-storybook:
+    image: node:20-alpine
+    container_name: mio-storybook
+    restart: always
+    user: "1000:1000"
+    tty: true
+    stdin_open: true
+    volumes:
+      - '${MIO_WORKSPACE_FOLDER}:${MIO_WORKSPACE_FOLDER}'
+    working_dir: ${MIO_WORKSPACE_FOLDER}/apps/storybook
+    expose:
+      - 6006
+    ports:
+      - 6006:6006
+    command: ["sh", "-c", "npx storybook dev -p 6006 -h 0.0.0.0 --no-open --ci"]
+    environment:
+      - NODE_ENV=development
+      - CI=true
+      - STORYBOOK_DISABLE_TELEMETRY=1
+    networks:
+      - mio-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mio-storybook.rule=Host(`storybook.mio.local`)"
+      - "traefik.http.routers.mio-storybook.priority=100"
+      - "traefik.http.routers.mio-storybook.entrypoints=web"
+      - "traefik.http.routers.mio-storybook.middlewares=redirect-to-https"
+      - "traefik.http.routers.mio-storybook-secure.rule=Host(`storybook.mio.local`)"
+      - "traefik.http.services.mio-storybook.loadbalancer.server.port=6006"
+      - "traefik.http.services.mio-storybook.loadbalancer.server.scheme=http"
+      - "traefik.http.routers.mio-storybook-secure.entrypoints=websecure"
+      - "traefik.http.routers.mio-storybook-secure.tls=true"
+      - "traefik.http.routers.mio-storybook-secure.service=mio-storybook"
+
 networks:
   mio-network:
     driver: bridge

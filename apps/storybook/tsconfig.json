@@ -1,0 +1,26 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["dom", "dom.iterable", "ESNext"],
+    "types": ["node"],
+    "baseUrl": ".",
+    "paths": {
+      "@mio/ui": ["../../packages/shared/src/ui/index.ts"],
+      "@mio/ui/*": ["../../packages/shared/src/ui/*"],
+      "@mio/shared": ["../../packages/shared/src/index.ts"],
+      "@mio/shared/*": ["../../packages/shared/src/*"],
+      "@admin": ["../../apps/admin/src"],
+      "@admin/*": ["../../apps/admin/src/*"],
+      "@web": ["../../apps/web/src"],
+      "@web/*": ["../../apps/web/src/*"]
+    }
+  },
+  "include": [
+    ".storybook/**/*",
+    "src/**/*",
+    "../../packages/shared/src/ui/**/*.stories.tsx",
+    "../../apps/admin/src/**/*.stories.tsx"
+  ],
+  "exclude": ["node_modules", "dist"]
+}
