@@ -44,6 +44,9 @@ export class StoriesStore {
       id: row.id,
       childProfileId: row.childProfileId,
       initialPrompt: row.initialPrompt,
+      enrichedConcept: row.enrichedConcept as StoryRow['enrichedConcept'],
+      script: row.script as StoryRow['script'],
+      answers: row.answers as StoryRow['answers'],
       finalAudioUrl: row.finalAudioUrl,
       duration: row.duration,
       status: row.status,
@@ -55,10 +58,26 @@ export class StoriesStore {
   /**
    * Find a story by ID
    */
-  async findById(id: string): Promise<typeof stories.$inferSelect | null> {
-    const [story] = await this.db.select().from(stories).where(eq(stories.id, id)).limit(1);
+  async findById(id: string): Promise<StoryRow | null> {
+    const [row] = await this.db.select().from(stories).where(eq(stories.id, id)).limit(1);
 
-    return story || null;
+    if (!row) {
+      return null;
+    }
+
+    return {
+      id: row.id,
+      childProfileId: row.childProfileId,
+      initialPrompt: row.initialPrompt,
+      enrichedConcept: row.enrichedConcept as StoryRow['enrichedConcept'],
+      script: row.script as StoryRow['script'],
+      answers: row.answers as StoryRow['answers'],
+      finalAudioUrl: row.finalAudioUrl,
+      duration: row.duration,
+      status: row.status,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt
+    };
   }
 
   /**
@@ -131,6 +150,9 @@ export class StoriesStore {
       id: row.id,
       childProfileId: row.childProfileId,
       initialPrompt: row.initialPrompt,
+      enrichedConcept: row.enrichedConcept as StoryRow['enrichedConcept'],
+      script: row.script as StoryRow['script'],
+      answers: row.answers as StoryRow['answers'],
       finalAudioUrl: row.finalAudioUrl,
       duration: row.duration,
       status: row.status,
@@ -205,6 +227,9 @@ export class StoriesStore {
         id: row.id,
         childProfileId: row.childProfileId,
         initialPrompt: row.initialPrompt,
+        enrichedConcept: row.enrichedConcept as StoryRow['enrichedConcept'],
+        script: row.script as StoryRow['script'],
+        answers: row.answers as StoryRow['answers'],
         finalAudioUrl: row.finalAudioUrl,
         duration: row.duration,
         status: row.status,

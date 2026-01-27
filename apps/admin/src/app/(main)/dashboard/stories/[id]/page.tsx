@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
@@ -14,6 +14,7 @@ import {
   Loader2,
   MapPin,
   Music,
+  Pause,
   Play,
   RefreshCw,
   Sparkles,
@@ -61,10 +62,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@mio/ui/tabs";
 import { Textarea } from "@mio/ui/textarea";
 import {
   useStory,
-  useStorySegments,
   useStoryAudioAssets,
   type AudioAsset,
-  type StorySegment,
 } from "@/hooks/queries/use-story";
 import {
   useEnrichStory,
@@ -112,6 +111,13 @@ function formatDuration(seconds: number | null): string {
   return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
 
+function getScriptSegmentCount(script: unknown): number {
+  if (!script || typeof script !== "object") return 0;
+  const scriptData = script as { tracks?: Array<{ type?: string; segments?: unknown[] }> };
+  const voiceTrack = scriptData.tracks?.find((t) => t.type === "voice");
+  return voiceTrack?.segments?.length ?? 0;
+}
+
 interface StoryDetailPageProps {
   params: Promise<{ id: string }>;
 }
@@ -124,7 +130,6 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
   const [editedPrompt, setEditedPrompt] = useState("");
 
   const { data: story, isLoading, error, refetch } = useStory(id);
-  const { data: segments = [] } = useStorySegments(id);
   const { data: audioAssets = [] } = useStoryAudioAssets(id);
 
   const enrichStory = useEnrichStory();
@@ -348,12 +353,12 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="script" disabled={!story.script}>
-            Script {segments.length > 0 && `(${segments.length})`}
+            Script {getScriptSegmentCount(story.script) > 0 && `(${getScriptSegmentCount(story.script)})`}
           </TabsTrigger>
           <TabsTrigger value="audio" disabled={audioAssets.length === 0}>
             Audio {audioAssets.length > 0 && `(${audioAssets.length})`}
           </TabsTrigger>
-          <TabsTrigger value="timeline" disabled={!isReady}>
+          <TabsTrigger value="timeline" disabled={!story.script}>
             Timeline
           </TabsTrigger>
         </TabsList>
@@ -532,20 +537,7 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
 
         {/* Script Tab */}
         <TabsContent value="script" className="min-w-0 space-y-4">
-          {segments.length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <BookOpen className="h-12 w-12 text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">No script segments yet</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-3">
-              {segments.map((segment, index) => (
-                <SegmentCard key={segment.id} segment={segment} index={index} />
-              ))}
-            </div>
-          )}
+          <ScriptView script={story.script} />
         </TabsContent>
 
         {/* Audio Tab */}
@@ -576,14 +568,11 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {segments.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12">
-                  <Music className="h-12 w-12 text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">No timeline data available</p>
-                </div>
-              ) : (
-                <TimelineView segments={segments} totalDuration={story.duration} />
-              )}
+              <ScriptTimelineView
+                script={story.script}
+                totalDuration={story.duration}
+                finalAudioUrl={story.finalAudioUrl}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -634,49 +623,6 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
   );
 }
 
-// Segment Card Component
-function SegmentCard({ segment, index }: { segment: StorySegment; index: number }) {
-  const content = segment.content as Record<string, unknown>;
-  const text = (content.text as string) || (content.narration as string) || "";
-
-  return (
-    <Card>
-      <CardHeader className="py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Badge variant="outline">{index + 1}</Badge>
-            <Badge variant="secondary" className="capitalize">
-              {segment.type}
-            </Badge>
-          </div>
-          <div className="flex items-center gap-2">
-            {segment.duration && (
-              <span className="text-xs text-muted-foreground">
-                {formatDuration(segment.duration)}
-              </span>
-            )}
-            {segment.audioUrl && (
-              <PlayButton
-                track={{
-                  id: segment.id,
-                  name: `Segment ${index + 1}`,
-                  url: segment.audioUrl,
-                  type: "voice",
-                }}
-              />
-            )}
-          </div>
-        </div>
-      </CardHeader>
-      {text && (
-        <CardContent className="pt-0">
-          <p className="text-sm text-muted-foreground break-words line-clamp-3">{text}</p>
-        </CardContent>
-      )}
-    </Card>
-  );
-}
-
 // Audio Asset Card Component
 function AudioAssetCard({ asset, storyTitle }: { asset: AudioAsset; storyTitle: string }) {
   const config = assetTypeConfig[asset.type] ?? assetTypeConfig.voice;
@@ -718,15 +664,373 @@ function AudioAssetCard({ asset, storyTitle }: { asset: AudioAsset; storyTitle: 
   );
 }
 
-// Timeline View Component
-function TimelineView({
-  segments,
+// Script types for display
+interface ScriptSegmentContent {
+  type: string;
+  text?: string;
+  description?: string;
+  characterName?: string;
+  emotion?: string;
+  mood?: string;
+}
+
+interface ScriptTimelineSegment {
+  id: string;
+  trackId: string;
+  startTime: number;
+  duration: number;
+  content: ScriptSegmentContent;
+}
+
+interface ScriptTrack {
+  id: string;
+  type: string;
+  name: string;
+  segments: ScriptTimelineSegment[];
+}
+
+interface ScriptData {
+  version: number;
+  metadata?: {
+    title?: string;
+    targetDuration?: number;
+    actualDuration?: number;
+    wordCount?: number;
+    voiceSegmentCount?: number;
+    sfxSegmentCount?: number;
+  };
+  characters?: Array<{
+    characterName: string;
+    voiceId?: string;
+    voiceDescription: string;
+  }>;
+  tracks?: ScriptTrack[];
+}
+
+// Script View Component
+function ScriptView({ script }: { script: unknown }) {
+  if (!script) {
+    return (
+      <Card>
+        <CardContent className="flex flex-col items-center justify-center py-12">
+          <BookOpen className="h-12 w-12 text-muted-foreground mb-4" />
+          <p className="text-muted-foreground">No script yet</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const scriptData = script as ScriptData;
+  const voiceTrack = scriptData.tracks?.find((t) => t.type === "voice");
+  const sfxTrack = scriptData.tracks?.find((t) => t.type === "sfx");
+  const musicTrack = scriptData.tracks?.find((t) => t.type === "music");
+  const ambianceTrack = scriptData.tracks?.find((t) => t.type === "ambiance");
+
+  const voiceSegments = voiceTrack?.segments ?? [];
+
+  return (
+    <div className="space-y-6">
+      {/* Script Metadata */}
+      {scriptData.metadata && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BookOpen className="h-5 w-5" />
+              Script Metadata
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <dl className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
+              {scriptData.metadata.title && (
+                <div>
+                  <dt className="text-muted-foreground">Title</dt>
+                  <dd className="font-medium">{scriptData.metadata.title}</dd>
+                </div>
+              )}
+              {scriptData.metadata.targetDuration && (
+                <div>
+                  <dt className="text-muted-foreground">Target Duration</dt>
+                  <dd>{formatDuration(scriptData.metadata.targetDuration)}</dd>
+                </div>
+              )}
+              {scriptData.metadata.actualDuration && (
+                <div>
+                  <dt className="text-muted-foreground">Actual Duration</dt>
+                  <dd>{formatDuration(scriptData.metadata.actualDuration)}</dd>
+                </div>
+              )}
+              {scriptData.metadata.wordCount && (
+                <div>
+                  <dt className="text-muted-foreground">Word Count</dt>
+                  <dd>{scriptData.metadata.wordCount}</dd>
+                </div>
+              )}
+              {scriptData.metadata.voiceSegmentCount !== undefined && (
+                <div>
+                  <dt className="text-muted-foreground">Voice Segments</dt>
+                  <dd>{scriptData.metadata.voiceSegmentCount}</dd>
+                </div>
+              )}
+              {scriptData.metadata.sfxSegmentCount !== undefined && (
+                <div>
+                  <dt className="text-muted-foreground">SFX Segments</dt>
+                  <dd>{scriptData.metadata.sfxSegmentCount}</dd>
+                </div>
+              )}
+            </dl>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Characters */}
+      {scriptData.characters && scriptData.characters.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Characters ({scriptData.characters.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 md:grid-cols-2">
+              {scriptData.characters.map((char, idx) => (
+                <div key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                  <div className="rounded-full bg-primary/10 p-2">
+                    <User className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium truncate">{char.characterName}</p>
+                    <p className="text-sm text-muted-foreground line-clamp-2">{char.voiceDescription}</p>
+                    {char.voiceId && (
+                      <p className="text-xs text-muted-foreground font-mono mt-1">Voice: {char.voiceId.slice(0, 8)}...</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Voice Segments */}
+      {voiceSegments.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Volume2 className="h-5 w-5" />
+              Voice Segments ({voiceSegments.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {voiceSegments.map((segment, index) => (
+              <ScriptSegmentCard key={segment.id} segment={segment} index={index} />
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* SFX Segments */}
+      {sfxTrack && sfxTrack.segments.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5" />
+              Sound Effects ({sfxTrack.segments.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-2 md:grid-cols-2">
+              {sfxTrack.segments.map((segment) => (
+                <div key={segment.id} className="flex items-center gap-2 p-2 rounded bg-yellow-50 dark:bg-yellow-950/30">
+                  <Badge variant="outline" className="shrink-0">
+                    {formatDuration(segment.startTime)}
+                  </Badge>
+                  <span className="text-sm truncate">{segment.content.description}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Music Track */}
+      {musicTrack && musicTrack.segments.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Music className="h-5 w-5" />
+              Music ({musicTrack.segments.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-2">
+              {musicTrack.segments.map((segment) => (
+                <div key={segment.id} className="flex items-center gap-2 p-2 rounded bg-pink-50 dark:bg-pink-950/30">
+                  <Badge variant="outline" className="shrink-0">
+                    {formatDuration(segment.startTime)}
+                  </Badge>
+                  <span className="text-sm">{segment.content.mood || segment.content.description}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Ambiance Track */}
+      {ambianceTrack && ambianceTrack.segments.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Volume2 className="h-5 w-5" />
+              Ambiance ({ambianceTrack.segments.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-2">
+              {ambianceTrack.segments.map((segment) => (
+                <div key={segment.id} className="flex items-center gap-2 p-2 rounded bg-green-50 dark:bg-green-950/30">
+                  <Badge variant="outline" className="shrink-0">
+                    {formatDuration(segment.startTime)}
+                  </Badge>
+                  <span className="text-sm">{segment.content.description}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Empty state */}
+      {voiceSegments.length === 0 && !sfxTrack?.segments.length && !musicTrack?.segments.length && (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <BookOpen className="h-12 w-12 text-muted-foreground mb-4" />
+            <p className="text-muted-foreground">Script has no segments</p>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+// Script Segment Card Component
+function ScriptSegmentCard({ segment, index }: { segment: ScriptTimelineSegment; index: number }) {
+  const content = segment.content;
+  const isDialogue = content.type === "dialogue";
+  const isNarration = content.type === "narration";
+
+  return (
+    <div className={`p-3 rounded-lg border ${isDialogue ? "bg-purple-50 dark:bg-purple-950/30 border-purple-200 dark:border-purple-800" : "bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800"}`}>
+      <div className="flex items-center gap-2 mb-2">
+        <Badge variant="outline">{index + 1}</Badge>
+        <Badge variant={isDialogue ? "secondary" : "default"} className="capitalize">
+          {content.type}
+        </Badge>
+        {content.characterName && (
+          <Badge variant="outline" className="bg-background">
+            {content.characterName}
+          </Badge>
+        )}
+        {content.emotion && (
+          <Badge variant="outline" className="text-xs">
+            {content.emotion}
+          </Badge>
+        )}
+        <span className="ml-auto text-xs text-muted-foreground">
+          {formatDuration(segment.startTime)} - {formatDuration(segment.startTime + segment.duration)}
+        </span>
+      </div>
+      {content.text && (
+        <p className="text-sm text-foreground/90 whitespace-pre-wrap">{content.text}</p>
+      )}
+    </div>
+  );
+}
+
+// Script Timeline View Component
+function ScriptTimelineView({
+  script,
   totalDuration,
+  finalAudioUrl,
 }: {
-  segments: StorySegment[];
+  script: unknown;
   totalDuration: number | null;
+  finalAudioUrl: string | null;
 }) {
-  if (!totalDuration) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const timelineRef = useRef<HTMLDivElement>(null);
+
+  // Update current time during playback
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const handleTimeUpdate = () => {
+      setCurrentTime(audio.currentTime);
+    };
+
+    const handleEnded = () => {
+      setIsPlaying(false);
+      setCurrentTime(0);
+    };
+
+    const handlePlay = () => setIsPlaying(true);
+    const handlePause = () => setIsPlaying(false);
+
+    audio.addEventListener("timeupdate", handleTimeUpdate);
+    audio.addEventListener("ended", handleEnded);
+    audio.addEventListener("play", handlePlay);
+    audio.addEventListener("pause", handlePause);
+
+    return () => {
+      audio.removeEventListener("timeupdate", handleTimeUpdate);
+      audio.removeEventListener("ended", handleEnded);
+      audio.removeEventListener("play", handlePlay);
+      audio.removeEventListener("pause", handlePause);
+    };
+  }, []);
+
+  const togglePlayPause = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (isPlaying) {
+      audio.pause();
+    } else {
+      audio.play();
+    }
+  }, [isPlaying]);
+
+  const handleTimelineClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const audio = audioRef.current;
+    const timeline = timelineRef.current;
+    if (!audio || !timeline || !totalDuration) return;
+
+    const rect = timeline.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const percentage = clickX / rect.width;
+    const newTime = percentage * totalDuration;
+
+    audio.currentTime = newTime;
+    setCurrentTime(newTime);
+  }, [totalDuration]);
+
+  if (!script) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <Music className="h-12 w-12 text-muted-foreground mb-4" />
+        <p className="text-muted-foreground">No timeline data available</p>
+      </div>
+    );
+  }
+
+  const scriptData = script as ScriptData;
+  const duration = totalDuration || scriptData.metadata?.actualDuration || 0;
+
+  if (!duration) {
     return (
       <div className="text-center text-muted-foreground py-8">
         No duration information available
@@ -734,46 +1038,128 @@ function TimelineView({
     );
   }
 
-  const segmentColors: Record<string, string> = {
-    narration: "bg-blue-500",
-    dialogue: "bg-purple-500",
-    sound_effect: "bg-yellow-500",
-    music_change: "bg-pink-500",
-    pause: "bg-gray-300",
+  const trackColors: Record<string, string> = {
+    voice: "bg-blue-500",
+    sfx: "bg-yellow-500",
+    music: "bg-pink-500",
+    ambiance: "bg-green-500",
   };
 
-  let currentTime = 0;
+  const segmentTypeColors: Record<string, string> = {
+    narration: "bg-blue-500",
+    dialogue: "bg-purple-500",
+    sfx: "bg-yellow-500",
+    music: "bg-pink-500",
+    ambiance: "bg-green-500",
+  };
+
+  const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div className="space-y-4">
-      <div className="relative h-12 bg-muted rounded-lg overflow-hidden">
-        {segments.map((segment, index) => {
-          const duration = segment.duration || 0;
-          const width = (duration / totalDuration) * 100;
-          const left = (currentTime / totalDuration) * 100;
-          currentTime += duration;
+    <div className="space-y-6">
+      {/* Audio element */}
+      {finalAudioUrl && (
+        <audio ref={audioRef} src={finalAudioUrl} preload="metadata" />
+      )}
 
-          return (
+      {/* Player controls */}
+      <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={togglePlayPause}
+          disabled={!finalAudioUrl}
+          className="h-12 w-12 rounded-full"
+        >
+          {isPlaying ? (
+            <Pause className="h-6 w-6" />
+          ) : (
+            <Play className="h-6 w-6 ml-0.5" />
+          )}
+        </Button>
+        <div className="flex-1">
+          <div className="flex items-center justify-between text-sm mb-1">
+            <span className="font-mono">{formatDuration(currentTime)}</span>
+            <span className="text-muted-foreground font-mono">{formatDuration(duration)}</span>
+          </div>
+          {/* Progress bar */}
+          <div
+            className="h-2 bg-muted rounded-full cursor-pointer overflow-hidden"
+            onClick={handleTimelineClick}
+            ref={timelineRef}
+          >
             <div
-              key={segment.id}
-              className={`absolute h-full ${segmentColors[segment.type] || "bg-gray-400"} opacity-80 hover:opacity-100 transition-opacity`}
-              style={{ left: `${left}%`, width: `${width}%` }}
-              title={`${segment.type}: ${formatDuration(duration)}`}
+              className="h-full bg-primary transition-all duration-100"
+              style={{ width: `${progressPercent}%` }}
             />
-          );
-        })}
+          </div>
+        </div>
+        {!finalAudioUrl && (
+          <span className="text-xs text-muted-foreground">No audio available</span>
+        )}
       </div>
 
-      <div className="flex justify-between text-xs text-muted-foreground">
+      {/* Track visualization with cursor */}
+      <div className="relative">
+        {/* Progress cursor */}
+        {finalAudioUrl && (
+          <div
+            className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-10 pointer-events-none transition-all duration-100"
+            style={{ left: `${progressPercent}%` }}
+          >
+            <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-red-500 rounded-full" />
+          </div>
+        )}
+
+        {/* Tracks */}
+        <div className="space-y-4">
+          {scriptData.tracks?.map((track) => (
+            <div key={track.id} className="space-y-1">
+              <div className="flex items-center gap-2">
+                <div className={`w-3 h-3 rounded ${trackColors[track.type] || "bg-gray-400"}`} />
+                <span className="text-sm font-medium capitalize">{track.name || track.type}</span>
+                <span className="text-xs text-muted-foreground">({track.segments.length})</span>
+              </div>
+              <div
+                className="relative h-10 bg-muted rounded-lg overflow-hidden cursor-pointer"
+                onClick={handleTimelineClick}
+              >
+                {track.segments.map((segment) => {
+                  const width = (segment.duration / duration) * 100;
+                  const left = (segment.startTime / duration) * 100;
+                  const color = segmentTypeColors[segment.content.type] || trackColors[track.type] || "bg-gray-400";
+                  const isActive = currentTime >= segment.startTime && currentTime < segment.startTime + segment.duration;
+
+                  return (
+                    <div
+                      key={segment.id}
+                      className={`absolute h-full ${color} ${isActive ? "opacity-100 ring-2 ring-white ring-inset" : "opacity-70"} hover:opacity-100 transition-all`}
+                      style={{ left: `${left}%`, width: `${Math.max(width, 0.5)}%` }}
+                      title={`${segment.content.type}: ${segment.content.text?.slice(0, 50) || segment.content.description || segment.content.mood || ""}`}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Time axis */}
+      <div className="flex justify-between text-xs text-muted-foreground pt-2 border-t">
         <span>0:00</span>
-        <span>{formatDuration(totalDuration)}</span>
+        <span>{formatDuration(duration / 4)}</span>
+        <span>{formatDuration(duration / 2)}</span>
+        <span>{formatDuration((duration * 3) / 4)}</span>
+        <span>{formatDuration(duration)}</span>
       </div>
 
-      <div className="flex flex-wrap gap-3 text-xs">
-        {Object.entries(segmentColors).map(([type, color]) => (
+      {/* Legend */}
+      <div className="flex flex-wrap gap-4 text-xs pt-2">
+        {Object.entries(segmentTypeColors).map(([type, color]) => (
           <div key={type} className="flex items-center gap-1">
             <div className={`w-3 h-3 rounded ${color}`} />
-            <span className="capitalize">{type.replace("_", " ")}</span>
+            <span className="capitalize">{type}</span>
           </div>
         ))}
       </div>

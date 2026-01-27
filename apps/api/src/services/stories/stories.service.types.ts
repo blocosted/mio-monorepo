@@ -100,6 +100,9 @@ export interface StoryRow {
   id: string;
   childProfileId: string;
   initialPrompt: string;
+  enrichedConcept: EnrichedConcept | null;
+  script: StoryScript | null;
+  answers: StoryAnswer[] | null;
   finalAudioUrl: string | null;
   duration: number | null;
   status: StoryStatus;
