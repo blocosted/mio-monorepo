@@ -12,7 +12,17 @@ import type { VoiceFilters, Voice } from './voices';
 import { AudioLibraryAdminClient } from './audio-library';
 import type { SfxFilters, SfxTrack, AmbianceFilters, AmbianceTrack, MusicFilters, MusicTrack } from './audio-library';
 import { StoriesAdminClient } from './stories';
-import type { StoryFilters, AdminStory, StorySegment, AudioAsset, UpdateStoryPromptResponse } from './stories';
+import type {
+  StoryFilters,
+  AdminStory,
+  StorySegment,
+  AudioAsset,
+  UpdateStoryPromptResponse,
+  CreateAndGenerateStoryBody,
+  CreateAndGenerateStoryResponse,
+  RegenerateStoryBody,
+  RegenerateStoryResponse
+} from './stories';
 import { ProfilesAdminClient } from './profiles';
 import type { ProfileFilters, AdminProfile, CreateAdminProfileBody } from './profiles';
 
@@ -92,6 +102,14 @@ export class MioApiAdminClient {
 
   public async updateStoryPrompt(id: string, prompt: string): Promise<UpdateStoryPromptResponse> {
     return this.stories.updateStoryPrompt(id, prompt);
+  }
+
+  public async createAndGenerateStory(body: CreateAndGenerateStoryBody): Promise<CreateAndGenerateStoryResponse> {
+    return this.stories.createAndGenerateStory(body);
+  }
+
+  public async regenerateStory(storyId: string, body?: RegenerateStoryBody): Promise<RegenerateStoryResponse> {
+    return this.stories.regenerateStory(storyId, body);
   }
 
   // ===========================================================================

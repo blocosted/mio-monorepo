@@ -71,6 +71,7 @@ import {
   useGenerateStory,
   useDeleteStory,
   useUpdateStoryPrompt,
+  useRegenerateStory,
 } from "@/hooks/mutations/use-story-mutations";
 
 const statusConfig: Record<string, { color: string; label: string; description: string }> = {
@@ -130,6 +131,17 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
   const generateStory = useGenerateStory();
   const deleteStory = useDeleteStory();
   const updatePrompt = useUpdateStoryPrompt();
+  const regenerateStory = useRegenerateStory();
+
+  const handleRegenerate = async () => {
+    try {
+      await regenerateStory.mutateAsync({ storyId: id, targetDurationMinutes: 0.33 });
+      toast.success("Story regeneration started");
+      refetch();
+    } catch {
+      toast.error("Failed to regenerate story");
+    }
+  };
 
   const handleEnrich = async () => {
     try {
@@ -284,6 +296,17 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
             <Button variant="outline" onClick={() => refetch()}>
               <RefreshCw className="mr-2 h-4 w-4" />
               Refresh
+            </Button>
+          )}
+
+          {(isReady || story.status === "failed") && (
+            <Button variant="outline" onClick={handleRegenerate} disabled={regenerateStory.isPending}>
+              {regenerateStory.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="mr-2 h-4 w-4" />
+              )}
+              Regenerate
             </Button>
           )}
 

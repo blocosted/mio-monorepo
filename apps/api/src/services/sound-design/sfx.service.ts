@@ -77,9 +77,10 @@ interface PersistSfxParams {
 
 /**
  * Map SfxCategory to SfxLibraryCategory
+ * Returns 'effects' as default when no category is provided
  */
-function mapToLibraryCategory(category: SfxCategory | undefined): SfxLibraryCategory | undefined {
-  if (!category) return undefined;
+function mapToLibraryCategory(category: SfxCategory | undefined): SfxLibraryCategory {
+  if (!category) return 'effects';
 
   // The categories are the same, just different module locations
   const mapping: Record<SfxCategory, SfxLibraryCategory> = {
@@ -639,14 +640,15 @@ export class SfxService extends AbstractService {
     // Generate storage path
     const storagePath = `sfx/${persistParams.category ?? 'general'}/${Date.now()}-${Bun.hash(persistParams.text).toString(36)}.mp3`;
 
-    // Upload to storage
-    await this.storage.upload(persistParams.audio, storagePath, {
+    // Upload to storage and get public URL
+    const uploadResult = await this.storage.upload(persistParams.audio, storagePath, {
       contentType: 'audio/mpeg'
     });
+    const publicUrl = uploadResult.url;
 
     // Store in Redis cache (short-term)
     await this.sfxCache.set(cacheParams, {
-      url: storagePath,
+      url: publicUrl,
       durationSeconds: persistParams.durationSeconds,
       category: persistParams.category
     });
@@ -673,7 +675,7 @@ export class SfxService extends AbstractService {
           intensity: persistParams.intensity,
           prompt: persistParams.text,
           promptInfluence: persistParams.promptInfluence ?? 0.3,
-          s3Url: storagePath,
+          s3Url: publicUrl,
           durationSeconds: persistParams.durationSeconds,
           format: 'mp3',
           tags: persistParams.tags ?? []
@@ -684,7 +686,7 @@ export class SfxService extends AbstractService {
       }
     }
 
-    return { url: storagePath };
+    return { url: publicUrl };
   }
 
   /**

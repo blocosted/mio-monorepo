@@ -15,5 +15,13 @@ export {
   UpdateStoryPromptBodySchema,
   type UpdateStoryPromptBody,
   UpdateStoryPromptResponseSchema,
-  type UpdateStoryPromptResponse
+  type UpdateStoryPromptResponse,
+  CreateAndGenerateStoryBodySchema,
+  type CreateAndGenerateStoryBody,
+  CreateAndGenerateStoryResponseSchema,
+  type CreateAndGenerateStoryResponse,
+  RegenerateStoryBodySchema,
+  type RegenerateStoryBody,
+  RegenerateStoryResponseSchema,
+  type RegenerateStoryResponse
 } from './stories.client.types';

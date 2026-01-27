@@ -30,3 +30,14 @@ export const StoryIdParamSchema = t.Object({
 export const UpdateStoryPromptBodySchema = t.Object({
   prompt: t.String({ minLength: 3, maxLength: 500 })
 });
+
+/**
+ * Create and generate story body
+ */
+export const CreateAndGenerateStoryBodySchema = t.Object({
+  childProfileId: t.String({ format: 'uuid' }),
+  prompt: t.String({ minLength: 3, maxLength: 500 }),
+  targetDurationMinutes: t.Optional(t.Number({ minimum: 0.1, maximum: 30 }))
+});
+
+export type CreateAndGenerateStoryBody = typeof CreateAndGenerateStoryBodySchema.static;

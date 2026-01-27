@@ -92,7 +92,7 @@ export const AudioIntensity = {
 /**
  * Ambiance environment for categorization
  */
-export const AmbianceEnvironmentValues = ['forest', 'ocean', 'city', 'village', 'castle', 'cave', 'mountain', 'meadow', 'space', 'underwater'] as const;
+export const AmbianceEnvironmentValues = ['forest', 'ocean', 'city', 'village', 'castle', 'cave', 'mountain', 'meadow', 'space', 'underwater', 'other'] as const;
 export type AmbianceEnvironment = (typeof AmbianceEnvironmentValues)[number];
 export const AmbianceEnvironment = {
   Forest: 'forest',
@@ -104,7 +104,8 @@ export const AmbianceEnvironment = {
   Mountain: 'mountain',
   Meadow: 'meadow',
   Space: 'space',
-  Underwater: 'underwater'
+  Underwater: 'underwater',
+  Other: 'other'
 } as const satisfies Record<string, AmbianceEnvironment>;
 
 /**

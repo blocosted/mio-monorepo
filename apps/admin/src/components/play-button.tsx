@@ -1,6 +1,6 @@
 "use client";
 
-import { Pause, Play } from "lucide-react";
+import { Loader2, Pause, Play } from "lucide-react";
 
 import { Button } from "@mio/ui/button";
 import { type AudioTrack, useAudioPlayer } from "@/contexts/audio-player-context";
@@ -10,10 +10,11 @@ interface PlayButtonProps {
 }
 
 export function PlayButton({ track }: PlayButtonProps) {
-  const { track: currentTrack, isPlaying, play, pause } = useAudioPlayer();
+  const { track: currentTrack, isPlaying, isLoading, play, pause } = useAudioPlayer();
 
   const isCurrentTrack = currentTrack?.id === track.id && currentTrack?.url === track.url;
   const isThisPlaying = isCurrentTrack && isPlaying;
+  const isThisLoading = isCurrentTrack && isLoading;
 
   const handleClick = () => {
     if (isThisPlaying) {
@@ -28,8 +29,11 @@ export function PlayButton({ track }: PlayButtonProps) {
       variant="ghost"
       size="sm"
       onClick={handleClick}
+      disabled={isThisLoading}
     >
-      {isThisPlaying ? (
+      {isThisLoading ? (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      ) : isThisPlaying ? (
         <Pause className="h-4 w-4" />
       ) : (
         <Play className="h-4 w-4" />

@@ -1,11 +1,10 @@
 "use client";
 
-import { ChevronDown, ChevronUp, Music, Pause, Play, Trees, Volume2, Sparkles, X, BookOpen, Mic } from "lucide-react";
+import { AlertCircle, ChevronDown, ChevronUp, Loader2, Music, Pause, Play, Trees, Sparkles, X, BookOpen, Mic } from "lucide-react";
 
 import { useAudioPlayer } from "@/contexts/audio-player-context";
 import { Button } from "@mio/ui/button";
 import { Slider } from "@mio/ui/slider";
-import { cn } from "@/lib/utils";
 
 function formatTime(seconds: number): string {
   if (!seconds || !isFinite(seconds)) return "0:00";
@@ -34,6 +33,8 @@ export function AudioPlayer() {
   const {
     track,
     isPlaying,
+    isLoading,
+    error,
     currentTime,
     duration,
     isVisible,
@@ -89,8 +90,13 @@ export function AudioPlayer() {
               size="icon"
               className="h-9 w-9 rounded-full"
               onClick={toggle}
+              disabled={isLoading}
             >
-              {isPlaying ? (
+              {isLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : error ? (
+                <AlertCircle className="h-5 w-5 text-destructive" />
+              ) : isPlaying ? (
                 <Pause className="h-5 w-5" />
               ) : (
                 <Play className="h-5 w-5 ml-0.5" />

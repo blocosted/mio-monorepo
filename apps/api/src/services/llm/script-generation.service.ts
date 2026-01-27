@@ -63,8 +63,15 @@ const NARRATIVE_STRUCTURE = {
  * We validate primarily on word count, not segment count.
  */
 const SEGMENT_REQUIREMENTS = {
+  micro: {
+    // < 1 min (for testing)
+    minNarration: 2,
+    minDialogue: 1,
+    minSfx: 1,
+    maxConsecutive: 3
+  },
   short: {
-    // ≤5 min
+    // 1-5 min
     minNarration: 5,
     minDialogue: 4,
     minSfx: 3,
@@ -140,6 +147,7 @@ export class ScriptGenerationService extends AbstractService {
    * Get segment requirements based on duration
    */
   getSegmentRequirements(targetMinutes: number): typeof SEGMENT_REQUIREMENTS.short {
+    if (targetMinutes < 1) return SEGMENT_REQUIREMENTS.micro;
     if (targetMinutes <= 5) return SEGMENT_REQUIREMENTS.short;
     if (targetMinutes <= 10) return SEGMENT_REQUIREMENTS.medium;
     return SEGMENT_REQUIREMENTS.long;
@@ -244,9 +252,11 @@ export class ScriptGenerationService extends AbstractService {
     // Calculate word count
     const wordCount = this.calculateScriptWordCount(script);
     const targetWordCount = constraints.durationBudget.targetWordCount;
-    // 15% tolerance for stricter word count control
-    // With WPM=120 and proper prompt instructions, LLMs should hit the target more accurately
-    const tolerance = 0.15;
+    // Tolerance varies by story length:
+    // - Micro stories (< 50 words): 50% tolerance (LLMs struggle with very short content)
+    // - Short stories: 30% tolerance
+    // - Normal stories: 15% tolerance
+    const tolerance = targetWordCount < 50 ? 0.5 : targetWordCount < 150 ? 0.3 : 0.15;
     const minWords = Math.round(targetWordCount * (1 - tolerance));
     const maxWords = Math.round(targetWordCount * (1 + tolerance));
 

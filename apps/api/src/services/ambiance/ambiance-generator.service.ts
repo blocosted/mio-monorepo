@@ -188,8 +188,8 @@ export class AmbianceGeneratorService {
       });
     }
 
-    // Infer taxonomy from description
-    const environment = inferEnvironment(description);
+    // Infer taxonomy from description (use 'other' as fallback for library storage)
+    const environment = inferEnvironment(description) ?? 'other';
     const timeOfDay = inferTimeOfDay(description);
     const weather = inferWeather(description);
     const mood = inferMood(description);
@@ -277,7 +277,7 @@ export class AmbianceGeneratorService {
       if (environment) {
         try {
           const storagePath = `ambiance/${environment}/${Date.now()}-${Bun.hash(description).toString(36)}.mp3`;
-          await this.storage.upload(sourceAudio, storagePath, {
+          const uploadResult = await this.storage.upload(sourceAudio, storagePath, {
             contentType: 'audio/mpeg'
           });
 
@@ -293,7 +293,7 @@ export class AmbianceGeneratorService {
             mood,
             prompt: description,
             promptInfluence,
-            s3Url: storagePath,
+            s3Url: uploadResult.url,
             sourceDurationSeconds: sourceDuration,
             format: 'mp3',
             isLoopable: true,
@@ -302,7 +302,7 @@ export class AmbianceGeneratorService {
 
           this.logger.info('Ambiance source stored in library', {
             environment,
-            storagePath
+            storagePath: uploadResult.url
           });
         } catch (error) {
           this.logger.warn('Failed to store ambiance in library', {
@@ -321,7 +321,7 @@ export class AmbianceGeneratorService {
       // No processing needed - upload source clip to processed path for deduplication
       const envFolder = environment ?? 'general';
       const processedPath = `ambiance/${envFolder}/${Bun.hash(description).toString(36)}-${Math.round(sourceDuration)}s.mp3`;
-      await this.storage.upload(sourceAudio, processedPath, { contentType: 'audio/mpeg' });
+      const noProcessUpload = await this.storage.upload(sourceAudio, processedPath, { contentType: 'audio/mpeg' });
 
       return {
         audio: sourceAudio,
@@ -329,7 +329,7 @@ export class AmbianceGeneratorService {
         description,
         looped: false,
         sourceClipDurationSeconds: sourceDuration,
-        url: processedPath,
+        url: noProcessUpload.url,
         fromLibrary
       };
     }
@@ -342,7 +342,7 @@ export class AmbianceGeneratorService {
     // Upload processed audio to shared path for deduplication
     const envFolder = environment ?? 'general';
     const processedPath = `ambiance/${envFolder}/${Bun.hash(description).toString(36)}-${Math.round(targetDurationSeconds)}s.mp3`;
-    await this.storage.upload(processedAudio, processedPath, { contentType: 'audio/mpeg' });
+    const finalUploadResult = await this.storage.upload(processedAudio, processedPath, { contentType: 'audio/mpeg' });
 
     this.logger.info('Ambiance generation complete', {
       description: description.substring(0, 30),
@@ -350,7 +350,7 @@ export class AmbianceGeneratorService {
       finalDuration,
       looped: needsLoop,
       fromLibrary,
-      processedPath
+      processedPath: finalUploadResult.url
     });
 
     return {
@@ -359,7 +359,7 @@ export class AmbianceGeneratorService {
       description,
       looped: needsLoop,
       sourceClipDurationSeconds: sourceDuration,
-      url: processedPath,
+      url: finalUploadResult.url,
       fromLibrary
     };
   }

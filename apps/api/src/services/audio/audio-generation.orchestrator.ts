@@ -147,9 +147,9 @@ export class AudioGenerationOrchestrator extends AbstractService {
         return null;
       }
 
-      // Content-based cache key for deduplication across stories
-      const descriptionHash = Bun.hash(segment.content.description).toString(36);
-      const cacheKey = `sfx_${descriptionHash}_${Math.round(segment.duration)}`;
+      // Cache key includes storyId and segmentId for proper mapping during mixing
+      // Note: This trades cross-story deduplication for correct segment mapping
+      const cacheKey = `sfx_${storyId}_${segment.id}`;
 
       // Check for existing asset
       const existing = await this.audioAssetsService.findByCacheKey(cacheKey);
@@ -206,8 +206,8 @@ export class AudioGenerationOrchestrator extends AbstractService {
         return null;
       }
 
-      // Content-based cache key
-      const cacheKey = `music_${segment.content.mood}_${Math.round(segment.duration)}`;
+      // Cache key includes storyId and segmentId for proper mapping during mixing
+      const cacheKey = `music_${storyId}_${segment.id}`;
 
       // Check for existing asset
       const existing = await this.audioAssetsService.findByCacheKey(cacheKey);
@@ -270,10 +270,9 @@ export class AudioGenerationOrchestrator extends AbstractService {
         return null;
       }
 
-      // Content-based cache key
-      const descriptionHash = Bun.hash(segment.content.description).toString(36);
+      // Cache key includes storyId and segmentId for proper mapping during mixing
+      const cacheKey = `ambiance_${storyId}_${segment.id}`;
       const targetDuration = segment.duration || storyDuration;
-      const cacheKey = `ambiance_${descriptionHash}_${Math.round(targetDuration)}`;
 
       // Check for existing asset
       const existing = await this.audioAssetsService.findByCacheKey(cacheKey);

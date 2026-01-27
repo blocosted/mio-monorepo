@@ -162,6 +162,13 @@ export class StoriesService {
   }
 
   /**
+   * Delete existing generation job for a story (for regeneration)
+   */
+  async deleteGenerationJobByStoryId(storyId: string): Promise<void> {
+    await this.jobsService.deleteByStoryId(storyId);
+  }
+
+  /**
    * Update workflow run ID for a job
    */
   async updateJobWorkflowRunId(jobId: string, workflowRunId: string): Promise<void> {

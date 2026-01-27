@@ -41,7 +41,11 @@ export {
   UpdateStoryPromptBodySchema,
   type UpdateStoryPromptBody,
   UpdateStoryPromptResponseSchema,
-  type UpdateStoryPromptResponse
+  type UpdateStoryPromptResponse,
+  CreateAndGenerateStoryBodySchema,
+  type CreateAndGenerateStoryBody,
+  CreateAndGenerateStoryResponseSchema,
+  type CreateAndGenerateStoryResponse
 } from './stories';
 
 // Profiles

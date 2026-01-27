@@ -121,3 +121,52 @@ export const UpdateStoryPromptResponseSchema = t.Object({
 });
 
 export type UpdateStoryPromptResponse = typeof UpdateStoryPromptResponseSchema.static;
+
+// =============================================================================
+// Create and Generate Story
+// =============================================================================
+
+export const CreateAndGenerateStoryBodySchema = t.Object({
+  childProfileId: t.String({ format: 'uuid' }),
+  prompt: t.String({ minLength: 3, maxLength: 500 }),
+  targetDurationMinutes: t.Optional(t.Number({ minimum: 0.1, maximum: 30 }))
+});
+
+export type CreateAndGenerateStoryBody = typeof CreateAndGenerateStoryBodySchema.static;
+
+export const CreateAndGenerateStoryResponseSchema = t.Object({
+  story: t.Object({
+    id: t.String({ format: 'uuid' }),
+    childProfileId: t.String({ format: 'uuid' }),
+    initialPrompt: t.String(),
+    status: t.String()
+  }),
+  job: t.Object({
+    jobId: t.String({ format: 'uuid' }),
+    workflowRunId: t.String()
+  }),
+  message: t.String()
+});
+
+export type CreateAndGenerateStoryResponse = typeof CreateAndGenerateStoryResponseSchema.static;
+
+// =============================================================================
+// Regenerate Story
+// =============================================================================
+
+export const RegenerateStoryBodySchema = t.Object({
+  targetDurationMinutes: t.Optional(t.Number({ minimum: 0.1, maximum: 30 }))
+});
+
+export type RegenerateStoryBody = typeof RegenerateStoryBodySchema.static;
+
+export const RegenerateStoryResponseSchema = t.Object({
+  storyId: t.String({ format: 'uuid' }),
+  job: t.Object({
+    jobId: t.String({ format: 'uuid' }),
+    workflowRunId: t.String()
+  }),
+  message: t.String()
+});
+
+export type RegenerateStoryResponse = typeof RegenerateStoryResponseSchema.static;

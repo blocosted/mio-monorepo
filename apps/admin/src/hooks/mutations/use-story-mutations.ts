@@ -86,3 +86,24 @@ export function useUpdateStoryPrompt() {
     }
   });
 }
+
+// Regenerate Story
+interface RegenerateStoryInput {
+  storyId: string;
+  targetDurationMinutes?: number;
+}
+
+export function useRegenerateStory() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ storyId, targetDurationMinutes }: RegenerateStoryInput) => {
+      const client = getMioApiClient();
+      return client.admin.regenerateStory(storyId, { targetDurationMinutes });
+    },
+    onSuccess: (_, { storyId }) => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'stories', storyId] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'stories'] });
+    }
+  });
+}

@@ -23,8 +23,16 @@ import {
   SelectValue,
 } from "@mio/ui/select";
 import { Textarea } from "@mio/ui/textarea";
-import { useCreateStory } from "@/hooks/mutations/use-create-story";
+import { useCreateAndGenerateStory } from "@/hooks/mutations/use-create-and-generate-story";
 import { useProfiles } from "@/hooks/queries/use-profiles";
+
+const DURATION_OPTIONS = [
+  { value: "0.33", label: "20 seconds" },
+  { value: "2", label: "2 minutes" },
+  { value: "5", label: "5 minutes" },
+  { value: "10", label: "10 minutes" },
+  { value: "15", label: "15 minutes" },
+] as const;
 
 interface QuickCreateStoryDialogProps {
   open: boolean;
@@ -35,11 +43,12 @@ export function QuickCreateStoryDialog({ open, onOpenChange }: QuickCreateStoryD
   const router = useRouter();
   const [profileId, setProfileId] = useState<string>("");
   const [prompt, setPrompt] = useState<string>("");
+  const [duration, setDuration] = useState<string>("5");
 
   const { data: profilesData, isLoading: isLoadingProfiles } = useProfiles({ isTest: true });
   const profiles = profilesData?.pages.flatMap((page) => page.data) ?? [];
 
-  const createStory = useCreateStory();
+  const createAndGenerateStory = useCreateAndGenerateStory();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,18 +59,20 @@ export function QuickCreateStoryDialog({ open, onOpenChange }: QuickCreateStoryD
     }
 
     try {
-      const story = await createStory.mutateAsync({
+      const result = await createAndGenerateStory.mutateAsync({
         childProfileId: profileId,
         prompt: prompt.trim(),
+        targetDurationMinutes: parseFloat(duration),
       });
 
-      toast.success("Story created successfully");
+      toast.success("Story created and generation started");
       onOpenChange(false);
       setProfileId("");
       setPrompt("");
+      setDuration("5");
 
-      // Navigate to stories page
-      router.push("/dashboard/stories");
+      // Navigate to story detail page to track progress
+      router.push(`/dashboard/stories/${result.story.id}`);
     } catch (error) {
       toast.error("Failed to create story");
     }
@@ -71,6 +82,7 @@ export function QuickCreateStoryDialog({ open, onOpenChange }: QuickCreateStoryD
     if (!newOpen) {
       setProfileId("");
       setPrompt("");
+      setDuration("5");
     }
     onOpenChange(newOpen);
   };
@@ -118,6 +130,22 @@ export function QuickCreateStoryDialog({ open, onOpenChange }: QuickCreateStoryD
                 {prompt.length}/500
               </p>
             </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="duration">Story Duration</Label>
+              <Select value={duration} onValueChange={setDuration}>
+                <SelectTrigger id="duration">
+                  <SelectValue placeholder="Select duration" />
+                </SelectTrigger>
+                <SelectContent>
+                  {DURATION_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <DialogFooter>
@@ -130,12 +158,12 @@ export function QuickCreateStoryDialog({ open, onOpenChange }: QuickCreateStoryD
             </Button>
             <Button
               type="submit"
-              disabled={createStory.isPending || !profileId || prompt.length < 3}
+              disabled={createAndGenerateStory.isPending || !profileId || prompt.length < 3}
             >
-              {createStory.isPending && (
+              {createAndGenerateStory.isPending && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
-              Create Story
+              Create & Generate
             </Button>
           </DialogFooter>
         </form>

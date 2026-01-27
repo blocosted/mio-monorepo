@@ -28,6 +28,12 @@ import { AbstractService } from '../service.abstract';
 /** Default concurrency for voice generation */
 const DEFAULT_CONCURRENCY = 3;
 
+/** Maximum retry attempts for failed segments */
+const MAX_SEGMENT_RETRIES = 3;
+
+/** Delay between retries in ms (exponential backoff base) */
+const RETRY_DELAY_BASE_MS = 1000;
+
 /**
  * Voice Generation Orchestrator
  *
@@ -111,7 +117,7 @@ export class VoiceGenerationOrchestrator extends AbstractService {
   }
 
   /**
-   * Generate voice audio for a single segment
+   * Generate voice audio for a single segment with retry logic
    */
   private async generateSegment(
     storyId: string,
@@ -119,85 +125,113 @@ export class VoiceGenerationOrchestrator extends AbstractService {
     segment: TimelineSegment,
     onComplete: () => void
   ): Promise<VoiceSegmentGenerationResult | null> {
-    try {
-      // Skip non-voice segments
-      if (segment.content.type !== 'narration' && segment.content.type !== 'dialogue') {
-        onComplete();
-        return null;
-      }
+    // Skip non-voice segments
+    if (segment.content.type !== 'narration' && segment.content.type !== 'dialogue') {
+      onComplete();
+      return null;
+    }
 
-      // Build cache key for idempotency
-      const cacheKey = `voice_${storyId}_${segment.id}`;
+    // Build cache key for idempotency
+    const cacheKey = `voice_${storyId}_${segment.id}`;
 
-      // Check for existing asset
-      const existing = await this.audioAssetsService.findByCacheKey(cacheKey);
-      if (existing) {
-        this.logger.debug('Using cached voice asset', { cacheKey, segmentId: segment.id });
-        onComplete();
-        return {
-          segmentId: segment.id,
-          assetId: existing.id,
-          fromCache: true,
-          durationSeconds: existing.duration
-        };
-      }
-
-      // Find voice ID from character mapping
-      const characterName = segment.content.characterName;
-      const character = characterName ? script.characters.find((c) => c.characterName === characterName) : script.characters[0]; // Default to first character (narrator)
-
-      if (!character?.voiceId) {
-        this.logger.warn('No voiceId found for character, skipping segment', {
-          segmentId: segment.id,
-          characterName
-        });
-        onComplete();
-        return null;
-      }
-
-      // Generate voice audio
-      const result = await this.ttsService.generateSpeech({
-        text: segment.content.text,
-        voiceId: character.voiceId,
-        emotion: segment.content.emotion,
-        characterName
-      });
-
-      // Upload to storage
-      const voicePath = `stories/${storyId}/voice/${segment.id}.mp3`;
-      const uploadResult = await this.storageService.upload(result.audio, voicePath, { contentType: 'audio/mpeg' });
-
-      // Store in audio_assets table
-      const asset = await this.audioAssetsService.create({
-        storyId,
-        type: AudioAssetType.Voice,
-        url: uploadResult.url,
-        duration: result.durationSeconds,
-        cacheKey
-      });
-
-      this.logger.debug('Voice segment generated', {
-        segmentId: segment.id,
-        assetId: asset.id,
-        durationSeconds: result.durationSeconds
-      });
-
+    // Check for existing asset first (no retry needed)
+    const existing = await this.audioAssetsService.findByCacheKey(cacheKey);
+    if (existing) {
+      this.logger.debug('Using cached voice asset', { cacheKey, segmentId: segment.id });
       onComplete();
       return {
         segmentId: segment.id,
-        assetId: asset.id,
-        fromCache: false,
-        durationSeconds: result.durationSeconds
+        assetId: existing.id,
+        fromCache: true,
+        durationSeconds: existing.duration
       };
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      this.logger.error('Failed to generate voice segment', {
+    }
+
+    // Find voice ID from character mapping
+    const characterName = segment.content.characterName;
+    const character = characterName ? script.characters.find((c) => c.characterName === characterName) : script.characters[0];
+
+    if (!character?.voiceId) {
+      this.logger.warn('No voiceId found for character, skipping segment', {
         segmentId: segment.id,
-        storyId,
-        error: errorMessage
+        characterName
       });
       onComplete();
       return null;
     }
+
+    // Retry loop for TTS generation
+    let lastError: Error | null = null;
+    for (let attempt = 1; attempt <= MAX_SEGMENT_RETRIES; attempt++) {
+      try {
+        // Generate voice audio
+        const result = await this.ttsService.generateSpeech({
+          text: segment.content.text,
+          voiceId: character.voiceId,
+          emotion: segment.content.emotion,
+          characterName
+        });
+
+        // Upload to storage
+        const voicePath = `stories/${storyId}/voice/${segment.id}.mp3`;
+        const uploadResult = await this.storageService.upload(result.audio, voicePath, { contentType: 'audio/mpeg' });
+
+        // Store in audio_assets table
+        const asset = await this.audioAssetsService.create({
+          storyId,
+          type: AudioAssetType.Voice,
+          url: uploadResult.url,
+          duration: result.durationSeconds,
+          cacheKey
+        });
+
+        this.logger.debug('Voice segment generated', {
+          segmentId: segment.id,
+          assetId: asset.id,
+          durationSeconds: result.durationSeconds,
+          attempt
+        });
+
+        onComplete();
+        return {
+          segmentId: segment.id,
+          assetId: asset.id,
+          fromCache: false,
+          durationSeconds: result.durationSeconds
+        };
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+
+        if (attempt < MAX_SEGMENT_RETRIES) {
+          const delayMs = RETRY_DELAY_BASE_MS * Math.pow(2, attempt - 1);
+          this.logger.warn('Voice segment generation failed, retrying', {
+            segmentId: segment.id,
+            storyId,
+            attempt,
+            maxAttempts: MAX_SEGMENT_RETRIES,
+            nextRetryMs: delayMs,
+            error: lastError.message
+          });
+          await this.sleep(delayMs);
+        }
+      }
+    }
+
+    // All retries exhausted
+    this.logger.error('Failed to generate voice segment after all retries', {
+      segmentId: segment.id,
+      storyId,
+      attempts: MAX_SEGMENT_RETRIES,
+      error: lastError?.message
+    });
+    onComplete();
+    return null;
+  }
+
+  /**
+   * Sleep for the specified duration
+   */
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }

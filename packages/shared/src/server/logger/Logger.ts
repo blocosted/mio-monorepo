@@ -135,29 +135,46 @@ export class Logger {
     return this.logger;
   }
 
+  /**
+   * Helper to properly format log arguments.
+   * If an object is passed as the second argument, use withMetadata for proper serialization.
+   */
+  private formatLog(level: 'info' | 'warn' | 'error' | 'debug' | 'trace' | 'fatal', messages: any[]) {
+    if (messages.length === 2 && typeof messages[0] === 'string' && typeof messages[1] === 'object' && messages[1] !== null) {
+      // Pattern: logger.info('message', { key: value })
+      return this.logger.withMetadata(messages[1])[level](messages[0]);
+    }
+    if (messages.length === 1 && typeof messages[0] === 'object' && messages[0] !== null) {
+      // Pattern: logger.info({ key: value })
+      return this.logger.withMetadata(messages[0])[level]('');
+    }
+    // Default: pass through
+    return this.logger[level](...messages);
+  }
+
   // Direct logging methods
   public info(...messages: any[]) {
-    return this.logger.info(...messages);
+    return this.formatLog('info', messages);
   }
 
   public warn(...messages: any[]) {
-    return this.logger.warn(...messages);
+    return this.formatLog('warn', messages);
   }
 
   public error(...messages: any[]) {
-    return this.logger.error(...messages);
+    return this.formatLog('error', messages);
   }
 
   public debug(...messages: any[]) {
-    return this.logger.debug(...messages);
+    return this.formatLog('debug', messages);
   }
 
   public trace(...messages: any[]) {
-    return this.logger.trace(...messages);
+    return this.formatLog('trace', messages);
   }
 
   public fatal(...messages: any[]) {
-    return this.logger.fatal(...messages);
+    return this.formatLog('fatal', messages);
   }
 
   public setLevel(level: LogLevel) {

@@ -11,7 +11,11 @@ import type {
   AdminStory,
   StorySegment,
   AudioAsset,
-  UpdateStoryPromptResponse
+  UpdateStoryPromptResponse,
+  CreateAndGenerateStoryBody,
+  CreateAndGenerateStoryResponse,
+  RegenerateStoryBody,
+  RegenerateStoryResponse
 } from './stories.client.types';
 
 const DEFAULT_LIMIT = 20;
@@ -105,5 +109,37 @@ export class StoriesAdminClient {
     }
 
     throw new Error(`Failed to update story prompt: ${res.status}`);
+  }
+
+  public async createAndGenerateStory(body: CreateAndGenerateStoryBody): Promise<CreateAndGenerateStoryResponse> {
+    const res = await this.client.api.admin.stories.generate.post(body, {
+      headers: this.client.headers
+    });
+
+    if (res.status === 202 && res.data) {
+      return res.data as unknown as CreateAndGenerateStoryResponse;
+    }
+
+    if (res.error) {
+      this.client.throwFromTreatyError(res.error);
+    }
+
+    throw new Error(`Failed to create and generate story: ${res.status}`);
+  }
+
+  public async regenerateStory(storyId: string, body?: RegenerateStoryBody): Promise<RegenerateStoryResponse> {
+    const res = await this.client.api.admin.stories({ id: storyId }).regenerate.post(body ?? {}, {
+      headers: this.client.headers
+    });
+
+    if (res.status === 202 && res.data) {
+      return res.data as unknown as RegenerateStoryResponse;
+    }
+
+    if (res.error) {
+      this.client.throwFromTreatyError(res.error);
+    }
+
+    throw new Error(`Failed to regenerate story: ${res.status}`);
   }
 }

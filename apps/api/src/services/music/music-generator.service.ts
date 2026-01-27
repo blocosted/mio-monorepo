@@ -288,7 +288,7 @@ export class MusicGeneratorService {
       // Store source clip in library for future reuse
       try {
         const storagePath = `music/${mood}/${Date.now()}-${Bun.hash(promptUsed).toString(36)}.mp3`;
-        await this.storage.upload(sourceAudio, storagePath, {
+        const uploadResult = await this.storage.upload(sourceAudio, storagePath, {
           contentType: 'audio/mpeg'
         });
 
@@ -307,7 +307,7 @@ export class MusicGeneratorService {
           variationIndex,
           prompt: promptUsed,
           promptInfluence,
-          s3Url: storagePath,
+          s3Url: uploadResult.url,
           sourceDurationSeconds: sourceDuration,
           format: 'mp3',
           isLoopable: true,
@@ -318,7 +318,7 @@ export class MusicGeneratorService {
           mood,
           intensity,
           tempo,
-          storagePath
+          storagePath: uploadResult.url
         });
       } catch (error) {
         this.logger.warn('Failed to store music in library', {
@@ -335,7 +335,7 @@ export class MusicGeneratorService {
     if (!needsLoop && Math.abs(volume - 1.0) < 0.01 && fadeInDuration === 0 && fadeOutDuration === 0) {
       // No processing needed - upload source clip to processed path for deduplication
       const processedPath = `music/${mood}/${Bun.hash(promptUsed).toString(36)}-${Math.round(sourceDuration)}s.mp3`;
-      await this.storage.upload(sourceAudio, processedPath, { contentType: 'audio/mpeg' });
+      const uploadResult = await this.storage.upload(sourceAudio, processedPath, { contentType: 'audio/mpeg' });
 
       return {
         audio: sourceAudio,
@@ -344,7 +344,7 @@ export class MusicGeneratorService {
         looped: false,
         sourceClipDurationSeconds: sourceDuration,
         promptUsed,
-        url: processedPath,
+        url: uploadResult.url,
         fromLibrary
       };
     }
@@ -356,7 +356,7 @@ export class MusicGeneratorService {
 
     // Upload processed audio to shared path for deduplication
     const processedPath = `music/${mood}/${Bun.hash(promptUsed).toString(36)}-${Math.round(targetDurationSeconds)}s.mp3`;
-    await this.storage.upload(processedAudio, processedPath, { contentType: 'audio/mpeg' });
+    const finalUploadResult = await this.storage.upload(processedAudio, processedPath, { contentType: 'audio/mpeg' });
 
     this.logger.info('Music generation complete', {
       mood,
@@ -364,7 +364,7 @@ export class MusicGeneratorService {
       finalDuration,
       looped: needsLoop,
       fromLibrary,
-      processedPath
+      processedPath: finalUploadResult.url
     });
 
     return {
@@ -374,7 +374,7 @@ export class MusicGeneratorService {
       looped: needsLoop,
       sourceClipDurationSeconds: sourceDuration,
       promptUsed,
-      url: processedPath,
+      url: finalUploadResult.url,
       fromLibrary
     };
   }
