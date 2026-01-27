@@ -1,8 +1,5 @@
 {
   "name": "@mio/admin",
   "version": "0.1.0",
-  "private": true,
-  "dependencies": {
-    "@tanstack/react-virtual": "^3.13.18"
-  }
+  "private": true
 }
