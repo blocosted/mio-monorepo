@@ -30,6 +30,7 @@ import { IocConnection, IocService } from '../../ioc/ioc.types';
 import {
   DEFAULT_VOLUMES,
   DUCKING_DEFAULTS,
+  FADE_DEFAULTS,
   FFMPEG_TIMEOUT_MS,
   FILTER_TEMPLATES,
   INTERMEDIATE_FILES,
@@ -545,10 +546,13 @@ export class FFmpegMixerService {
         mixInputs.push('[voice_main]');
       }
 
-      // Music tracks with timing and optional ducking
+      // Music tracks with timing, optional ducking, and crossfade
       let duckingIndex = 0;
       if (hasMusicFiles && music) {
         const musicVolume = music.volume ?? DEFAULT_VOLUMES.music;
+        const enableCrossfade = music.enableCrossfade ?? true; // Default to enabled
+        const fadeInDuration = music.fade?.fadeInDuration ?? FADE_DEFAULTS.fadeInDuration;
+        const fadeOutDuration = music.fade?.fadeOutDuration ?? FADE_DEFAULTS.musicFadeOutDuration;
 
         music.files.forEach((file, i) => {
           const musicPath = downloadedFiles.music[i];
@@ -557,19 +561,26 @@ export class FFmpegMixerService {
             const delayMs = (file.startTime ?? 0) * 1000;
             const fileVolume = file.volume ?? musicVolume;
 
+            // Build fade filters if enabled
+            let fadeFilters = '';
+            if (enableCrossfade && file.duration > 0) {
+              const fadeOutStart = Math.max(0, file.duration - fadeOutDuration);
+              fadeFilters = `,${FILTER_TEMPLATES.fadeIn(0, fadeInDuration)},${FILTER_TEMPLATES.fadeOut(fadeOutStart, fadeOutDuration)}`;
+            }
+
             if (music.enableDucking) {
               const d = { ...DUCKING_DEFAULTS, ...music.ducking };
-              // Apply delay, then volume, then sidechain compression
+              // Apply delay, fade, volume, then sidechain compression
               // Each music track gets its own voice_sc copy
               filterParts.push(
-                `[${inputIndex}:a]${FILTER_TEMPLATES.adelay(delayMs)},${FILTER_TEMPLATES.volume(fileVolume)}[music_${i}_vol]`,
+                `[${inputIndex}:a]${FILTER_TEMPLATES.adelay(delayMs)}${fadeFilters},${FILTER_TEMPLATES.volume(fileVolume)}[music_${i}_vol]`,
                 `[music_${i}_vol][voice_sc_${duckingIndex}]${FILTER_TEMPLATES.sidechainCompress(d.threshold, d.ratio, d.attackMs, d.releaseMs)}[music_${i}_ducked]`
               );
               mixInputs.push(`[music_${i}_ducked]`);
               duckingIndex++;
             } else {
               filterParts.push(
-                `[${inputIndex}:a]${FILTER_TEMPLATES.adelay(delayMs)},${FILTER_TEMPLATES.volume(fileVolume)}[music_${i}]`
+                `[${inputIndex}:a]${FILTER_TEMPLATES.adelay(delayMs)}${fadeFilters},${FILTER_TEMPLATES.volume(fileVolume)}[music_${i}]`
               );
               mixInputs.push(`[music_${i}]`);
             }
@@ -578,9 +589,11 @@ export class FFmpegMixerService {
         });
       }
 
-      // Ambiance tracks with timing and optional loop
+      // Ambiance tracks with timing, optional loop, and fadeout before trim
       if (hasAmbianceFiles && ambiance) {
         const ambianceVolume = ambiance.volume ?? DEFAULT_VOLUMES.ambiance;
+        const fadeInDuration = ambiance.fade?.fadeInDuration ?? FADE_DEFAULTS.fadeInDuration;
+        const fadeOutDuration = ambiance.fade?.fadeOutDuration ?? FADE_DEFAULTS.ambianceFadeOutDuration;
 
         ambiance.files.forEach((file, i) => {
           const ambiancePath = downloadedFiles.ambiance[i];
@@ -590,13 +603,17 @@ export class FFmpegMixerService {
             const fileVolume = file.volume ?? ambianceVolume;
 
             if (ambiance.loop) {
-              // Loop, trim to voice duration, apply delay and volume
+              // Loop, apply fadeout BEFORE trim to prevent abrupt ending, then trim, delay and volume
+              // Calculate fadeout start time (before the end of the looped+trimmed section)
+              const fadeOutStart = Math.max(0, voiceDuration - fadeOutDuration);
               filterParts.push(
-                `[${inputIndex}:a]${FILTER_TEMPLATES.aloop()},atrim=0:${voiceDuration},${FILTER_TEMPLATES.adelay(delayMs)},${FILTER_TEMPLATES.volume(fileVolume)}[ambiance_${i}]`
+                `[${inputIndex}:a]${FILTER_TEMPLATES.aloop()},${FILTER_TEMPLATES.fadeIn(0, fadeInDuration)},${FILTER_TEMPLATES.fadeOut(fadeOutStart, fadeOutDuration)},${FILTER_TEMPLATES.atrim(voiceDuration)},${FILTER_TEMPLATES.adelay(delayMs)},${FILTER_TEMPLATES.volume(fileVolume)}[ambiance_${i}]`
               );
             } else {
+              // Non-looped: add fade-in and fade-out based on file duration
+              const fadeOutStart = Math.max(0, file.duration - fadeOutDuration);
               filterParts.push(
-                `[${inputIndex}:a]${FILTER_TEMPLATES.adelay(delayMs)},${FILTER_TEMPLATES.volume(fileVolume)}[ambiance_${i}]`
+                `[${inputIndex}:a]${FILTER_TEMPLATES.fadeIn(0, fadeInDuration)},${FILTER_TEMPLATES.fadeOut(fadeOutStart, fadeOutDuration)},${FILTER_TEMPLATES.adelay(delayMs)},${FILTER_TEMPLATES.volume(fileVolume)}[ambiance_${i}]`
               );
             }
             mixInputs.push(`[ambiance_${i}]`);

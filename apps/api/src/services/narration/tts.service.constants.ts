@@ -6,13 +6,13 @@
  */
 
 import type { ElevenLabsVoiceSettings } from '@mio/shared/types';
-import { Emotion } from '@mio/shared/types';
+import { Emotion, SpeechAct } from '@mio/shared/types';
 
 /**
  * Audio tags for emotional expression (eleven_v3)
  *
  * These tags are prepended to text to guide emotional delivery.
- * See: https://elevenlabs.io/docs/overview/capabilities/text-to-speech/best-practices
+ * @see https://elevenlabs.io/docs/overview/capabilities/text-to-speech/best-practices
  */
 export const EMOTION_AUDIO_TAGS: Record<Emotion, string | null> = {
   [Emotion.Neutral]: null,
@@ -24,6 +24,29 @@ export const EMOTION_AUDIO_TAGS: Record<Emotion, string | null> = {
   [Emotion.Surprised]: '[gasp]',
   [Emotion.Curious]: null, // No specific tag, use intonation via punctuation
   [Emotion.Calm]: '[softly]'
+};
+
+/**
+ * Audio tags for speech act modifiers (eleven_v3)
+ *
+ * These tags modify how text is spoken, independent of or in addition to emotion.
+ * Can be combined with emotion tags for nuanced delivery.
+ *
+ * @example
+ * // Whispering while scared:
+ * '[whispers] [scared] Be very quiet...'
+ *
+ * @see https://elevenlabs.io/docs/overview/capabilities/text-to-speech/best-practices
+ */
+export const SPEECH_ACT_AUDIO_TAGS: Record<SpeechAct, string | null> = {
+  [SpeechAct.Normal]: null,
+  [SpeechAct.Whisper]: '[whispers]',
+  [SpeechAct.Shout]: null, // Use emphasis + speed, not a specific tag
+  [SpeechAct.Laugh]: '[laughs]',
+  [SpeechAct.Sigh]: '[sighs]',
+  [SpeechAct.Cry]: '[crying]',
+  [SpeechAct.Sing]: '[sings]',
+  [SpeechAct.Sarcastic]: '[sarcastic]'
 };
 
 /**
@@ -59,13 +82,13 @@ export const EMOTION_VOICE_SETTINGS: Record<Emotion, ElevenLabsVoiceSettings> = 
     speed: 0.9 // Slower
   },
   [Emotion.Excited]: {
-    stability: 0, // Creative - very expressive
+    stability: 0.25, // Low stability for expressiveness, but not 0 to prevent artifacts
     similarityBoost: 0.65,
     style: 0.6,
-    speed: 1.1 // Faster
+    speed: 1.08 // Slightly faster (was 1.1, reduced to avoid rushing)
   },
   [Emotion.Scared]: {
-    stability: 0, // Creative - unstable delivery
+    stability: 0.25, // Low stability for varied delivery, but not 0 to prevent artifacts
     similarityBoost: 0.7,
     style: 0.4,
     speed: 1.05

@@ -6,7 +6,7 @@
  *
  * Flow:
  * 1. Load V3 script with relative timing
- * 2. Build voice timeline sequentially (with pauses)
+ * 2. Build voice timeline sequentially (with contextual pauses)
  * 3. Resolve relative timing hints to absolute times
  * 4. Persist ComputedTimeline to DB
  */
@@ -29,14 +29,17 @@ import type {
   RelativeTimingHint,
   ScriptSegment,
   StoryScript,
-  TimingAnchorType
+  TimingAnchorType,
+  VoiceSegmentContent
 } from '@mio/shared/types';
 import { computedTimelines } from '@mio/db/schema';
 
 import { IocConnection } from '../../ioc/ioc.types';
 import { AbstractService } from '../service.abstract';
+import { PauseComputationService } from './pause-computation.service';
+import type { VoiceSegmentInfo } from './pause-computation.service.types';
 
-/** Default pause between voice segments (seconds) */
+/** Default pause between voice segments (seconds) - fallback only */
 const DEFAULT_VOICE_PAUSE_SECONDS = 0.3;
 
 /** Voice segment timing (computed) */
@@ -56,12 +59,14 @@ interface VoiceSegmentTiming {
 @injectable()
 export class TimelineComputationService extends AbstractService {
   private readonly database: DatabaseConnection;
+  private readonly pauseService: PauseComputationService;
 
   constructor(
     @inject(IocConnection.DATABASE) database: DatabaseConnection
   ) {
     super();
     this.database = database;
+    this.pauseService = new PauseComputationService();
   }
 
   /**
@@ -171,11 +176,13 @@ export class TimelineComputationService extends AbstractService {
 
   /**
    * Build voice timeline with real durations (sequential)
+   *
+   * Uses contextual pause computation for natural rhythm.
    */
   private buildVoiceTimeline(
     script: StoryScript,
     voiceAssets: AudioAssetWithDuration[],
-    pauseSeconds: number
+    fallbackPauseSeconds: number
   ): Map<string, VoiceSegmentTiming> {
     const voiceTrack = script.tracks.find((t) => t.type === 'voice');
     if (!voiceTrack) {
@@ -190,8 +197,20 @@ export class TimelineComputationService extends AbstractService {
       (a, b) => (a.order ?? 0) - (b.order ?? 0)
     );
 
+    // Convert segments to VoiceSegmentInfo for pause computation
+    const voiceSegmentInfos: VoiceSegmentInfo[] = sortedSegments
+      .filter((s) => s.content.type === 'narration' || s.content.type === 'dialogue')
+      .map((s) => ({
+        id: s.id,
+        content: s.content as VoiceSegmentContent
+      }));
+
+    // Compute contextual pauses for all segments
+    const computedPauses = this.pauseService.computePausesForSegments(voiceSegmentInfos);
+
     const timeline = new Map<string, VoiceSegmentTiming>();
     let currentTime = 0;
+    let segmentIndex = 0;
 
     for (const segment of sortedSegments) {
       const asset = assetDurationMap.get(segment.id);
@@ -210,7 +229,11 @@ export class TimelineComputationService extends AbstractService {
       };
 
       timeline.set(segment.id, timing);
+
+      // Use contextual pause if available, otherwise fallback
+      const pauseSeconds = computedPauses.get(segmentIndex) ?? fallbackPauseSeconds;
       currentTime += asset.durationSeconds + pauseSeconds;
+      segmentIndex++;
     }
 
     return timeline;

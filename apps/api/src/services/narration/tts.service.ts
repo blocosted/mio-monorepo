@@ -86,7 +86,7 @@ export class TTSService extends AbstractService {
    * Generate speech from text
    */
   async generateSpeech(input: GenerateSpeechInput): Promise<GenerateSpeechResult> {
-    const { text, voiceId, segmentType = 'narration', emotion, voiceSettings, characterName } = input;
+    const { text, voiceId, segmentType = 'narration', emotion, voiceSettings, characterName, previousText, nextText } = input;
 
     // Extract TTS text based on segment type
     // For dialogue: extracts only quoted text (e.g., "REGARDE!" from '[excited] "REGARDE!" s\'ecria-t-il')
@@ -175,7 +175,9 @@ export class TTSService extends AbstractService {
       voiceId,
       modelId: DEFAULT_TTS_MODEL,
       outputFormat: DEFAULT_OUTPUT_FORMAT,
-      voiceSettings: mergedSettings
+      voiceSettings: mergedSettings,
+      previousText,
+      nextText
     });
 
     // Persist audio to cache and storage

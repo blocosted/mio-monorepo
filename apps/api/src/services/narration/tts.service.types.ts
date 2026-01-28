@@ -44,6 +44,18 @@ export interface GenerateSpeechInput {
   voiceSettings?: ElevenLabsVoiceSettings;
   /** Character name (for logging/debugging) */
   characterName?: string;
+  /**
+   * Text that comes before this segment (for prosodic continuity)
+   * Helps ElevenLabs maintain natural flow between segments.
+   * Only the last ~200 characters are used.
+   */
+  previousText?: string;
+  /**
+   * Text that comes after this segment (for prosodic anticipation)
+   * Helps ElevenLabs prepare for transitions.
+   * Only the first ~200 characters are used.
+   */
+  nextText?: string;
 }
 
 /**

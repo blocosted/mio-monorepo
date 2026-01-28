@@ -31,6 +31,9 @@ export const VocabularyLevel = {
 
 /**
  * Emotion for story segments
+ *
+ * Core emotions that affect voice delivery via ElevenLabs v3 audio tags.
+ * @see https://elevenlabs.io/docs/overview/capabilities/text-to-speech/best-practices
  */
 export const EmotionValues = ['neutral', 'happy', 'sad', 'excited', 'scared', 'angry', 'surprised', 'curious', 'calm'] as const;
 export type Emotion = (typeof EmotionValues)[number];
@@ -45,6 +48,35 @@ export const Emotion = {
   Curious: 'curious',
   Calm: 'calm'
 } as const satisfies Record<string, Emotion>;
+
+/**
+ * Speech act modifiers for voice delivery
+ *
+ * These are additional audio tags that can modify how text is spoken,
+ * independent of or in addition to the base emotion.
+ *
+ * @see https://elevenlabs.io/docs/overview/capabilities/text-to-speech/best-practices
+ */
+export const SpeechActValues = ['normal', 'whisper', 'shout', 'laugh', 'sigh', 'cry', 'sing', 'sarcastic'] as const;
+export type SpeechAct = (typeof SpeechActValues)[number];
+export const SpeechAct = {
+  /** Normal speech (no modifier) */
+  Normal: 'normal',
+  /** Whispering - soft, quiet delivery */
+  Whisper: 'whisper',
+  /** Shouting - loud, emphatic delivery */
+  Shout: 'shout',
+  /** Laughing while speaking */
+  Laugh: 'laugh',
+  /** Sighing delivery */
+  Sigh: 'sigh',
+  /** Crying/tearful delivery */
+  Cry: 'cry',
+  /** Singing the text */
+  Sing: 'sing',
+  /** Sarcastic tone */
+  Sarcastic: 'sarcastic'
+} as const satisfies Record<string, SpeechAct>;
 
 /**
  * Segment Type

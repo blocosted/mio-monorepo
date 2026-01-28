@@ -94,7 +94,15 @@ export class AudioRepository implements IAudioRepository, ISoundEffectsRepositor
    * Convert text to speech with timestamps for accurate duration
    */
   async convertTextToSpeech(input: VoicesConvertInput): Promise<VoicesConvertResult> {
-    const { text, voiceId, modelId = DEFAULT_TTS_MODEL, outputFormat = DEFAULT_OUTPUT_FORMAT, voiceSettings } = input;
+    const {
+      text,
+      voiceId,
+      modelId = DEFAULT_TTS_MODEL,
+      outputFormat = DEFAULT_OUTPUT_FORMAT,
+      voiceSettings,
+      previousText,
+      nextText
+    } = input;
 
     const normalizedStability = normalizeTtdStability(voiceSettings?.stability);
     if (voiceSettings?.stability !== undefined && normalizedStability !== voiceSettings.stability) {
@@ -115,11 +123,17 @@ export class AudioRepository implements IAudioRepository, ISoundEffectsRepositor
         }
       : undefined;
 
+    // Truncate context to recommended length (200 chars)
+    const contextPrevious = previousText?.slice(-200);
+    const contextNext = nextText?.slice(0, 200);
+
     this.logger.info('[TTS API CALL] Converting text to speech', {
       voiceId,
       modelId,
       outputFormat,
       textLength: text.length,
+      hasPreviousContext: !!contextPrevious,
+      hasNextContext: !!contextNext,
       inputVoiceSettings: voiceSettings
         ? {
             stability: voiceSettings.stability,
@@ -136,7 +150,9 @@ export class AudioRepository implements IAudioRepository, ISoundEffectsRepositor
         text,
         model_id: modelId,
         output_format: outputFormat,
-        voice_settings: apiVoiceSettings
+        voice_settings: apiVoiceSettings,
+        previous_text: contextPrevious,
+        next_text: contextNext
       });
 
       // Decode base64 audio
@@ -255,15 +271,15 @@ export class AudioRepository implements IAudioRepository, ISoundEffectsRepositor
   async createSoundEffect(input: SoundEffectsConvertInput): Promise<SoundEffectsConvertResult> {
     const { text, outputFormat = DEFAULT_OUTPUT_FORMAT, durationSeconds, promptInfluence = DEFAULT_PROMPT_INFLUENCE } = input;
 
-    // Validate duration if provided (ElevenLabs supports 0.5-22 seconds)
+    // Validate duration if provided (ElevenLabs supports 0.5-30 seconds)
     if (durationSeconds !== undefined) {
-      if (durationSeconds < 0.5 || durationSeconds > 22) {
+      if (durationSeconds < 0.5 || durationSeconds > 30) {
         throw new AppError(ErrorCodes.SFXInvalidInput, {
           name: 'InvalidDuration',
           diagnoses: [
             {
               name: 'durationSeconds',
-              message: `Duration must be between 0.5 and 22 seconds, got ${durationSeconds}`,
+              message: `Duration must be between 0.5 and 30 seconds, got ${durationSeconds}`,
               severity: DiagnoseSeverity.Error
             }
           ]

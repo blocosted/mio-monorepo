@@ -62,6 +62,18 @@ export const LOUDNORM_SETTINGS = {
 } as const;
 
 /**
+ * Fade defaults for crossfades
+ */
+export const FADE_DEFAULTS = {
+  /** Fade-in duration for music/ambiance (seconds) */
+  fadeInDuration: 1.0,
+  /** Fade-out duration for music (seconds) */
+  musicFadeOutDuration: 2.0,
+  /** Fade-out duration for ambiance before trim (seconds) */
+  ambianceFadeOutDuration: 2.0
+} as const;
+
+/**
  * FFmpeg filter chain templates
  */
 export const FILTER_TEMPLATES = {
@@ -102,7 +114,29 @@ export const FILTER_TEMPLATES = {
   /**
    * Loudness normalization filter (EBU R128)
    */
-  loudnorm: () => `loudnorm=I=${LOUDNORM_SETTINGS.integratedLoudness}:TP=${LOUDNORM_SETTINGS.truePeak}:LRA=${LOUDNORM_SETTINGS.loudnessRange}`
+  loudnorm: () => `loudnorm=I=${LOUDNORM_SETTINGS.integratedLoudness}:TP=${LOUDNORM_SETTINGS.truePeak}:LRA=${LOUDNORM_SETTINGS.loudnessRange}`,
+
+  /**
+   * Fade-in filter
+   * @param startTime - Start time for fade (seconds)
+   * @param duration - Fade duration (seconds)
+   */
+  fadeIn: (startTime: number, duration: number) =>
+    `afade=t=in:st=${startTime}:d=${duration}`,
+
+  /**
+   * Fade-out filter
+   * @param startTime - Start time for fade (seconds)
+   * @param duration - Fade duration (seconds)
+   */
+  fadeOut: (startTime: number, duration: number) =>
+    `afade=t=out:st=${startTime}:d=${duration}`,
+
+  /**
+   * Trim filter
+   * @param endTime - End time to trim to (seconds)
+   */
+  atrim: (endTime: number) => `atrim=0:${endTime}`
 } as const;
 
 /**

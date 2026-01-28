@@ -54,12 +54,13 @@ export const SFX_CONCURRENCY_CONFIG = {
 
 /**
  * SFX duration limits (ElevenLabs API constraints)
+ * @see https://elevenlabs.io/docs/api-reference/text-to-sound-effects/convert
  */
 export const SFX_DURATION_LIMITS = {
   /** Minimum duration in seconds */
   min: 0.5,
-  /** Maximum duration in seconds */
-  max: 22
+  /** Maximum duration in seconds (ElevenLabs supports up to 30s) */
+  max: 30
 };
 
 /**
@@ -77,12 +78,15 @@ export const RECOMMENDED_DURATIONS: Record<SfxCategory, number> = {
 /**
  * Prompt influence by category
  * Higher values = more literal interpretation of the prompt
+ *
+ * Optimized values based on ElevenLabs documentation:
+ * @see https://elevenlabs.io/docs/overview/capabilities/sound-effects
  */
 export const CATEGORY_PROMPT_INFLUENCE: Record<SfxCategory, number> = {
   [SfxCategory.Ambient]: 0.2, // More creative for ambiance
-  [SfxCategory.Effects]: 0.5, // More precise for effects
-  [SfxCategory.Transitions]: 0.4, // Balanced for transitions
-  [SfxCategory.Foley]: 0.6, // More precise for foley
-  [SfxCategory.Creatures]: 0.3, // Creative for creatures
-  [SfxCategory.Music]: 0.2 // Creative for music
+  [SfxCategory.Effects]: 0.6, // More literal for precise effects
+  [SfxCategory.Transitions]: 0.3, // More creative for transitions
+  [SfxCategory.Foley]: 0.7, // Most precise for foley sounds
+  [SfxCategory.Creatures]: 0.4, // Balanced for creatures
+  [SfxCategory.Music]: 0.15 // Most creative for music
 };

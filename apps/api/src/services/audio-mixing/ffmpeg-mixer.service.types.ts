@@ -49,6 +49,15 @@ export interface MusicTrackInput {
     /** Release time in ms (default 100) */
     releaseMs: number;
   };
+  /** Enable crossfade transitions between music segments */
+  enableCrossfade?: boolean;
+  /** Fade configuration */
+  fade?: {
+    /** Fade-in duration in seconds (default 1.0) */
+    fadeInDuration?: number;
+    /** Fade-out duration in seconds (default 2.0) */
+    fadeOutDuration?: number;
+  };
 }
 
 /**
@@ -61,6 +70,13 @@ export interface AmbianceTrackInput {
   volume: number;
   /** Loop the ambiance to match story length */
   loop: boolean;
+  /** Fade configuration */
+  fade?: {
+    /** Fade-in duration in seconds (default 1.0) */
+    fadeInDuration?: number;
+    /** Fade-out duration in seconds before trim (default 2.0) */
+    fadeOutDuration?: number;
+  };
 }
 
 /**

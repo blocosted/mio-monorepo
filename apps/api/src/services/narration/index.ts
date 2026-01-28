@@ -38,17 +38,48 @@ export type {
   UpsertVoiceInput,
   VoiceRow
 } from './voice-registry.store';
-export { TimelineComputationService } from './timeline-computation.service';
+export type {
+  ComputedPause,
+  PauseComputationConfig,
+  PauseComputationContext,
+  PauseContextType,
+  VoiceSegmentInfo
+} from './pause-computation.service.types';
+export type {
+  VoiceMatchResult,
+  VoiceMatchScore,
+  VoiceProfile,
+  VoiceSpecialization,
+  VoiceTone
+} from './voice-assignment.service.types';
+export type {
+  TTSSegmentInput,
+  TTSBatchedSegment,
+  TTSSplitResult
+} from './tts-batch.service';
+
 // Services
 export { TTSService } from './tts.service';
+export { TTSBatchService, MIN_TTS_CHARACTERS, MAX_BATCH_CHARACTERS } from './tts-batch.service';
+export { TimelineComputationService } from './timeline-computation.service';
+export { PauseComputationService } from './pause-computation.service';
+export { VoiceMatchingService } from './voice-matching.service';
+export { VoiceAssignmentService } from './voice-assignment.service';
+export { VoiceGenerationOrchestrator } from './voice-generation.orchestrator';
+export { VoiceRegistryService } from './voice-registry.service';
+
 // Constants
 export {
   DEFAULT_VOICE_SETTINGS,
   EMOTION_AUDIO_TAGS,
-  EMOTION_VOICE_SETTINGS
+  EMOTION_VOICE_SETTINGS,
+  SPEECH_ACT_AUDIO_TAGS
 } from './tts.service.constants';
-export { VoiceAssignmentService } from './voice-assignment.service';
-export { VoiceGenerationOrchestrator } from './voice-generation.orchestrator';
-export { VoiceRegistryService } from './voice-registry.service';
+export { PAUSE_CONTEXT_TYPE } from './pause-computation.service.types';
+export {
+  VoiceSpecialization as VoiceSpecializationEnum,
+  VoiceTone as VoiceToneEnum
+} from './voice-assignment.service.types';
+
 // Stores
 export { VoiceRegistryStore } from './voice-registry.store';

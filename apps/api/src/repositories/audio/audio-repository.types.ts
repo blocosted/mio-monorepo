@@ -63,6 +63,16 @@ export interface VoicesConvertInput {
   outputFormat?: ElevenLabsOutputFormat;
   /** Voice settings override */
   voiceSettings?: ElevenLabsVoiceSettings;
+  /**
+   * Text that comes before this request (for prosodic continuity)
+   * @see https://elevenlabs.io/docs/api-reference/text-to-speech/convert
+   */
+  previousText?: string;
+  /**
+   * Text that comes after this request (for prosodic anticipation)
+   * @see https://elevenlabs.io/docs/api-reference/text-to-speech/convert
+   */
+  nextText?: string;
 }
 
 /**
@@ -117,7 +127,7 @@ export interface SoundEffectsConvertInput {
   text: string;
   /** Output format (default: mp3_44100_128) */
   outputFormat?: ElevenLabsOutputFormat;
-  /** Duration in seconds (0.5-22, optional - ElevenLabs auto-detects if not provided) */
+  /** Duration in seconds (0.5-30, optional - ElevenLabs auto-detects if not provided) */
   durationSeconds?: number;
   /** How closely to follow the prompt (0-1, default: 0.3) */
   promptInfluence?: number;
