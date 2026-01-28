@@ -11,7 +11,9 @@ import { config as loadDotenv } from 'dotenv';
 
 import type { Emotion, StoryScript, VoiceSegmentContent } from '@mio/shared/types';
 import { VoicesRepository } from '@mio/api/repositories/audio';
-import { type CharacterArchetype, EMOTION_VOICE_SETTINGS, TimelineSyncService, type TTSSegmentResult } from '@mio/api/services/narration';
+import { type CharacterArchetype, EMOTION_VOICE_SETTINGS } from '@mio/api/services/narration';
+
+// TODO: Update this script to use TimelineComputationService (V3) instead of deprecated TimelineSyncService
 
 // TODO: VOICE_IDS_BY_LANGUAGE was removed - refactor to use VoiceRegistryService
 const VOICE_IDS_BY_LANGUAGE: Record<string, Record<CharacterArchetype, Record<string, string>>> = {
@@ -445,11 +447,11 @@ export async function runGenerateFromScriptCommand(args: {
   // Create run directory for artifacts
   const run = args.save
     ? createRunDir({
-        rootDir: args.storeDir,
-        namespace: 'tts',
-        command: 'from-script',
-        labelParts: [script.metadata.title.substring(0, 20)]
-      })
+      rootDir: args.storeDir,
+      namespace: 'tts',
+      command: 'from-script',
+      labelParts: [script.metadata.title.substring(0, 20)]
+    })
     : null;
 
   // Save input
@@ -532,19 +534,8 @@ export async function runGenerateFromScriptCommand(args: {
   const failCount = results.filter((r) => !r.success).length;
   const totalDuration = results.filter((r) => r.durationSeconds).reduce((sum, r) => sum + (r.durationSeconds ?? 0), 0);
 
-  // Sync timings based on actual TTS durations
-  const ttsResults: TTSSegmentResult[] = results
-    .filter((r): r is typeof r & { durationSeconds: number } => r.success && r.durationSeconds !== undefined)
-    .map((r) => ({
-      segmentId: r.id,
-      actualDurationSeconds: r.durationSeconds
-    }));
-
-  let syncedScript = null;
-  if (ttsResults.length > 0) {
-    const syncService = new TimelineSyncService(logger);
-    syncedScript = syncService.syncTimings(script, ttsResults);
-  }
+  // TODO: Implement timeline computation using TimelineComputationService (V3)
+  // The old TimelineSyncService (V2) has been removed
 
   // Save output
   if (run) {
@@ -556,11 +547,6 @@ export async function runGenerateFromScriptCommand(args: {
       results
     });
 
-    // Save synced script with recalculated timings
-    if (syncedScript) {
-      writeJsonFile(run.runDir, 'synced-script.json', syncedScript);
-    }
-
     writeJsonFile(run.runDir, 'meta.json', {
       command: 'tts from-script',
       storyTitle: script.metadata.title,
@@ -570,7 +556,6 @@ export async function runGenerateFromScriptCommand(args: {
       failCount,
       totalDurationSeconds: totalDuration,
       generationTimeSeconds: parseFloat(elapsed),
-      syncMetadata: syncedScript?.syncMetadata,
       createdAt: new Date().toISOString()
     });
   }

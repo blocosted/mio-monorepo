@@ -33,8 +33,8 @@ function loadEnv(envFile?: string): void {
 interface SfxSegmentInfo {
   id: string;
   description: string;
-  startTime: number;
-  duration: number;
+  /** Estimated duration from script (actual startTime computed after TTS) */
+  estimatedDuration: number;
   promptInfluence?: number;
 }
 
@@ -51,8 +51,7 @@ function extractSfxSegments(script: StoryScript): SfxSegmentInfo[] {
         segments.push({
           id: segment.id,
           description: content.description,
-          startTime: segment.startTime,
-          duration: segment.duration,
+          estimatedDuration: segment.estimatedDuration ?? 5,
           promptInfluence: content.promptInfluence
         });
       }
@@ -105,11 +104,11 @@ export async function runGenerateFromScriptCommand(args: GenerateFromScriptComma
   // Create run directory for artifacts
   const run = args.save
     ? createRunDir({
-        rootDir: args.storeDir,
-        namespace: 'sfx',
-        command: 'from-script',
-        labelParts: [script.metadata.title.substring(0, 20)]
-      })
+      rootDir: args.storeDir,
+      namespace: 'sfx',
+      command: 'from-script',
+      labelParts: [script.metadata.title.substring(0, 20)]
+    })
     : null;
 
   // Save input
@@ -134,8 +133,7 @@ export async function runGenerateFromScriptCommand(args: GenerateFromScriptComma
       segments: sfxSegments.map((s) => ({
         id: s.id,
         description: s.description.substring(0, 50) + (s.description.length > 50 ? '...' : ''),
-        startTime: s.startTime,
-        duration: s.duration
+        estimatedDuration: s.estimatedDuration
       })),
       artifactsDir: run?.runDir
     };
@@ -150,9 +148,8 @@ export async function runGenerateFromScriptCommand(args: GenerateFromScriptComma
   const results: Array<{
     id: string;
     success: boolean;
-    durationSeconds?: number;
+    estimatedDuration?: number;
     actualDuration?: number;
-    startTime: number;
     error?: string;
     outputFile?: string;
     description: string;
@@ -162,7 +159,7 @@ export async function runGenerateFromScriptCommand(args: GenerateFromScriptComma
     try {
       const result = await repository.convert({
         text: segment.description,
-        durationSeconds: segment.duration,
+        durationSeconds: segment.estimatedDuration,
         promptInfluence: args.promptInfluence ?? segment.promptInfluence ?? 0.3
       });
 
@@ -177,9 +174,8 @@ export async function runGenerateFromScriptCommand(args: GenerateFromScriptComma
       results.push({
         id: segment.id,
         success: true,
-        durationSeconds: segment.duration,
+        estimatedDuration: segment.estimatedDuration,
         actualDuration: result.durationSeconds,
-        startTime: segment.startTime,
         outputFile: outputFilename,
         description: segment.description
       });
@@ -187,7 +183,6 @@ export async function runGenerateFromScriptCommand(args: GenerateFromScriptComma
       results.push({
         id: segment.id,
         success: false,
-        startTime: segment.startTime,
         error: error instanceof Error ? error.message : String(error),
         description: segment.description
       });

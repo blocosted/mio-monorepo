@@ -21,6 +21,7 @@
  */
 
 import type { Logger } from '@mio/shared/server/logger/Logger';
+import type { AudioAssetWithDuration, StoryScript } from '@mio/shared/types';
 
 import type { ILLMRepository } from '../../repositories/llm/llm-repository.types';
 import type { AudioGenerationOrchestrator } from '../../services/audio/audio-generation.orchestrator';
@@ -28,9 +29,11 @@ import type { StoryMixingOrchestrator } from '../../services/audio-mixing/story-
 // LLM Services
 import type { EnrichmentService } from '../../services/llm/enrichment.service';
 import type { ScriptGenerationService } from '../../services/llm/script-generation.service';
+import type { TimelineComputationService } from '../../services/narration/timeline-computation.service';
 import type { VoiceAssignmentService } from '../../services/narration/voice-assignment.service';
 import type { VoiceGenerationOrchestrator } from '../../services/narration/voice-generation.orchestrator';
 // Stores
+import type { AudioAssetsStore } from '../../services/stories/audio-assets.store';
 import type { StoriesStore } from '../../services/stories/stories.store';
 // Orchestration Services
 import type { StoryContextService } from '../../services/stories/story-context.service';
@@ -402,18 +405,152 @@ export async function ambianceGenerationStep(context: StoryGenerationWorkflowCon
 }
 
 /**
- * Step 8: Audio Mixing
- * Mix all audio assets together and upload to S3 temp location
+ * Step 8: Timeline Computation
+ * Compute the final timeline with absolute times from real audio durations
  */
-export async function mixingStep(context: StoryGenerationWorkflowContext): Promise<StoryGenerationWorkflowContext> {
-  const config = getStepConfig(WORKFLOW_STEPS.MIXING);
+export async function timelineComputationStep(context: StoryGenerationWorkflowContext): Promise<StoryGenerationWorkflowContext> {
+  const config = getStepConfig(WORKFLOW_STEPS.TIMELINE_COMPUTATION);
   const helper = new WorkflowStepHelper();
 
   if (!context.script) {
     throw new Error('Script not found in context');
   }
 
-  const script = context.script;
+  if (!context.voiceAssetIds || context.voiceAssetIds.length === 0) {
+    throw new Error('Voice asset IDs not found in context');
+  }
+
+  return helper.executeStepWithRollback(
+    context.jobId,
+    config.name,
+    async () => {
+      if (await helper.isJobCancelled(context.jobId)) {
+        throw new Error('Job cancelled by user');
+      }
+
+      const timelineService = getInstance<TimelineComputationService>(IocService.TIMELINE_COMPUTATION);
+      const audioAssetsStore = getInstance<AudioAssetsStore>(IocStore.AUDIO_ASSETS_STORE);
+
+      await helper.updateProgress(context.jobId, config.startProgress, config.name);
+
+      // Load voice assets with durations from database
+      const voiceAssets = await Promise.all(
+        context.voiceAssetIds!.map(async (id) => {
+          const asset = await audioAssetsStore.findById(id);
+          if (!asset) {
+            throw new Error(`Voice asset not found: ${id}`);
+          }
+          // Extract segment ID from cache key (format: voice_{storyId}_{segmentId})
+          const segmentId = asset.cacheKey?.split('_').pop() ?? id;
+          return {
+            id: asset.id,
+            segmentId,
+            durationSeconds: asset.duration,
+            url: asset.url
+          } satisfies AudioAssetWithDuration;
+        })
+      );
+
+      // Load SFX assets if available
+      const sfxAssets: AudioAssetWithDuration[] = context.sfxAssetIds
+        ? await Promise.all(
+          context.sfxAssetIds.map(async (id) => {
+            const asset = await audioAssetsStore.findById(id);
+            if (!asset) return null;
+            const segmentId = asset.cacheKey?.split('_').pop() ?? id;
+            return {
+              id: asset.id,
+              segmentId,
+              durationSeconds: asset.duration,
+              url: asset.url
+            } satisfies AudioAssetWithDuration;
+          })
+        ).then((assets) => assets.filter((a): a is AudioAssetWithDuration => a !== null))
+        : [];
+
+      // Load music assets if available
+      const musicAssets: AudioAssetWithDuration[] = context.musicAssetIds
+        ? await Promise.all(
+          context.musicAssetIds.map(async (id) => {
+            const asset = await audioAssetsStore.findById(id);
+            if (!asset) return null;
+            const segmentId = asset.cacheKey?.split('_').pop() ?? id;
+            return {
+              id: asset.id,
+              segmentId,
+              durationSeconds: asset.duration,
+              url: asset.url
+            } satisfies AudioAssetWithDuration;
+          })
+        ).then((assets) => assets.filter((a): a is AudioAssetWithDuration => a !== null))
+        : [];
+
+      // Load ambiance assets if available
+      const ambianceAssets: AudioAssetWithDuration[] = context.ambianceAssetIds
+        ? await Promise.all(
+          context.ambianceAssetIds.map(async (id) => {
+            const asset = await audioAssetsStore.findById(id);
+            if (!asset) return null;
+            const segmentId = asset.cacheKey?.split('_').pop() ?? id;
+            return {
+              id: asset.id,
+              segmentId,
+              durationSeconds: asset.duration,
+              url: asset.url
+            } satisfies AudioAssetWithDuration;
+          })
+        ).then((assets) => assets.filter((a): a is AudioAssetWithDuration => a !== null))
+        : [];
+
+      getLogger().info('Computing timeline with audio assets', {
+        jobId: context.jobId,
+        voiceAssets: voiceAssets.length,
+        sfxAssets: sfxAssets.length,
+        musicAssets: musicAssets.length,
+        ambianceAssets: ambianceAssets.length
+      });
+
+      // Compute and persist timeline
+      // Note: For V2 scripts, we convert the script structure to work with the computation service
+      const computedTimeline = await timelineService.computeAndPersist({
+        storyId: context.storyId,
+        scriptVersion: 3,
+        script: context.script as unknown as StoryScript, // Type coercion for compatibility
+        voiceAssets,
+        sfxAssets,
+        musicAssets,
+        ambianceAssets
+      });
+
+      getLogger().info('Timeline computed and persisted', {
+        jobId: context.jobId,
+        totalDuration: computedTimeline.metadata.totalDuration,
+        trackCount: computedTimeline.tracks.length
+      });
+
+      await helper.updateProgress(context.jobId, config.endProgress, config.name);
+
+      return {
+        ...context,
+        computedTimeline
+      };
+    },
+    undefined,
+    { retries: config.retries, timeout: config.timeout }
+  );
+}
+
+/**
+ * Step 9: Audio Mixing
+ * Mix all audio assets using ComputedTimeline (accurate timing from real TTS durations)
+ */
+export async function mixingStep(context: StoryGenerationWorkflowContext): Promise<StoryGenerationWorkflowContext> {
+  const config = getStepConfig(WORKFLOW_STEPS.MIXING);
+  const helper = new WorkflowStepHelper();
+
+  if (!context.computedTimeline) {
+    throw new Error('Computed timeline not found in context - computeTimelineStep must run first');
+  }
 
   return helper.executeStepWithRollback(
     context.jobId,
@@ -427,14 +564,10 @@ export async function mixingStep(context: StoryGenerationWorkflowContext): Promi
 
       await helper.updateProgress(context.jobId, config.startProgress, config.name);
 
-      // Use StoryMixingOrchestrator
-      const result = await mixingOrchestrator.mixStory({
+      // Use mixStoryV3 with ComputedTimeline for accurate timing
+      const result = await mixingOrchestrator.mixStoryV3({
         storyId: context.storyId,
-        script,
-        voiceAssetIds: context.voiceAssetIds ?? [],
-        sfxAssetIds: context.sfxAssetIds,
-        musicAssetIds: context.musicAssetIds,
-        ambianceAssetIds: context.ambianceAssetIds
+        computedTimeline: context.computedTimeline!
       });
 
       getLogger().info('Mixed audio uploaded to temp location', {

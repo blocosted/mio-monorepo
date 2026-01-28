@@ -169,9 +169,9 @@ export async function createCliServices(logger: Logger): Promise<CliServices> {
   const { MusicLibraryStore } = await import('@mio/api/services/music');
 
   // Create store instances (pass dependencies manually for CLI context)
-  const sfxStore = new SfxLibraryStore(db as any, mockCache as any);
-  const ambianceStore = new AmbianceLibraryStore(db as any, mockCache as any);
-  const musicStore = new MusicLibraryStore(db as any, mockCache as any);
+  const sfxStore = new SfxLibraryStore(db as any);
+  const ambianceStore = new AmbianceLibraryStore(db as any);
+  const musicStore = new MusicLibraryStore(db as any);
 
   // Create repository
   const sfxRepository = new SoundEffectsRepository(logger);

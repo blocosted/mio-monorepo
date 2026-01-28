@@ -117,78 +117,6 @@ export interface AmbianceSegmentContent {
  */
 export type SegmentContent = VoiceSegmentContent | SfxSegmentContent | MusicSegmentContent | AmbianceSegmentContent;
 
-/**
- * Timeline segment with absolute positioning
- */
-export interface TimelineSegment {
-  /** Unique segment identifier */
-  id: string;
-  /** Track this segment belongs to */
-  trackId: string;
-  /** Start time in seconds (absolute position on timeline) */
-  startTime: number;
-  /** Duration in seconds */
-  duration: number;
-  /** Segment content */
-  content: SegmentContent;
-}
-
-/**
- * Audio track containing segments
- */
-export interface AudioTrack {
-  /** Unique track identifier */
-  id: string;
-  /** Track type determines mixing behavior */
-  type: AudioTrackType;
-  /** Human-readable track name */
-  name: string;
-  /** Segments on this track (ordered by startTime) */
-  segments: TimelineSegment[];
-}
-
-/**
- * Script metadata
- */
-export interface ScriptMetadata {
-  /** Story title */
-  title: string;
-  /** Target duration in seconds (what was requested) */
-  targetDuration: number;
-  /** Actual calculated duration in seconds */
-  actualDuration: number;
-  /** Vocabulary level based on child age */
-  vocabularyLevel: VocabularyLevel;
-  /** Story language */
-  language: Language;
-  /** Total word count in voice segments */
-  wordCount: number;
-  /** Number of voice segments */
-  voiceSegmentCount: number;
-  /** Number of SFX segments */
-  sfxSegmentCount: number;
-  /** ElevenLabs model to use */
-  elevenLabsModel?: string;
-}
-
-/**
- * Story Script
- *
- * Timeline-based script structure supporting:
- * - Multiple overlapping audio tracks
- * - Precise duration via word count
- * - ElevenLabs v3 audio tags
- */
-export interface StoryScript {
-  /** Version identifier */
-  version: 2;
-  /** Script metadata */
-  metadata: ScriptMetadata;
-  /** Character to voice mappings */
-  characters: CharacterVoiceMap[];
-  /** Audio tracks (voice, sfx, music, ambiance) */
-  tracks: AudioTrack[];
-}
 
 /**
  * Duration budget for script generation
@@ -255,4 +183,146 @@ export interface ScriptGenerationConstraints {
    * - OpenAI: ~0.80 (generates ~55% of asked)
    */
   wordCountInflation: number;
+}
+
+// =============================================================================
+// V3 Script Types (Relative Timing)
+// =============================================================================
+
+/**
+ * Timing anchor type for relative positioning
+ *
+ * Allows non-voice segments (SFX, music, ambiance) to be positioned
+ * relative to voice segments rather than using hypothetical absolute times.
+ */
+export const TIMING_ANCHOR_TYPE = {
+  /** Align to start of a voice segment */
+  SEGMENT_START: 'segment_start',
+  /** Align to end of a voice segment */
+  SEGMENT_END: 'segment_end',
+  /** Align to a percentage point within a voice segment */
+  SEGMENT_PERCENT: 'segment_percent'
+} as const;
+
+export type TimingAnchorType = (typeof TIMING_ANCHOR_TYPE)[keyof typeof TIMING_ANCHOR_TYPE];
+
+/**
+ * Relative timing hint for non-voice segments
+ *
+ * LLM generates these instead of absolute startTime/duration.
+ * The TimelineComputationService resolves them to absolute times
+ * after TTS generation provides real durations.
+ *
+ * @example
+ * // SFX starts 500ms before voice-003 ends
+ * {
+ *   anchorType: 'segment_end',
+ *   anchorSegmentId: 'voice-003',
+ *   offsetMs: -500
+ * }
+ *
+ * @example
+ * // Music starts at 75% through voice-001
+ * {
+ *   anchorType: 'segment_percent',
+ *   anchorSegmentId: 'voice-001',
+ *   anchorPercent: 75,
+ *   offsetMs: 0
+ * }
+ */
+export interface RelativeTimingHint {
+  /** Type of anchor point */
+  anchorType: TimingAnchorType;
+  /** ID of the voice segment to anchor to */
+  anchorSegmentId: string;
+  /** Offset in milliseconds (negative = before anchor, positive = after) */
+  offsetMs: number;
+  /** Percentage within segment (0-100), only used with segment_percent */
+  anchorPercent?: number;
+}
+
+/**
+ * V3 Segment without absolute timing
+ *
+ * Voice segments use `order` for sequential positioning.
+ * Non-voice segments use `timingHint` for relative positioning.
+ */
+export interface ScriptSegment {
+  /** Unique segment identifier */
+  id: string;
+  /** Track this segment belongs to */
+  trackId: string;
+  /** Segment content (voice, sfx, music, ambiance) */
+  content: SegmentContent;
+  /** Order for voice segments (sequential, 1-based) */
+  order?: number;
+  /** Timing hint for non-voice segments (relative to voice) */
+  timingHint?: RelativeTimingHint;
+  /**
+   * Estimated duration in seconds (LLM hint, not authoritative)
+   * - For voice: based on word count estimate
+   * - For SFX/music/ambiance: suggested duration
+   */
+  estimatedDuration?: number;
+}
+
+/**
+ * V3 Audio track with relative timing
+ */
+export interface AudioTrack {
+  /** Unique track identifier */
+  id: string;
+  /** Track type determines mixing behavior */
+  type: AudioTrackType;
+  /** Human-readable track name */
+  name: string;
+  /** Segments on this track */
+  segments: ScriptSegment[];
+}
+
+/**
+ * V3 Script metadata
+ */
+export interface ScriptMetadata {
+  /** Story title */
+  title: string;
+  /** Target duration in seconds (what was requested) */
+  targetDuration: number;
+  /** Vocabulary level based on child age */
+  vocabularyLevel: VocabularyLevel;
+  /** Story language */
+  language: Language;
+  /** Total word count in voice segments (spoken words only) */
+  wordCount: number;
+  /** Number of voice segments */
+  voiceSegmentCount: number;
+  /** Number of SFX segments */
+  sfxSegmentCount: number;
+  /** ElevenLabs model to use */
+  elevenLabsModel?: string;
+  /** Pause between voice segments in seconds (default: 0.3) */
+  voiceSegmentPauseSeconds?: number;
+}
+
+/**
+ * V3 Story Script with Relative Timing
+ *
+ * Uses relative timing hints instead of absolute times.
+ * Actual timeline is computed after TTS generation provides real durations.
+ *
+ * Key differences from V2:
+ * - No absolute startTime/duration on segments
+ * - Voice segments have `order` for sequential positioning
+ * - Non-voice segments have `timingHint` for relative positioning
+ * - Actual timeline computed by TimelineComputationService
+ */
+export interface StoryScript {
+  /** Version identifier */
+  version: 3;
+  /** Script metadata */
+  metadata: ScriptMetadata;
+  /** Character to voice mappings */
+  characters: CharacterVoiceMap[];
+  /** Audio tracks (voice, sfx, music, ambiance) */
+  tracks: AudioTrack[];
 }

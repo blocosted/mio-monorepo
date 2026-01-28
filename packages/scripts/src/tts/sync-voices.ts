@@ -9,7 +9,7 @@ import { existsSync } from 'node:fs';
 
 import { config as loadDotenv } from 'dotenv';
 
-import type { IVoiceRegistryService } from '@mio/api/services/narration';
+import type { VoiceRegistryService } from '@mio/api/services/narration';
 import { IocService } from '@mio/api/ioc/ioc.types';
 import { getInstance, initializeContainer } from '@mio/api/ioc/ioc.config';
 import { loadEnvironmentFromProcessEnv } from '@mio/shared/constants/environment.constants';
@@ -36,7 +36,7 @@ export async function runSyncVoicesCommand(args: SyncVoicesArgs): Promise<void> 
   await initializeContainer();
 
   // Get VoiceRegistry service
-  const voiceRegistry = getInstance<IVoiceRegistryService>(IocService.VOICE_REGISTRY);
+  const voiceRegistry = getInstance<VoiceRegistryService>(IocService.VOICE_REGISTRY);
 
   // Check last sync time
   const lastSync = await voiceRegistry.getLastSyncTime();

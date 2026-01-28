@@ -59,13 +59,20 @@ export const STEP_CONFIGS: Record<string, WorkflowStepConfig> = {
     retries: 2,
     timeout: 180_000, // 3 minutes
     startProgress: 80,
-    endProgress: 85
+    endProgress: 84
+  },
+  [WORKFLOW_STEPS.TIMELINE_COMPUTATION]: {
+    name: WORKFLOW_STEPS.TIMELINE_COMPUTATION,
+    retries: 2,
+    timeout: 30_000, // 30 seconds (CPU-only, no external API)
+    startProgress: 84,
+    endProgress: 86
   },
   [WORKFLOW_STEPS.MIXING]: {
     name: WORKFLOW_STEPS.MIXING,
     retries: 2,
     timeout: 300_000, // 5 minutes
-    startProgress: 85,
+    startProgress: 86,
     endProgress: 95
   },
   [WORKFLOW_STEPS.UPLOAD]: {

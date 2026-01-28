@@ -10,10 +10,15 @@ import type { StoryStatus } from '@mio/shared/types';
 
 import { IocService } from '../../../ioc/ioc.types';
 import { getInstance } from '../../../ioc/ioc.config';
+import type { AudioAssetWithDuration, StoryScript } from '@mio/shared/types';
+
 import type { StoriesService } from '../../../services/stories/stories.service';
 import type { AudioAssetsService } from '../../../services/stories/audio-assets.service';
 import type { StorySegmentsService } from '../../../services/stories/story-segments.service';
 import type { WorkflowOrchestratorService } from '../../../services/workflows/workflow-orchestrator.service';
+import type { TimelineComputationService } from '../../../services/narration/timeline-computation.service';
+import type { StoryMixingOrchestrator } from '../../../services/audio-mixing/story-mixing.orchestrator';
+import type { StoryFinalizationService } from '../../../services/stories/story-finalization.service';
 import {
   StoryFilterQuerySchema,
   StoryIdParamSchema,
@@ -210,5 +215,125 @@ export const storiesHandlers = new Elysia({ tags: ['admin'] })
     {
       params: StoryIdParamSchema,
       body: UpdateStoryPromptBodySchema
+    }
+  )
+  .get(
+    '/stories/:id/computed-timeline',
+    async ({ params, set }) => {
+      const timelineService = getInstance<TimelineComputationService>(IocService.TIMELINE_COMPUTATION);
+      const timeline = await timelineService.loadTimeline(params.id);
+
+      if (!timeline) {
+        set.status = 404;
+        return { error: 'Computed timeline not found', computed: false };
+      }
+
+      return { data: timeline, computed: true };
+    },
+    {
+      params: StoryIdParamSchema
+    }
+  )
+  .post(
+    '/stories/:id/remix',
+    async ({ params, set }) => {
+      const storiesService = getInstance<StoriesService>(IocService.STORIES);
+      const audioAssetsService = getInstance<AudioAssetsService>(IocService.AUDIO_ASSETS);
+      const timelineService = getInstance<TimelineComputationService>(IocService.TIMELINE_COMPUTATION);
+      const mixingOrchestrator = getInstance<StoryMixingOrchestrator>(IocService.STORY_MIXING_ORCHESTRATOR);
+      const finalizationService = getInstance<StoryFinalizationService>(IocService.STORY_FINALIZATION);
+
+      // Verify story exists and has a script
+      const story = await storiesService.findById(params.id);
+      if (!story) {
+        set.status = 404;
+        return { error: 'Story not found' };
+      }
+
+      if (!story.script) {
+        set.status = 400;
+        return { error: 'Story has no script - cannot remix without a script' };
+      }
+
+      // Load all audio assets for this story
+      const allAssets = await audioAssetsService.findByStoryId(params.id);
+
+      // Group assets by type
+      const voiceAssets: AudioAssetWithDuration[] = [];
+      const sfxAssets: AudioAssetWithDuration[] = [];
+      const musicAssets: AudioAssetWithDuration[] = [];
+      const ambianceAssets: AudioAssetWithDuration[] = [];
+
+      for (const asset of allAssets) {
+        // Extract segment ID from cache key (format: voice_{storyId}_{segmentId})
+        const segmentId = asset.cacheKey?.split('_').pop() ?? asset.id;
+        const assetWithDuration: AudioAssetWithDuration = {
+          id: asset.id,
+          segmentId,
+          durationSeconds: asset.duration,
+          url: asset.url
+        };
+
+        switch (asset.type) {
+          case 'voice':
+            voiceAssets.push(assetWithDuration);
+            break;
+          case 'sfx':
+            sfxAssets.push(assetWithDuration);
+            break;
+          case 'music':
+            musicAssets.push(assetWithDuration);
+            break;
+          case 'ambiance':
+            ambianceAssets.push(assetWithDuration);
+            break;
+        }
+      }
+
+      if (voiceAssets.length === 0) {
+        set.status = 400;
+        return { error: 'Story has no voice assets - cannot remix without voice audio' };
+      }
+
+      // Recompute timeline with existing assets
+      const computedTimeline = await timelineService.computeAndPersist({
+        storyId: params.id,
+        scriptVersion: 3,
+        script: story.script as unknown as StoryScript,
+        voiceAssets,
+        sfxAssets,
+        musicAssets,
+        ambianceAssets
+      });
+
+      // Mix the audio
+      const mixResult = await mixingOrchestrator.mixStoryV3({
+        storyId: params.id,
+        computedTimeline
+      });
+
+      // Upload final audio and update story
+      const uploadResult = await finalizationService.uploadFinalAudio({
+        storyId: params.id,
+        tempMixedAudioUrl: mixResult.tempUrl,
+        durationSeconds: mixResult.durationSeconds
+      });
+
+      // Finalize story (update DB status)
+      await finalizationService.finalizeStoryRemix({
+        storyId: params.id,
+        finalAudioUrl: uploadResult.finalAudioUrl,
+        durationSeconds: mixResult.durationSeconds
+      });
+
+      return {
+        storyId: params.id,
+        finalAudioUrl: uploadResult.finalAudioUrl,
+        duration: mixResult.durationSeconds,
+        message: 'Story remixed successfully'
+      };
+    },
+    {
+      params: StoryIdParamSchema
     }
   );

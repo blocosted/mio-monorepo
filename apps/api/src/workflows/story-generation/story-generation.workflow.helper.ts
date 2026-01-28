@@ -127,16 +127,19 @@ export class WorkflowStepHelper {
 
   /**
    * Update job progress (DB + Redis + Pub/Sub)
+   *
+   * Also ensures DB status is set to Processing when job starts.
    */
   async updateProgress(jobId: string, progress: number, currentStep: string, metadata?: Record<string, unknown>): Promise<void> {
     try {
       // Convert workflow step to JobStep enum
       const jobStep = WORKFLOW_STEP_TO_JOB_STEP[currentStep];
 
-      // Update in DB
-      await this.jobsStore.updateProgress(jobId, {
+      // Update in DB (includes status: Processing to ensure job is marked as running)
+      await this.jobsStore.update(jobId, {
         progress,
-        currentStep: jobStep
+        currentStep: jobStep,
+        status: JobStatus.Processing
       });
 
       // Update in Redis cache + publish event
@@ -164,29 +167,65 @@ export class WorkflowStepHelper {
   }
 
   /**
-   * Mark job as failed
+   * Mark job as failed with retry logic
+   *
+   * Critical: This method MUST succeed to avoid jobs stuck in "running" state.
+   * DB update is retried multiple times, Redis update is best-effort.
    */
   private async markFailed(jobId: string, error: Error, step: string): Promise<void> {
-    try {
-      await this.jobsStore.fail(jobId, `Step ${step} failed: ${error.message}`);
+    const errorMessage = `Step ${step} failed: ${error.message}`;
+    const maxRetries = 3;
 
+    // 1. Update DB status (critical - retry on failure)
+    let dbUpdateSuccess = false;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        await this.jobsStore.fail(jobId, errorMessage);
+        dbUpdateSuccess = true;
+        break;
+      } catch (dbError) {
+        this.logger.error('Failed to update job status in DB', {
+          jobId,
+          attempt,
+          maxRetries,
+          error: dbError instanceof Error ? dbError.message : String(dbError)
+        });
+
+        if (attempt < maxRetries) {
+          // Exponential backoff before retry
+          await this.sleep(2 ** attempt * 500);
+        }
+      }
+    }
+
+    if (!dbUpdateSuccess) {
+      this.logger.error('CRITICAL: Could not mark job as failed in DB after all retries', {
+        jobId,
+        step,
+        error: error.message
+      });
+    }
+
+    // 2. Update Redis cache (best-effort for real-time UI)
+    try {
       await this.jobProgress.update(jobId, {
         status: 'failed',
         error: error.message,
         currentStep: step
       });
-
-      this.logger.error('Job marked as failed', {
+    } catch (redisError) {
+      this.logger.warn('Failed to update job status in Redis cache', {
         jobId,
-        step,
-        error: error.message
-      });
-    } catch (updateError) {
-      this.logger.error('Failed to mark job as failed', {
-        jobId,
-        error: updateError instanceof Error ? updateError.message : String(updateError)
+        error: redisError instanceof Error ? redisError.message : String(redisError)
       });
     }
+
+    this.logger.error('Job marked as failed', {
+      jobId,
+      step,
+      error: error.message,
+      dbUpdateSuccess
+    });
   }
 
   /**

@@ -1,16 +1,9 @@
 /**
  * Narration Services Module
  *
- * Voice-over and narration services (TTS, voice registry, voice assignment, timeline sync).
+ * Voice-over and narration services (TTS, voice registry, voice assignment, timeline computation).
  */
 
-export type {
-  SyncedStoryScript,
-  SyncMetadata,
-  TimelineSyncOptions,
-  TTSSegmentResult,
-  VoiceSegmentTiming
-} from './timeline-sync.service.types';
 // Types
 export type {
   AudioFormat,
@@ -45,7 +38,7 @@ export type {
   UpsertVoiceInput,
   VoiceRow
 } from './voice-registry.store';
-export { TimelineSyncService } from './timeline-sync.service';
+export { TimelineComputationService } from './timeline-computation.service';
 // Services
 export { TTSService } from './tts.service';
 // Constants

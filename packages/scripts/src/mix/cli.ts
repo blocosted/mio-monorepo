@@ -13,7 +13,7 @@
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 
-import type { IStorageService } from '@mio/api/services/storage';
+import type { StorageService } from '@mio/api/services/storage';
 
 import { runMixStoryCommand } from './mix-story';
 
@@ -176,7 +176,7 @@ yargs(hideBin(process.argv))
         const { FFmpegMixerService } = await import('@mio/api/services/audio-mixing');
 
         const logger = await Logger.create();
-        const mockStorage: IStorageService = {
+        const mockStorage = {
           download: async () => Buffer.from(''),
           upload: async () => ({ path: '', url: '' }),
           delete: async () => {
@@ -187,7 +187,7 @@ yargs(hideBin(process.argv))
           },
           getPublicUrl: () => '',
           exists: async () => true
-        };
+        } as unknown as StorageService;
 
         const mixerService = new FFmpegMixerService(logger, mockStorage);
         const _result = await mixerService.verifyFFmpegInstalled();

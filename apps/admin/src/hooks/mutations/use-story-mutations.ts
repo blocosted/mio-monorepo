@@ -107,3 +107,21 @@ export function useRegenerateStory() {
     }
   });
 }
+
+// Remix Story
+export function useRemixStory() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (storyId: string) => {
+      const client = getMioApiClient();
+      return client.admin.remixStory(storyId);
+    },
+    onSuccess: (_, storyId) => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'stories', storyId] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'stories'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'stories', storyId, 'computed-timeline'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'stories', storyId, 'audio-assets'] });
+    }
+  });
+}

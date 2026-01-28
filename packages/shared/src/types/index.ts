@@ -18,3 +18,5 @@ export * from './script.types';
 export * from './stories.types';
 // Pagination types
 export * from './pagination.types';
+// Timeline types (computed timeline)
+export * from './timeline.types';

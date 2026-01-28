@@ -34,8 +34,8 @@ function loadEnv(envFile?: string): void {
 interface MusicSegmentInfo {
   id: string;
   mood: MusicMood;
-  startTime: number;
-  duration: number;
+  /** Estimated duration from script (actual startTime computed after TTS) */
+  estimatedDuration: number;
   volume?: number;
   fadeInDuration?: number;
   fadeOutDuration?: number;
@@ -55,8 +55,7 @@ function extractMusicSegments(script: StoryScript, logger: Logger): MusicSegment
         segments.push({
           id: segment.id,
           mood: musicStrategyService.normalizeMood(content.mood),
-          startTime: segment.startTime,
-          duration: segment.duration,
+          estimatedDuration: segment.estimatedDuration ?? 30,
           fadeInDuration: content.fadeInDuration,
           fadeOutDuration: content.fadeOutDuration
         });
@@ -99,7 +98,7 @@ export async function runGenerateFromScriptCommand(args: GenerateFromScriptComma
   // If no music segments and --autoMusic is set, generate using MusicStrategyService
   if (musicSegments.length === 0 && args.autoMusic) {
     const musicStrategyService = new MusicStrategyService(logger);
-    const totalDuration = script.metadata.actualDuration ?? script.metadata.targetDuration;
+    const totalDuration = script.metadata.targetDuration;
 
     const strategyResult = musicStrategyService.generateMusicCues({
       totalDuration,
@@ -110,8 +109,7 @@ export async function runGenerateFromScriptCommand(args: GenerateFromScriptComma
     musicSegments = strategyResult.cues.map((cue: MusicCue, index: number) => ({
       id: `auto-music-${index + 1}`,
       mood: cue.mood,
-      startTime: cue.startTime,
-      duration: cue.duration,
+      estimatedDuration: cue.duration,
       volume: cue.volume,
       fadeInDuration: cue.fadeIn,
       fadeOutDuration: cue.fadeOut
@@ -125,11 +123,11 @@ export async function runGenerateFromScriptCommand(args: GenerateFromScriptComma
   // Create run directory for artifacts
   const run = args.save
     ? createRunDir({
-        rootDir: args.storeDir,
-        namespace: 'music',
-        command: 'from-script',
-        labelParts: [script.metadata.title.substring(0, 20)]
-      })
+      rootDir: args.storeDir,
+      namespace: 'music',
+      command: 'from-script',
+      labelParts: [script.metadata.title.substring(0, 20)]
+    })
     : null;
 
   // Save input
@@ -155,8 +153,7 @@ export async function runGenerateFromScriptCommand(args: GenerateFromScriptComma
       segments: musicSegments.map((s) => ({
         id: s.id,
         mood: s.mood,
-        startTime: s.startTime,
-        duration: s.duration
+        estimatedDuration: s.estimatedDuration
       })),
       artifactsDir: run?.runDir
     };
@@ -172,9 +169,8 @@ export async function runGenerateFromScriptCommand(args: GenerateFromScriptComma
     id: string;
     success: boolean;
     mood: string;
-    durationSeconds?: number;
+    estimatedDuration?: number;
     actualDuration?: number;
-    startTime: number;
     error?: string;
     outputFile?: string;
     looped?: boolean;
@@ -184,7 +180,7 @@ export async function runGenerateFromScriptCommand(args: GenerateFromScriptComma
     try {
       const result = await musicService.generate({
         mood: segment.mood,
-        targetDurationSeconds: segment.duration,
+        targetDurationSeconds: segment.estimatedDuration,
         fadeInDuration: segment.fadeInDuration,
         fadeOutDuration: segment.fadeOutDuration,
         volume: segment.volume,
@@ -202,9 +198,8 @@ export async function runGenerateFromScriptCommand(args: GenerateFromScriptComma
         id: segment.id,
         success: true,
         mood: segment.mood,
-        durationSeconds: segment.duration,
+        estimatedDuration: segment.estimatedDuration,
         actualDuration: result.durationSeconds,
-        startTime: segment.startTime,
         outputFile: outputFilename,
         looped: result.looped
       });
@@ -213,7 +208,6 @@ export async function runGenerateFromScriptCommand(args: GenerateFromScriptComma
         id: segment.id,
         success: false,
         mood: segment.mood,
-        startTime: segment.startTime,
         error: error instanceof Error ? error.message : String(error)
       });
     }

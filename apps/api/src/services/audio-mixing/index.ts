@@ -14,9 +14,9 @@ export type {
   VoiceTrackInput
 } from './ffmpeg-mixer.service.types';
 export type {
-  LoadedAudioAsset,
-  StoryMixingInput,
-  StoryMixingResult
+  StoryMixingInputV3,
+  StoryMixingResult,
+  VolumeSettings
 } from './story-mixing.orchestrator.types';
 // Services
 export { FFmpegMixerService } from './ffmpeg-mixer.service';

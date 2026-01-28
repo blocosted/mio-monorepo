@@ -22,6 +22,13 @@ export interface AudioFormat {
 }
 
 /**
+ * Segment type for TTS text extraction
+ * - 'narration': Full text is spoken (no extraction)
+ * - 'dialogue': Only quoted text is extracted for TTS
+ */
+export type TTSSegmentType = 'narration' | 'dialogue';
+
+/**
  * Input for single speech generation
  */
 export interface GenerateSpeechInput {
@@ -29,6 +36,8 @@ export interface GenerateSpeechInput {
   text: string;
   /** ElevenLabs voice ID */
   voiceId: string;
+  /** Segment type for text extraction (defaults to 'narration') */
+  segmentType?: TTSSegmentType;
   /** Emotion affecting delivery */
   emotion?: Emotion;
   /** Voice settings override */
@@ -59,6 +68,8 @@ export interface GenerateSpeechResult {
 export interface BatchSegment extends GenerateSpeechInput {
   /** Unique segment identifier */
   id: string;
+  /** Segment type for text extraction */
+  segmentType?: TTSSegmentType;
 }
 
 /**

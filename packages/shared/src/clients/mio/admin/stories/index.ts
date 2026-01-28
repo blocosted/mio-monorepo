@@ -23,5 +23,14 @@ export {
   RegenerateStoryBodySchema,
   type RegenerateStoryBody,
   RegenerateStoryResponseSchema,
-  type RegenerateStoryResponse
+  type RegenerateStoryResponse,
+  ComputedTimelineSchema,
+  type ComputedTimelineClient,
+  ComputedTimelineResponseSchema,
+  type ComputedTimelineResponse,
+  type ComputedSegmentClient,
+  type ComputedTrackClient,
+  type ComputedTimelineMetadataClient,
+  RemixStoryResponseSchema,
+  type RemixStoryResponse
 } from './stories.client.types';

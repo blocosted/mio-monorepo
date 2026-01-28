@@ -1,36 +1,33 @@
 /**
  * Story Mixing Orchestrator Types
  *
- * Types for orchestrating audio mixing including asset loading and input building.
+ * Types for orchestrating audio mixing with computed timeline.
  */
 
-import type { StoryScript } from '@mio/shared/types';
-
-import type { MixStoryInput } from './ffmpeg-mixer.service.types';
+import type { ComputedTimeline } from '@mio/shared/types';
 
 /**
- * Input for mixing a story
+ * Volume settings for mixing
  */
-export interface StoryMixingInput {
+export interface VolumeSettings {
+  voice?: number;
+  sfx?: number;
+  music?: number;
+  ambiance?: number;
+}
+
+/**
+ * Input for mixing a story using ComputedTimeline
+ *
+ * Uses absolute times from ComputedTimeline which are based on real TTS durations.
+ */
+export interface StoryMixingInputV3 {
   /** Story ID */
   storyId: string;
-  /** Story script for segment timings */
-  script: StoryScript;
-  /** Voice asset IDs from generation */
-  voiceAssetIds: string[];
-  /** SFX asset IDs from generation */
-  sfxAssetIds?: string[];
-  /** Music asset IDs from generation */
-  musicAssetIds?: string[];
-  /** Ambiance asset IDs from generation */
-  ambianceAssetIds?: string[];
+  /** Computed timeline with real durations and absolute times */
+  computedTimeline: ComputedTimeline;
   /** Volume settings overrides */
-  volumeSettings?: {
-    voice?: number;
-    sfx?: number;
-    music?: number;
-    ambiance?: number;
-  };
+  volumeSettings?: VolumeSettings;
 }
 
 /**
@@ -43,15 +40,5 @@ export interface StoryMixingResult {
   durationSeconds: number;
   /** Temporary S3 URL for the mixed audio */
   tempUrl: string;
-}
-
-/**
- * Audio asset loaded from database
- */
-export interface LoadedAudioAsset {
-  id: string;
-  url: string;
-  duration: number;
-  cacheKey?: string | null;
 }
 

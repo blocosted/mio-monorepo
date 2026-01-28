@@ -48,6 +48,7 @@ import {
 } from '../services/music';
 // Narration Services
 import {
+  TimelineComputationService,
   TTSService,
   VoiceAssignmentService,
   VoiceGenerationOrchestrator,
@@ -151,7 +152,8 @@ export async function initializeContainer(): Promise<void> {
     [IocService.VOICE_GENERATION_ORCHESTRATOR]: () => container.get(VoiceGenerationOrchestrator, { autobind: true }),
     [IocService.AUDIO_GENERATION_ORCHESTRATOR]: () => container.get(AudioGenerationOrchestrator, { autobind: true }),
     [IocService.STORY_MIXING_ORCHESTRATOR]: () => container.get(StoryMixingOrchestrator, { autobind: true }),
-    [IocService.STORY_FINALIZATION]: () => container.get(StoryFinalizationService, { autobind: true })
+    [IocService.STORY_FINALIZATION]: () => container.get(StoryFinalizationService, { autobind: true }),
+    [IocService.TIMELINE_COMPUTATION]: () => container.get(TimelineComputationService, { autobind: true })
   } as const;
 
   // Register all factories

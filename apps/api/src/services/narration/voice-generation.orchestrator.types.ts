@@ -12,7 +12,7 @@ import type { StoryScript } from '@mio/shared/types';
 export interface VoiceGenerationInput {
   /** Story ID for asset storage */
   storyId: string;
-  /** Script containing voice segments and character mappings */
+  /** Script containing voice segments and character mappings (V3 with relative timing) */
   script: StoryScript;
   /** Maximum concurrent TTS requests (default: 3) */
   concurrency?: number;

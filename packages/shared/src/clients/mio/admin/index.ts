@@ -45,7 +45,14 @@ export {
   CreateAndGenerateStoryBodySchema,
   type CreateAndGenerateStoryBody,
   CreateAndGenerateStoryResponseSchema,
-  type CreateAndGenerateStoryResponse
+  type CreateAndGenerateStoryResponse,
+  ComputedTimelineSchema,
+  type ComputedTimelineClient,
+  ComputedTimelineResponseSchema,
+  type ComputedTimelineResponse,
+  type ComputedSegmentClient,
+  type ComputedTrackClient,
+  type ComputedTimelineMetadataClient
 } from './stories';
 
 // Profiles

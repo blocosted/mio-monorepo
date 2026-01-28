@@ -158,4 +158,39 @@ export class StoryFinalizationService extends AbstractService {
       durationSeconds
     });
   }
+
+  /**
+   * Finalize a story remix (no job involved)
+   *
+   * Used when remixing a story without going through the workflow.
+   * Only updates the story record, not job records.
+   */
+  async finalizeStoryRemix(input: {
+    storyId: string;
+    finalAudioUrl: string;
+    durationSeconds: number;
+  }): Promise<{ storyId: string; finalAudioUrl: string; durationSeconds: number; success: boolean }> {
+    const { storyId, finalAudioUrl, durationSeconds } = input;
+
+    this.logger.info('Finalizing story remix in database', { storyId });
+
+    // Update story (status=ready, finalAudioUrl, duration)
+    await this.storiesStore.finalize(storyId, {
+      finalAudioUrl,
+      duration: durationSeconds
+    });
+
+    this.logger.info('Story remix finalized successfully', {
+      storyId,
+      finalAudioUrl,
+      durationSeconds
+    });
+
+    return {
+      storyId,
+      finalAudioUrl,
+      durationSeconds,
+      success: true
+    };
+  }
 }

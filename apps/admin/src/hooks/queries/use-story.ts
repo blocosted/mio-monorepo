@@ -8,11 +8,16 @@
 
 import { useQuery } from '@tanstack/react-query';
 
-import type { AdminStory, StorySegment, AudioAsset } from '@mio/shared/clients/mio';
+import type {
+  AdminStory,
+  StorySegment,
+  AudioAsset,
+  ComputedTimelineResponse
+} from '@mio/shared/clients/mio';
 
 import { getMioApiClient } from '@/lib/api/mio-client';
 
-export type { AdminStory as StoryDetail, StorySegment, AudioAsset };
+export type { AdminStory as StoryDetail, StorySegment, AudioAsset, ComputedTimelineResponse };
 
 export function useStory(id: string) {
   return useQuery({
@@ -42,6 +47,17 @@ export function useStoryAudioAssets(id: string) {
     queryFn: async () => {
       const client = getMioApiClient();
       return client.admin.getStoryAudioAssets(id);
+    },
+    enabled: !!id
+  });
+}
+
+export function useStoryComputedTimeline(id: string) {
+  return useQuery({
+    queryKey: ['admin', 'stories', id, 'computed-timeline'],
+    queryFn: async () => {
+      const client = getMioApiClient();
+      return client.admin.getStoryComputedTimeline(id);
     },
     enabled: !!id
   });

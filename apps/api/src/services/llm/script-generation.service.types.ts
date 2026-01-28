@@ -46,7 +46,7 @@ export interface ScriptGenerationInput {
 }
 
 /**
- * Script generation result (timeline-based)
+ * Script generation result (V3 with relative timing)
  */
 export interface ScriptGenerationResult {
   script: StoryScript;

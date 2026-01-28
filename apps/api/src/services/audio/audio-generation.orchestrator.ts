@@ -1,15 +1,15 @@
 /**
  * Audio Generation Orchestrator Implementation
  *
- * Orchestrates SFX, Music, and Ambiance generation for story scripts.
- * Extracts common caching and generation patterns from workflow steps.
+ * Orchestrates SFX, Music, and Ambiance generation for V3 story scripts.
+ * Uses estimatedDuration from segments for audio generation.
  */
 
 import 'reflect-metadata';
 
 import { inject, injectable } from 'inversify';
 
-import { AudioAssetType, type MusicMood, type TimelineSegment } from '@mio/shared/types';
+import { AudioAssetType, type MusicMood, type ScriptSegment } from '@mio/shared/types';
 
 import type { AmbianceGeneratorService } from '../ambiance/ambiance-generator.service';
 import type { MusicGeneratorService } from '../music/music-generator.service';
@@ -24,6 +24,13 @@ import type {
 } from './audio-generation.orchestrator.types';
 import { IocService } from '../../ioc/ioc.types';
 import { AbstractService } from '../service.abstract';
+
+/** Default durations when estimatedDuration is not specified */
+const DEFAULT_DURATIONS = {
+  sfx: 5, // 5 seconds for sound effects
+  music: 30, // 30 seconds for music (reasonable for transitions)
+  ambiance: 60 // 60 seconds for ambiance (will loop)
+} as const;
 
 /**
  * Audio Generation Orchestrator
@@ -128,8 +135,11 @@ export class AudioGenerationOrchestrator extends AbstractService {
     const results: (AudioSegmentGenerationResult | null)[] = [];
     let completedCount = 0;
 
+    // Use target duration from script metadata
+    const storyDuration = script.metadata.targetDuration ?? DEFAULT_DURATIONS.ambiance;
+
     for (const segment of ambianceSegments) {
-      const result = await this.generateAmbianceSegment(storyId, segment, script.metadata.actualDuration, defaultVolume);
+      const result = await this.generateAmbianceSegment(storyId, segment, storyDuration, defaultVolume);
       results.push(result);
       completedCount++;
       onProgress?.(completedCount, ambianceSegments.length);
@@ -141,14 +151,12 @@ export class AudioGenerationOrchestrator extends AbstractService {
   /**
    * Generate SFX for a single segment
    */
-  private async generateSfxSegment(storyId: string, segment: TimelineSegment): Promise<AudioSegmentGenerationResult | null> {
+  private async generateSfxSegment(storyId: string, segment: ScriptSegment): Promise<AudioSegmentGenerationResult | null> {
     try {
       if (segment.content.type !== 'sfx') {
         return null;
       }
 
-      // Cache key includes storyId and segmentId for proper mapping during mixing
-      // Note: This trades cross-story deduplication for correct segment mapping
       const cacheKey = `sfx_${storyId}_${segment.id}`;
 
       // Check for existing asset
@@ -164,13 +172,16 @@ export class AudioGenerationOrchestrator extends AbstractService {
         };
       }
 
-      // Generate SFX audio (service handles storage)
+      // Use estimatedDuration or default
+      const targetDuration = segment.estimatedDuration ?? DEFAULT_DURATIONS.sfx;
+
+      // Generate SFX audio
       const result = await this.sfxService.generateSfx({
         text: segment.content.description,
-        durationSeconds: segment.duration
+        durationSeconds: targetDuration
       });
 
-      // Store in audio_assets table (URL from service)
+      // Store in audio_assets table
       const asset = await this.audioAssetsService.create({
         storyId,
         type: AudioAssetType.Sfx,
@@ -200,13 +211,12 @@ export class AudioGenerationOrchestrator extends AbstractService {
   /**
    * Generate Music for a single segment
    */
-  private async generateMusicSegment(storyId: string, segment: TimelineSegment, defaultVolume: number): Promise<AudioSegmentGenerationResult | null> {
+  private async generateMusicSegment(storyId: string, segment: ScriptSegment, defaultVolume: number): Promise<AudioSegmentGenerationResult | null> {
     try {
       if (segment.content.type !== 'music') {
         return null;
       }
 
-      // Cache key includes storyId and segmentId for proper mapping during mixing
       const cacheKey = `music_${storyId}_${segment.id}`;
 
       // Check for existing asset
@@ -222,14 +232,17 @@ export class AudioGenerationOrchestrator extends AbstractService {
         };
       }
 
-      // Generate music audio (service handles storage)
+      // Use estimatedDuration or default
+      const targetDuration = segment.estimatedDuration ?? DEFAULT_DURATIONS.music;
+
+      // Generate music audio
       const result = await this.musicService.generate({
         mood: segment.content.mood as MusicMood,
-        targetDurationSeconds: segment.duration,
+        targetDurationSeconds: targetDuration,
         volume: defaultVolume
       });
 
-      // Store in audio_assets table (URL from service)
+      // Store in audio_assets table
       const asset = await this.audioAssetsService.create({
         storyId,
         type: AudioAssetType.Music,
@@ -261,7 +274,7 @@ export class AudioGenerationOrchestrator extends AbstractService {
    */
   private async generateAmbianceSegment(
     storyId: string,
-    segment: TimelineSegment,
+    segment: ScriptSegment,
     storyDuration: number,
     defaultVolume: number
   ): Promise<AudioSegmentGenerationResult | null> {
@@ -270,9 +283,9 @@ export class AudioGenerationOrchestrator extends AbstractService {
         return null;
       }
 
-      // Cache key includes storyId and segmentId for proper mapping during mixing
       const cacheKey = `ambiance_${storyId}_${segment.id}`;
-      const targetDuration = segment.duration || storyDuration;
+      // Use estimatedDuration, or fall back to story duration
+      const targetDuration = segment.estimatedDuration ?? storyDuration;
 
       // Check for existing asset
       const existing = await this.audioAssetsService.findByCacheKey(cacheKey);
@@ -287,14 +300,14 @@ export class AudioGenerationOrchestrator extends AbstractService {
         };
       }
 
-      // Generate ambiance audio (service handles storage)
+      // Generate ambiance audio
       const result = await this.ambianceService.generate({
         description: segment.content.description,
         targetDurationSeconds: targetDuration,
         volume: segment.content.volume ?? defaultVolume
       });
 
-      // Store in audio_assets table (URL from service)
+      // Store in audio_assets table
       const asset = await this.audioAssetsService.create({
         storyId,
         type: AudioAssetType.Ambiance,

@@ -15,7 +15,9 @@ import type {
   CreateAndGenerateStoryBody,
   CreateAndGenerateStoryResponse,
   RegenerateStoryBody,
-  RegenerateStoryResponse
+  RegenerateStoryResponse,
+  ComputedTimelineResponse,
+  RemixStoryResponse
 } from './stories.client.types';
 
 const DEFAULT_LIMIT = 20;
@@ -141,5 +143,42 @@ export class StoriesAdminClient {
     }
 
     throw new Error(`Failed to regenerate story: ${res.status}`);
+  }
+
+  public async getStoryComputedTimeline(storyId: string): Promise<ComputedTimelineResponse> {
+    const res = await this.client.api.admin.stories({ id: storyId })['computed-timeline'].get({
+      headers: this.client.headers
+    });
+
+    if (res.status === 200 && res.data) {
+      return res.data as unknown as ComputedTimelineResponse;
+    }
+
+    // 404 is expected when timeline not yet computed
+    if (res.status === 404) {
+      return { computed: false };
+    }
+
+    if (res.error) {
+      this.client.throwFromTreatyError(res.error);
+    }
+
+    throw new Error(`Failed to fetch computed timeline: ${res.status}`);
+  }
+
+  public async remixStory(storyId: string): Promise<RemixStoryResponse> {
+    const res = await this.client.api.admin.stories({ id: storyId }).remix.post({}, {
+      headers: this.client.headers
+    });
+
+    if (res.status === 200 && res.data) {
+      return res.data as unknown as RemixStoryResponse;
+    }
+
+    if (res.error) {
+      this.client.throwFromTreatyError(res.error);
+    }
+
+    throw new Error(`Failed to remix story: ${res.status}`);
   }
 }

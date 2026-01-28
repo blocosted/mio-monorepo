@@ -8,6 +8,7 @@
     "build": "nx run-many -t build",
     "test": "bun test",
     "start": "docker compose up",
+    "typecheck": "nx run-many -t typecheck",
     "lint": "nx run-many -t lint",
     "lint:fix": "nx run-many -t lint:fix",
     "format": "biome format --write .",

@@ -13,7 +13,7 @@ import 'reflect-metadata';
 import { inject, injectable } from 'inversify';
 import pLimit from 'p-limit';
 
-import { AudioAssetType, type StoryScript, type TimelineSegment } from '@mio/shared/types';
+import { AudioAssetType, type ScriptSegment, type StoryScript } from '@mio/shared/types';
 
 import type { AudioAssetsService } from '../stories/audio-assets.service';
 import type { TTSService } from './tts.service';
@@ -122,7 +122,7 @@ export class VoiceGenerationOrchestrator extends AbstractService {
   private async generateSegment(
     storyId: string,
     script: StoryScript,
-    segment: TimelineSegment,
+    segment: ScriptSegment,
     onComplete: () => void
   ): Promise<VoiceSegmentGenerationResult | null> {
     // Skip non-voice segments
@@ -165,9 +165,13 @@ export class VoiceGenerationOrchestrator extends AbstractService {
     for (let attempt = 1; attempt <= MAX_SEGMENT_RETRIES; attempt++) {
       try {
         // Generate voice audio
+        // Pass segmentType for TTS text extraction:
+        // - 'dialogue': extracts only quoted text (e.g., "REGARDE!" from '[excited] "REGARDE!" s\'ecria-t-il')
+        // - 'narration': uses full text
         const result = await this.ttsService.generateSpeech({
           text: segment.content.text,
           voiceId: character.voiceId,
+          segmentType: segment.content.type as 'narration' | 'dialogue',
           emotion: segment.content.emotion,
           characterName
         });

@@ -170,3 +170,68 @@ export const RegenerateStoryResponseSchema = t.Object({
 });
 
 export type RegenerateStoryResponse = typeof RegenerateStoryResponseSchema.static;
+
+// =============================================================================
+// Computed Timeline
+// =============================================================================
+
+export const ComputedSegmentSchema = t.Object({
+  id: t.String(),
+  trackId: t.String(),
+  startTime: t.Number(),
+  duration: t.Number(),
+  endTime: t.Number(),
+  audioAssetId: t.Optional(t.String()),
+  audioUrl: t.Optional(t.String()),
+  content: t.Record(t.String(), t.Unknown())
+});
+
+export type ComputedSegmentClient = typeof ComputedSegmentSchema.static;
+
+export const ComputedTrackSchema = t.Object({
+  id: t.String(),
+  type: t.String(),
+  name: t.String(),
+  segments: t.Array(ComputedSegmentSchema)
+});
+
+export type ComputedTrackClient = typeof ComputedTrackSchema.static;
+
+export const ComputedTimelineMetadataSchema = t.Object({
+  totalDuration: t.Number(),
+  computedAt: t.String(),
+  voiceSegmentPauseSeconds: t.Number(),
+  voiceSegmentCount: t.Number(),
+  nonVoiceSegmentCount: t.Number()
+});
+
+export type ComputedTimelineMetadataClient = typeof ComputedTimelineMetadataSchema.static;
+
+export const ComputedTimelineSchema = t.Object({
+  storyId: t.String({ format: 'uuid' }),
+  metadata: ComputedTimelineMetadataSchema,
+  tracks: t.Array(ComputedTrackSchema)
+});
+
+export type ComputedTimelineClient = typeof ComputedTimelineSchema.static;
+
+export const ComputedTimelineResponseSchema = t.Object({
+  data: t.Optional(ComputedTimelineSchema),
+  computed: t.Boolean(),
+  error: t.Optional(t.String())
+});
+
+export type ComputedTimelineResponse = typeof ComputedTimelineResponseSchema.static;
+
+// =============================================================================
+// Remix Story
+// =============================================================================
+
+export const RemixStoryResponseSchema = t.Object({
+  storyId: t.String({ format: 'uuid' }),
+  finalAudioUrl: t.String(),
+  duration: t.Number(),
+  message: t.String()
+});
+
+export type RemixStoryResponse = typeof RemixStoryResponseSchema.static;

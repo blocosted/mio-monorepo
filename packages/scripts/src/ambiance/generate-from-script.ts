@@ -33,8 +33,8 @@ function loadEnv(envFile?: string): void {
 interface AmbianceSegmentInfo {
   id: string;
   description: string;
-  startTime: number;
-  duration: number;
+  /** Estimated duration from script (actual startTime computed after TTS) */
+  estimatedDuration: number;
   volume?: number;
   fadeInDuration?: number;
 }
@@ -52,8 +52,7 @@ function extractAmbianceSegments(script: StoryScript): AmbianceSegmentInfo[] {
         segments.push({
           id: segment.id,
           description: content.description,
-          startTime: segment.startTime,
-          duration: segment.duration,
+          estimatedDuration: segment.estimatedDuration ?? 10,
           volume: content.volume,
           fadeInDuration: content.fadeInDuration
         });
@@ -107,11 +106,11 @@ export async function runGenerateFromScriptCommand(args: GenerateFromScriptComma
   // Create run directory for artifacts
   const run = args.save
     ? createRunDir({
-        rootDir: args.storeDir,
-        namespace: 'ambiance',
-        command: 'from-script',
-        labelParts: [script.metadata.title.substring(0, 20)]
-      })
+      rootDir: args.storeDir,
+      namespace: 'ambiance',
+      command: 'from-script',
+      labelParts: [script.metadata.title.substring(0, 20)]
+    })
     : null;
 
   // Save input
@@ -136,8 +135,7 @@ export async function runGenerateFromScriptCommand(args: GenerateFromScriptComma
       segments: ambianceSegments.map((s) => ({
         id: s.id,
         description: s.description.substring(0, 50) + (s.description.length > 50 ? '...' : ''),
-        startTime: s.startTime,
-        duration: s.duration
+        estimatedDuration: s.estimatedDuration
       })),
       artifactsDir: run?.runDir
     };
@@ -153,9 +151,8 @@ export async function runGenerateFromScriptCommand(args: GenerateFromScriptComma
   const results: Array<{
     id: string;
     success: boolean;
-    durationSeconds?: number;
+    estimatedDuration?: number;
     actualDuration?: number;
-    startTime: number;
     error?: string;
     outputFile?: string;
     description: string;
@@ -166,7 +163,7 @@ export async function runGenerateFromScriptCommand(args: GenerateFromScriptComma
     try {
       const result = await ambianceService.generate({
         description: segment.description,
-        targetDurationSeconds: segment.duration,
+        targetDurationSeconds: segment.estimatedDuration,
         fadeInDuration: segment.fadeInDuration,
         volume: segment.volume,
         promptInfluence: args.promptInfluence
@@ -183,9 +180,8 @@ export async function runGenerateFromScriptCommand(args: GenerateFromScriptComma
       results.push({
         id: segment.id,
         success: true,
-        durationSeconds: segment.duration,
+        estimatedDuration: segment.estimatedDuration,
         actualDuration: result.durationSeconds,
-        startTime: segment.startTime,
         outputFile: outputFilename,
         description: segment.description,
         looped: result.looped
@@ -194,7 +190,6 @@ export async function runGenerateFromScriptCommand(args: GenerateFromScriptComma
       results.push({
         id: segment.id,
         success: false,
-        startTime: segment.startTime,
         error: error instanceof Error ? error.message : String(error),
         description: segment.description
       });

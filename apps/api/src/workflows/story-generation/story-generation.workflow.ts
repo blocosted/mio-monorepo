@@ -16,6 +16,7 @@ import {
   musicGenerationStep,
   scriptGenerationStep,
   sfxGenerationStep,
+  timelineComputationStep,
   uploadStep,
   voiceAssignmentStep,
   voiceGenerationStep
@@ -74,17 +75,23 @@ export const storyGenerationWorkflow = serve<StoryGenerationWorkflowContext>(asy
     return ambianceGenerationStep(musicContext);
   });
 
-  // Step 7: Audio Mixing
-  const mixedContext = await context.run('mixing', async () => {
-    return mixingStep(ambianceContext);
+  // Step 7: Timeline Computation
+  // Compute absolute times from real audio durations
+  const timelineContext = await context.run('timeline-computation', async () => {
+    return timelineComputationStep(ambianceContext);
   });
 
-  // Step 8: Upload Final
+  // Step 8: Audio Mixing
+  const mixedContext = await context.run('mixing', async () => {
+    return mixingStep(timelineContext);
+  });
+
+  // Step 9: Upload Final
   const uploadedContext = await context.run('upload', async () => {
     return uploadStep(mixedContext);
   });
 
-  // Step 9: Finalization
+  // Step 10: Finalization
   const finalContext = await context.run('finalization', async () => {
     return finalizationStep(uploadedContext);
   });

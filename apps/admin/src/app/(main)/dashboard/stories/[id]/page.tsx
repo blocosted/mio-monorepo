@@ -63,7 +63,9 @@ import { Textarea } from "@mio/ui/textarea";
 import {
   useStory,
   useStoryAudioAssets,
+  useStoryComputedTimeline,
   type AudioAsset,
+  type ComputedTimelineResponse,
 } from "@/hooks/queries/use-story";
 import {
   useEnrichStory,
@@ -71,6 +73,7 @@ import {
   useDeleteStory,
   useUpdateStoryPrompt,
   useRegenerateStory,
+  useRemixStory,
 } from "@/hooks/mutations/use-story-mutations";
 
 const statusConfig: Record<string, { color: string; label: string; description: string }> = {
@@ -131,12 +134,14 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
 
   const { data: story, isLoading, error, refetch } = useStory(id);
   const { data: audioAssets = [] } = useStoryAudioAssets(id);
+  const { data: computedTimelineData } = useStoryComputedTimeline(id);
 
   const enrichStory = useEnrichStory();
   const generateStory = useGenerateStory();
   const deleteStory = useDeleteStory();
   const updatePrompt = useUpdateStoryPrompt();
   const regenerateStory = useRegenerateStory();
+  const remixStory = useRemixStory();
 
   const handleRegenerate = async () => {
     try {
@@ -145,6 +150,16 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
       refetch();
     } catch {
       toast.error("Failed to regenerate story");
+    }
+  };
+
+  const handleRemix = async () => {
+    try {
+      await remixStory.mutateAsync(id);
+      toast.success("Story remixed successfully");
+      refetch();
+    } catch {
+      toast.error("Failed to remix story");
     }
   };
 
@@ -305,14 +320,24 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
           )}
 
           {(isReady || story.status === "failed") && (
-            <Button variant="outline" onClick={handleRegenerate} disabled={regenerateStory.isPending}>
-              {regenerateStory.isPending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <RefreshCw className="mr-2 h-4 w-4" />
-              )}
-              Regenerate
-            </Button>
+            <>
+              <Button variant="outline" onClick={handleRemix} disabled={remixStory.isPending || audioAssets.length === 0}>
+                {remixStory.isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Music className="mr-2 h-4 w-4" />
+                )}
+                Remix
+              </Button>
+              <Button variant="outline" onClick={handleRegenerate} disabled={regenerateStory.isPending}>
+                {regenerateStory.isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                )}
+                Regenerate
+              </Button>
+            </>
           )}
 
           <AlertDialog>
@@ -564,12 +589,15 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
             <CardHeader>
               <CardTitle>Audio Timeline</CardTitle>
               <CardDescription>
-                Visual representation of the story audio mix
+                {computedTimelineData?.computed
+                  ? "Computed timeline with real audio durations"
+                  : "Visual representation of the story audio mix (hypothetical timing)"}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <ScriptTimelineView
                 script={story.script}
+                computedTimeline={computedTimelineData}
                 totalDuration={story.duration}
                 finalAudioUrl={story.finalAudioUrl}
               />
@@ -948,13 +976,46 @@ function ScriptSegmentCard({ segment, index }: { segment: ScriptTimelineSegment;
   );
 }
 
+// Computed Timeline types for display
+interface ComputedTimelineSegment {
+  id: string;
+  trackId: string;
+  startTime: number;
+  duration: number;
+  endTime: number;
+  audioAssetId?: string;
+  audioUrl?: string;
+  content: Record<string, unknown>;
+}
+
+interface ComputedTimelineTrack {
+  id: string;
+  type: string;
+  name: string;
+  segments: ComputedTimelineSegment[];
+}
+
+interface ComputedTimelineData {
+  storyId: string;
+  metadata: {
+    totalDuration: number;
+    computedAt: string;
+    voiceSegmentPauseSeconds: number;
+    voiceSegmentCount: number;
+    nonVoiceSegmentCount: number;
+  };
+  tracks: ComputedTimelineTrack[];
+}
+
 // Script Timeline View Component
 function ScriptTimelineView({
   script,
+  computedTimeline,
   totalDuration,
   finalAudioUrl,
 }: {
   script: unknown;
+  computedTimeline?: ComputedTimelineResponse;
   totalDuration: number | null;
   finalAudioUrl: string | null;
 }) {
@@ -1007,18 +1068,26 @@ function ScriptTimelineView({
   const handleTimelineClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     const audio = audioRef.current;
     const timeline = timelineRef.current;
-    if (!audio || !timeline || !totalDuration) return;
+    // Use computed timeline duration if available
+    const effectiveDuration = computedTimeline?.data?.metadata?.totalDuration ?? totalDuration;
+    if (!audio || !timeline || !effectiveDuration) return;
 
     const rect = timeline.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const percentage = clickX / rect.width;
-    const newTime = percentage * totalDuration;
+    const newTime = percentage * effectiveDuration;
 
     audio.currentTime = newTime;
     setCurrentTime(newTime);
-  }, [totalDuration]);
+  }, [totalDuration, computedTimeline]);
 
-  if (!script) {
+  // Prefer computed timeline (real durations) over script (hypothetical)
+  const hasComputedTimeline = computedTimeline?.computed && computedTimeline.data;
+  const timelineData = hasComputedTimeline
+    ? (computedTimeline.data as unknown as ComputedTimelineData)
+    : null;
+
+  if (!script && !timelineData) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
         <Music className="h-12 w-12 text-muted-foreground mb-4" />
@@ -1028,7 +1097,12 @@ function ScriptTimelineView({
   }
 
   const scriptData = script as ScriptData;
-  const duration = totalDuration || scriptData.metadata?.actualDuration || 0;
+
+  // Use computed timeline duration if available, otherwise fall back to script/totalDuration
+  const duration = timelineData?.metadata.totalDuration
+    ?? totalDuration
+    ?? scriptData?.metadata?.actualDuration
+    ?? 0;
 
   if (!duration) {
     return (
@@ -1037,6 +1111,9 @@ function ScriptTimelineView({
       </div>
     );
   }
+
+  // Use computed timeline tracks if available, otherwise use script tracks
+  const displayTracks = timelineData?.tracks ?? scriptData?.tracks ?? [];
 
   const trackColors: Record<string, string> = {
     voice: "bg-blue-500",
@@ -1057,6 +1134,23 @@ function ScriptTimelineView({
 
   return (
     <div className="space-y-6">
+      {/* Timeline source indicator */}
+      {hasComputedTimeline ? (
+        <div className="flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800">
+          <div className="w-2 h-2 bg-green-500 rounded-full" />
+          <span className="text-sm text-green-700 dark:text-green-300">
+            Showing computed timeline with real audio durations (computed {timelineData?.metadata.computedAt ? new Date(timelineData.metadata.computedAt).toLocaleString() : "recently"})
+          </span>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 px-3 py-2 bg-yellow-50 dark:bg-yellow-950/30 rounded-lg border border-yellow-200 dark:border-yellow-800">
+          <div className="w-2 h-2 bg-yellow-500 rounded-full" />
+          <span className="text-sm text-yellow-700 dark:text-yellow-300">
+            Showing script timeline with estimated durations (not yet computed from real audio)
+          </span>
+        </div>
+      )}
+
       {/* Audio element */}
       {finalAudioUrl && (
         <audio ref={audioRef} src={finalAudioUrl} preload="metadata" />
@@ -1113,29 +1207,37 @@ function ScriptTimelineView({
 
         {/* Tracks */}
         <div className="space-y-4">
-          {scriptData.tracks?.map((track) => (
+          {displayTracks.map((track) => (
             <div key={track.id} className="space-y-1">
               <div className="flex items-center gap-2">
                 <div className={`w-3 h-3 rounded ${trackColors[track.type] || "bg-gray-400"}`} />
                 <span className="text-sm font-medium capitalize">{track.name || track.type}</span>
                 <span className="text-xs text-muted-foreground">({track.segments.length})</span>
+                {hasComputedTimeline && (
+                  <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                    Computed
+                  </Badge>
+                )}
               </div>
               <div
                 className="relative h-10 bg-muted rounded-lg overflow-hidden cursor-pointer"
                 onClick={handleTimelineClick}
               >
                 {track.segments.map((segment) => {
-                  const width = (segment.duration / duration) * 100;
-                  const left = (segment.startTime / duration) * 100;
-                  const color = segmentTypeColors[segment.content.type] || trackColors[track.type] || "bg-gray-400";
-                  const isActive = currentTime >= segment.startTime && currentTime < segment.startTime + segment.duration;
+                  const segmentContent = segment.content as ScriptSegmentContent;
+                  const segmentStartTime = segment.startTime ?? 0;
+                  const segmentDuration = segment.duration ?? 0;
+                  const width = (segmentDuration / duration) * 100;
+                  const left = (segmentStartTime / duration) * 100;
+                  const color = segmentTypeColors[segmentContent.type] || trackColors[track.type] || "bg-gray-400";
+                  const isActive = currentTime >= segmentStartTime && currentTime < segmentStartTime + segmentDuration;
 
                   return (
                     <div
                       key={segment.id}
                       className={`absolute h-full ${color} ${isActive ? "opacity-100 ring-2 ring-white ring-inset" : "opacity-70"} hover:opacity-100 transition-all`}
                       style={{ left: `${left}%`, width: `${Math.max(width, 0.5)}%` }}
-                      title={`${segment.content.type}: ${segment.content.text?.slice(0, 50) || segment.content.description || segment.content.mood || ""}`}
+                      title={`${segmentContent.type}: ${segmentContent.text?.slice(0, 50) || segmentContent.description || segmentContent.mood || ""}`}
                     />
                   );
                 })}

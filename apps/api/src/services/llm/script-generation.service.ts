@@ -26,6 +26,7 @@ import type {
 import { AbstractService } from '../service.abstract';
 import { getVocabularyLevel } from './llm.service.types';
 import { buildScriptGenerationSystemPrompt, buildScriptGenerationUserPrompt } from './prompts/scriptGeneration.prompts';
+import { extractTTSText } from '../narration/tts-text-extractor';
 
 /**
  * Constants for duration calculation
@@ -182,9 +183,21 @@ export class ScriptGenerationService extends AbstractService {
 
   /**
    * Count words in a text (handles French and English)
+   *
+   * For dialogue, this method extracts only the quoted (spoken) text
+   * to get an accurate word count for TTS duration estimation.
+   *
+   * @param text - The text to count words in
+   * @param segmentType - 'narration' for full text, 'dialogue' to extract only quoted text
    */
-  countWords(text: string): number {
-    // Remove audio tags for word count
+  countWords(text: string, segmentType: 'narration' | 'dialogue' = 'narration'): number {
+    // Use TTS text extraction for dialogue to count only spoken words
+    if (segmentType === 'dialogue') {
+      const extraction = extractTTSText(text, 'dialogue');
+      return extraction.spokenWordCount;
+    }
+
+    // For narration, count all words (excluding audio tags)
     const cleanText = text.replace(/\[[^\]]+\]/g, '');
     // Split on whitespace and filter empty
     const words = cleanText.split(/\s+/).filter((w) => w.length > 0);
@@ -193,6 +206,9 @@ export class ScriptGenerationService extends AbstractService {
 
   /**
    * Calculate total word count from script
+   *
+   * Uses TTS text extraction for dialogue segments to count only the
+   * words that will actually be spoken (excludes narrative descriptions).
    */
   calculateScriptWordCount(script: StoryScript): number {
     let totalWords = 0;
@@ -202,7 +218,8 @@ export class ScriptGenerationService extends AbstractService {
         for (const segment of track.segments) {
           const content = segment.content as VoiceSegmentContent;
           if (content.text) {
-            totalWords += this.countWords(content.text);
+            // Pass segment type to countWords for accurate TTS word count
+            totalWords += this.countWords(content.text, content.type);
           }
         }
       }
@@ -264,7 +281,7 @@ export class ScriptGenerationService extends AbstractService {
     if (wordCount < minWords) {
       errors.push(
         `Word count too low: ${wordCount} words (minimum: ${minWords}, target: ${targetWordCount}). ` +
-          `Add ${minWords - wordCount} more words of narrative content.`
+        `Add ${minWords - wordCount} more words of narrative content.`
       );
     } else if (wordCount > maxWords) {
       warnings.push(`Word count slightly high: ${wordCount} words (maximum: ${maxWords}). Consider trimming.`);
@@ -287,17 +304,15 @@ export class ScriptGenerationService extends AbstractService {
       warnings.push('Story should have at least 3 music changes (opening, climax, closing)');
     }
 
-    // Validate timeline continuity
+    // Validate voice segment ordering (V3 uses order field instead of startTime)
     const voiceTrack = script.tracks.find((t) => t.type === 'voice');
     if (voiceTrack && voiceTrack.segments.length > 1) {
-      const segments = [...voiceTrack.segments].sort((a, b) => a.startTime - b.startTime);
-      for (let i = 1; i < segments.length; i++) {
-        const prev = segments[i - 1];
-        const curr = segments[i];
-        const expectedStart = prev ? prev.startTime + prev.duration : 0;
-
-        if (curr && curr.startTime < expectedStart - 0.1) {
-          errors.push(`Timeline overlap: segment ${curr.id} starts at ${curr.startTime}s but previous segment ends at ${expectedStart}s`);
+      const segments = [...voiceTrack.segments].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+      for (let i = 0; i < segments.length; i++) {
+        const segment = segments[i];
+        const expectedOrder = i + 1;
+        if (segment && segment.order !== expectedOrder) {
+          warnings.push(`Voice segment ${segment.id} has order ${segment.order}, expected ${expectedOrder}`);
         }
       }
     }
@@ -410,7 +425,7 @@ export class ScriptGenerationService extends AbstractService {
 
     // Type assertion after validation
     return {
-      version: 2,
+      version: 3,
       metadata: obj.metadata as StoryScript['metadata'],
       characters: obj.characters as StoryScript['characters'],
       tracks: obj.tracks as StoryScript['tracks']
@@ -490,9 +505,8 @@ export class ScriptGenerationService extends AbstractService {
         }
 
         if (validation.isValid) {
-          // Update metadata with calculated values
+          // Update metadata with calculated word count
           script.metadata.wordCount = validation.wordCount;
-          script.metadata.actualDuration = validation.estimatedDuration;
 
           return {
             script,

@@ -147,12 +147,12 @@ export async function runFullStoryCommand(args: FullStoryCommandArgs): Promise<v
     runDir?: string;
     error?: string;
   }> = [
-    { name: 'TTS Generation', status: 'pending' },
-    { name: 'SFX Generation', status: analysis.hasSfx && !args.skipSfx ? 'pending' : 'skipped' },
-    { name: 'Ambiance Generation', status: analysis.hasAmbiance && !args.skipAmbiance ? 'pending' : 'skipped' },
-    { name: 'Music Generation', status: (analysis.hasMusic || args.autoMusic) && !args.skipMusic ? 'pending' : 'skipped' },
-    { name: 'Final Mix', status: 'pending' }
-  ];
+      { name: 'TTS Generation', status: 'pending' },
+      { name: 'SFX Generation', status: analysis.hasSfx && !args.skipSfx ? 'pending' : 'skipped' },
+      { name: 'Ambiance Generation', status: analysis.hasAmbiance && !args.skipAmbiance ? 'pending' : 'skipped' },
+      { name: 'Music Generation', status: (analysis.hasMusic || args.autoMusic) && !args.skipMusic ? 'pending' : 'skipped' },
+      { name: 'Final Mix', status: 'pending' }
+    ];
 
   // Helper to safely access steps array
   const getStep = (index: number) => {

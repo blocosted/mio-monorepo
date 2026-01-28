@@ -32,8 +32,8 @@ export interface VoiceTrackInput {
  * Music track input with ducking configuration
  */
 export interface MusicTrackInput {
-  /** Music file */
-  file: AudioFile;
+  /** Music files with their start times (supports multiple segments) */
+  files: AudioFile[];
   /** Volume level (typically 0.15 for background music) */
   volume: number;
   /** Enable sidechain compression (ducking) when voice is present */
@@ -55,8 +55,8 @@ export interface MusicTrackInput {
  * Ambiance track input with loop configuration
  */
 export interface AmbianceTrackInput {
-  /** Ambiance audio file */
-  file: AudioFile;
+  /** Ambiance audio files with their start times (supports multiple segments) */
+  files: AudioFile[];
   /** Volume level (typically 0.3) */
   volume: number;
   /** Loop the ambiance to match story length */

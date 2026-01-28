@@ -21,7 +21,9 @@ import type {
   CreateAndGenerateStoryBody,
   CreateAndGenerateStoryResponse,
   RegenerateStoryBody,
-  RegenerateStoryResponse
+  RegenerateStoryResponse,
+  ComputedTimelineResponse,
+  RemixStoryResponse
 } from './stories';
 import { ProfilesAdminClient } from './profiles';
 import type { ProfileFilters, AdminProfile, CreateAdminProfileBody } from './profiles';
@@ -110,6 +112,14 @@ export class MioApiAdminClient {
 
   public async regenerateStory(storyId: string, body?: RegenerateStoryBody): Promise<RegenerateStoryResponse> {
     return this.stories.regenerateStory(storyId, body);
+  }
+
+  public async getStoryComputedTimeline(storyId: string): Promise<ComputedTimelineResponse> {
+    return this.stories.getStoryComputedTimeline(storyId);
+  }
+
+  public async remixStory(storyId: string): Promise<RemixStoryResponse> {
+    return this.stories.remixStory(storyId);
   }
 
   // ===========================================================================

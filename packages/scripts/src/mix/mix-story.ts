@@ -12,6 +12,7 @@ import { config as loadDotenv } from 'dotenv';
 
 import type { MixStoryInput } from '@mio/api/services/audio-mixing';
 import type { MusicCue } from '@mio/api/services/music';
+import type { StorageService } from '@mio/api/services/storage';
 import type { MusicMood } from '@mio/shared/types';
 import { FFmpegMixerService } from '@mio/api/services/audio-mixing';
 import { MusicStrategyService } from '@mio/api/services/music';
@@ -119,8 +120,9 @@ function selectMusicForMood(library: MusicLibrary, mood: MusicMood): string | nu
 
 /**
  * Create a mock storage service that reads files from local disk
+ * Cast to StorageService to satisfy type requirements (private fields are not accessed)
  */
-function createLocalStorageService(baseDir: string) {
+function createLocalStorageService(baseDir: string): StorageService {
   return {
     download: async (filePath: string): Promise<Buffer> => {
       const fullPath = path.isAbsolute(filePath) ? filePath : path.join(baseDir, filePath);
@@ -138,7 +140,7 @@ function createLocalStorageService(baseDir: string) {
     },
     getPublicUrl: () => '',
     exists: async () => true
-  };
+  } as unknown as StorageService;
 }
 
 /**
@@ -292,10 +294,13 @@ export async function runMixStoryCommand(args: MixStoryCommandArgs): Promise<voi
       throw new Error(`Music file not found: ${args.music}`);
     }
     mixInput.music = {
-      file: {
-        path: args.music,
-        duration: 0 // Will be determined by ffprobe
-      },
+      files: [
+        {
+          path: args.music,
+          duration: 0, // Will be determined by ffprobe
+          startTime: 0
+        }
+      ],
       volume: args.musicVolume ?? 0.15,
       enableDucking: args.enableDucking ?? true
     };
@@ -307,10 +312,13 @@ export async function runMixStoryCommand(args: MixStoryCommandArgs): Promise<voi
       throw new Error(`Ambiance file not found: ${args.ambiance}`);
     }
     mixInput.ambiance = {
-      file: {
-        path: args.ambiance,
-        duration: 0
-      },
+      files: [
+        {
+          path: args.ambiance,
+          duration: 0,
+          startTime: 0
+        }
+      ],
       volume: args.ambianceVolume ?? 0.3,
       loop: args.loopAmbiance ?? true
     };
@@ -372,38 +380,26 @@ export async function runMixStoryCommand(args: MixStoryCommandArgs): Promise<voi
     const ambianceOutput = readJsonFile<AudioRunOutput>(ambianceOutputPath);
     const ambianceResults = ambianceOutput.results.filter((r) => r.success && r.outputFile);
 
-    if (ambianceResults.length > 0) {
-      // For ambiance, we typically use the first one as the main ambiance track
-      // Additional ambiance files can be added as SFX with their timings
-      const mainAmbiance = ambianceResults[0];
-      if (mainAmbiance?.outputFile) {
-        const ambiancePath = path.join(args.ambianceRunDir, mainAmbiance.outputFile);
-        if (existsSync(ambiancePath) && !mixInput.ambiance) {
-          mixInput.ambiance = {
-            file: {
-              path: ambiancePath,
-              duration: mainAmbiance.actualDuration ?? mainAmbiance.durationSeconds ?? 0
-            },
-            volume: args.ambianceVolume ?? 0.3,
-            loop: args.loopAmbiance ?? true
+    if (ambianceResults.length > 0 && !mixInput.ambiance) {
+      // Load all ambiance files with their timing
+      const ambianceFiles = ambianceResults
+        .filter((r) => r.outputFile)
+        .map((result) => {
+          const filePath = path.join(args.ambianceRunDir!, result.outputFile!);
+          return {
+            path: filePath,
+            duration: result.actualDuration ?? result.durationSeconds ?? 0,
+            startTime: result.startTime
           };
-        }
-      }
+        })
+        .filter((f) => existsSync(f.path));
 
-      // Additional ambiance files are treated as timed SFX
-      for (let i = 1; i < ambianceResults.length; i++) {
-        const result = ambianceResults[i];
-        if (result?.outputFile) {
-          const filePath = path.join(args.ambianceRunDir, result.outputFile);
-          if (existsSync(filePath)) {
-            sfxFiles.push({
-              path: filePath,
-              duration: result.actualDuration ?? result.durationSeconds ?? 0,
-              startTime: result.startTime,
-              volume: 0.3 // Ambiance volume
-            });
-          }
-        }
+      if (ambianceFiles.length > 0) {
+        mixInput.ambiance = {
+          files: ambianceFiles,
+          volume: args.ambianceVolume ?? 0.3,
+          loop: args.loopAmbiance ?? true
+        };
       }
     }
   }
@@ -419,18 +415,27 @@ export async function runMixStoryCommand(args: MixStoryCommandArgs): Promise<voi
     }
     const musicOutput = readJsonFile<AudioRunOutput>(musicOutputPath);
     const musicResults = musicOutput.results.filter((r) => r.success && r.outputFile);
-    // Music files are added as timed SFX with appropriate volume
-    for (const result of musicResults) {
-      if (result.outputFile) {
-        const musicPath = path.join(args.musicRunDir, result.outputFile);
-        if (existsSync(musicPath)) {
-          sfxFiles.push({
-            path: musicPath,
+
+    if (musicResults.length > 0 && !mixInput.music) {
+      // Load all music files with their timing
+      const musicFiles = musicResults
+        .filter((r) => r.outputFile)
+        .map((result) => {
+          const filePath = path.join(args.musicRunDir!, result.outputFile!);
+          return {
+            path: filePath,
             duration: result.actualDuration ?? result.durationSeconds ?? 0,
-            startTime: result.startTime,
-            volume: args.musicVolume ?? 0.15 // Music volume
-          });
-        }
+            startTime: result.startTime
+          };
+        })
+        .filter((f) => existsSync(f.path));
+
+      if (musicFiles.length > 0) {
+        mixInput.music = {
+          files: musicFiles,
+          volume: args.musicVolume ?? 0.15,
+          enableDucking: args.enableDucking ?? true
+        };
       }
     }
   }

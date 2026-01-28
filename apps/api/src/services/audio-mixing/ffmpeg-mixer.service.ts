@@ -70,8 +70,8 @@ export class FFmpegMixerService {
       storyId,
       workdir,
       voiceSegments: voice.segments.length,
-      hasMusic: !!music,
-      hasAmbiance: !!ambiance,
+      musicSegments: music?.files.length ?? 0,
+      ambianceSegments: ambiance?.files.length ?? 0,
       sfxCount: sfx?.files.length ?? 0
     });
 
@@ -286,8 +286,8 @@ export class FFmpegMixerService {
     workdir: string
   ): Promise<{
     voice: string[];
-    music?: string;
-    ambiance?: string;
+    music: string[];
+    ambiance: string[];
     sfx: string[];
   }> {
     const { voice, music, ambiance, sfx } = input;
@@ -302,21 +302,29 @@ export class FFmpegMixerService {
       })
     );
 
-    // Download music if present
-    let musicFile: string | undefined;
-    if (music) {
-      musicFile = join(workdir, 'music.mp3');
-      const buffer = await this.storage.download(music.file.path);
-      await writeFile(musicFile, buffer);
-    }
+    // Download music files if present
+    const musicFiles = music
+      ? await Promise.all(
+          music.files.map(async (file, index) => {
+            const localPath = join(workdir, `music-${index}.mp3`);
+            const buffer = await this.storage.download(file.path);
+            await writeFile(localPath, buffer);
+            return localPath;
+          })
+        )
+      : [];
 
-    // Download ambiance if present
-    let ambianceFile: string | undefined;
-    if (ambiance) {
-      ambianceFile = join(workdir, 'ambiance.mp3');
-      const buffer = await this.storage.download(ambiance.file.path);
-      await writeFile(ambianceFile, buffer);
-    }
+    // Download ambiance files if present
+    const ambianceFiles = ambiance
+      ? await Promise.all(
+          ambiance.files.map(async (file, index) => {
+            const localPath = join(workdir, `ambiance-${index}.mp3`);
+            const buffer = await this.storage.download(file.path);
+            await writeFile(localPath, buffer);
+            return localPath;
+          })
+        )
+      : [];
 
     // Download SFX files
     const sfxFiles = sfx
@@ -332,15 +340,15 @@ export class FFmpegMixerService {
 
     this.logger.debug('Downloaded audio files', {
       voiceCount: voiceFiles.length,
-      hasMusic: !!musicFile,
-      hasAmbiance: !!ambianceFile,
+      musicCount: musicFiles.length,
+      ambianceCount: ambianceFiles.length,
       sfxCount: sfxFiles.length
     });
 
     return {
       voice: voiceFiles,
-      music: musicFile,
-      ambiance: ambianceFile,
+      music: musicFiles,
+      ambiance: ambianceFiles,
       sfx: sfxFiles
     };
   }
@@ -373,6 +381,8 @@ export class FFmpegMixerService {
     // Write concat list file
     await writeFile(concatListPath, concatEntries.join('\n'));
 
+    this.logger.debug('Voice timeline concat list', { concatListPath, entries: concatEntries });
+
     // Run FFmpeg concat
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
@@ -389,6 +399,8 @@ export class FFmpegMixerService {
         );
       }, FFMPEG_TIMEOUT_MS);
 
+      let ffmpegStderr = '';
+
       ffmpeg()
         .input(concatListPath)
         .inputOptions(['-f', 'concat', '-safe', '0'])
@@ -396,6 +408,9 @@ export class FFmpegMixerService {
         .audioChannels(2)
         .audioFrequency(44100)
         .output(outputPath)
+        .on('stderr', (stderrLine: string) => {
+          ffmpegStderr += stderrLine + '\n';
+        })
         .on('end', () => {
           clearTimeout(timeout);
           this.logger.debug('Voice timeline created', { outputPath });
@@ -403,6 +418,11 @@ export class FFmpegMixerService {
         })
         .on('error', (err: Error) => {
           clearTimeout(timeout);
+          this.logger.error('FFmpeg createVoiceTimeline failed', {
+            error: err.message,
+            stderr: ffmpegStderr,
+            concatEntries
+          });
           reject(
             new AppError(ErrorCodes.FFmpegMixingFailed, {
               diagnoses: [
@@ -414,6 +434,11 @@ export class FFmpegMixerService {
                 {
                   name: 'error',
                   message: err.message,
+                  severity: DiagnoseSeverity.Error
+                },
+                {
+                  name: 'stderr',
+                  message: ffmpegStderr.slice(-1000),
                   severity: DiagnoseSeverity.Error
                 }
               ]
@@ -430,15 +455,19 @@ export class FFmpegMixerService {
   private async mixAllTracks(
     voiceTimelinePath: string,
     voiceDuration: number,
-    downloadedFiles: { voice: string[]; music?: string; ambiance?: string; sfx: string[] },
+    downloadedFiles: { voice: string[]; music: string[]; ambiance: string[]; sfx: string[] },
     tracks: { music?: MusicTrackInput; ambiance?: AmbianceTrackInput; sfx?: SfxTrackInput },
     workdir: string
   ): Promise<string> {
     const outputPath = join(workdir, INTERMEDIATE_FILES.mixed);
     const { music, ambiance, sfx } = tracks;
 
+    const hasMusicFiles = music && music.files.length > 0 && downloadedFiles.music.length > 0;
+    const hasAmbianceFiles = ambiance && ambiance.files.length > 0 && downloadedFiles.ambiance.length > 0;
+    const hasSfxFiles = sfx && sfx.files.length > 0 && downloadedFiles.sfx.length > 0;
+
     // If only voice track, just copy it
-    if (!music && !ambiance && (!sfx || sfx.files.length === 0)) {
+    if (!hasMusicFiles && !hasAmbianceFiles && !hasSfxFiles) {
       return new Promise((resolve, reject) => {
         ffmpeg()
           .input(voiceTimelinePath)
@@ -495,9 +524,20 @@ export class FFmpegMixerService {
       // Check if we need sidechain (only when music has ducking enabled)
       const needsSidechain = music?.enableDucking ?? false;
 
-      // Voice processing - only split if we need sidechain for ducking
-      if (needsSidechain) {
-        filterParts.push('[0:a]asplit=2[voice_main][voice_sc]');
+      // Count how many music files need ducking (for asplit)
+      const duckingMusicCount = needsSidechain && hasMusicFiles
+        ? music.files.filter((_, i) => downloadedFiles.music[i]).length
+        : 0;
+
+      // Voice processing - split for main output plus one per ducking music track
+      if (needsSidechain && duckingMusicCount > 0) {
+        // asplit creates N outputs: voice_main + voice_sc_0, voice_sc_1, etc.
+        const splitCount = 1 + duckingMusicCount;
+        const splitOutputs = ['[voice_main]'];
+        for (let i = 0; i < duckingMusicCount; i++) {
+          splitOutputs.push(`[voice_sc_${i}]`);
+        }
+        filterParts.push(`[0:a]asplit=${splitCount}${splitOutputs.join('')}`);
         mixInputs.push('[voice_main]');
       } else {
         // Just use voice directly without splitting
@@ -505,41 +545,68 @@ export class FFmpegMixerService {
         mixInputs.push('[voice_main]');
       }
 
-      // Music track with ducking
-      if (music && downloadedFiles.music) {
-        command.input(downloadedFiles.music);
+      // Music tracks with timing and optional ducking
+      let duckingIndex = 0;
+      if (hasMusicFiles && music) {
         const musicVolume = music.volume ?? DEFAULT_VOLUMES.music;
 
-        if (music.enableDucking) {
-          const d = { ...DUCKING_DEFAULTS, ...music.ducking };
-          filterParts.push(
-            `[${inputIndex}:a]${FILTER_TEMPLATES.volume(musicVolume)}[music_vol]`,
-            `[music_vol][voice_sc]${FILTER_TEMPLATES.sidechainCompress(d.threshold, d.ratio, d.attackMs, d.releaseMs)}[music_ducked]`
-          );
-          mixInputs.push('[music_ducked]');
-        } else {
-          filterParts.push(`[${inputIndex}:a]${FILTER_TEMPLATES.volume(musicVolume)}[music_vol]`);
-          mixInputs.push('[music_vol]');
-        }
-        inputIndex++;
+        music.files.forEach((file, i) => {
+          const musicPath = downloadedFiles.music[i];
+          if (musicPath) {
+            command.input(musicPath);
+            const delayMs = (file.startTime ?? 0) * 1000;
+            const fileVolume = file.volume ?? musicVolume;
+
+            if (music.enableDucking) {
+              const d = { ...DUCKING_DEFAULTS, ...music.ducking };
+              // Apply delay, then volume, then sidechain compression
+              // Each music track gets its own voice_sc copy
+              filterParts.push(
+                `[${inputIndex}:a]${FILTER_TEMPLATES.adelay(delayMs)},${FILTER_TEMPLATES.volume(fileVolume)}[music_${i}_vol]`,
+                `[music_${i}_vol][voice_sc_${duckingIndex}]${FILTER_TEMPLATES.sidechainCompress(d.threshold, d.ratio, d.attackMs, d.releaseMs)}[music_${i}_ducked]`
+              );
+              mixInputs.push(`[music_${i}_ducked]`);
+              duckingIndex++;
+            } else {
+              filterParts.push(
+                `[${inputIndex}:a]${FILTER_TEMPLATES.adelay(delayMs)},${FILTER_TEMPLATES.volume(fileVolume)}[music_${i}]`
+              );
+              mixInputs.push(`[music_${i}]`);
+            }
+            inputIndex++;
+          }
+        });
       }
 
-      // Ambiance track with loop
-      if (ambiance && downloadedFiles.ambiance) {
-        command.input(downloadedFiles.ambiance);
+      // Ambiance tracks with timing and optional loop
+      if (hasAmbianceFiles && ambiance) {
         const ambianceVolume = ambiance.volume ?? DEFAULT_VOLUMES.ambiance;
 
-        if (ambiance.loop) {
-          filterParts.push(`[${inputIndex}:a]${FILTER_TEMPLATES.aloop()},atrim=0:${voiceDuration},${FILTER_TEMPLATES.volume(ambianceVolume)}[ambiance_loop]`);
-        } else {
-          filterParts.push(`[${inputIndex}:a]${FILTER_TEMPLATES.volume(ambianceVolume)}[ambiance_loop]`);
-        }
-        mixInputs.push('[ambiance_loop]');
-        inputIndex++;
+        ambiance.files.forEach((file, i) => {
+          const ambiancePath = downloadedFiles.ambiance[i];
+          if (ambiancePath) {
+            command.input(ambiancePath);
+            const delayMs = (file.startTime ?? 0) * 1000;
+            const fileVolume = file.volume ?? ambianceVolume;
+
+            if (ambiance.loop) {
+              // Loop, trim to voice duration, apply delay and volume
+              filterParts.push(
+                `[${inputIndex}:a]${FILTER_TEMPLATES.aloop()},atrim=0:${voiceDuration},${FILTER_TEMPLATES.adelay(delayMs)},${FILTER_TEMPLATES.volume(fileVolume)}[ambiance_${i}]`
+              );
+            } else {
+              filterParts.push(
+                `[${inputIndex}:a]${FILTER_TEMPLATES.adelay(delayMs)},${FILTER_TEMPLATES.volume(fileVolume)}[ambiance_${i}]`
+              );
+            }
+            mixInputs.push(`[ambiance_${i}]`);
+            inputIndex++;
+          }
+        });
       }
 
       // SFX tracks with timing
-      if (sfx && sfx.files.length > 0 && downloadedFiles.sfx.length > 0) {
+      if (hasSfxFiles && sfx) {
         const sfxVolume = sfx.volume ?? DEFAULT_VOLUMES.sfx;
 
         sfx.files.forEach((file, i) => {
@@ -563,12 +630,17 @@ export class FFmpegMixerService {
       const filterGraph = filterParts.join(';');
       this.logger.debug('Built filter graph', { filterGraph });
 
+      let ffmpegStderr = '';
+
       command
         .complexFilter(filterGraph, 'mixed')
         .audioCodec('pcm_s16le')
         .audioChannels(2)
         .audioFrequency(44100)
         .output(outputPath)
+        .on('stderr', (stderrLine: string) => {
+          ffmpegStderr += stderrLine + '\n';
+        })
         .on('end', () => {
           clearTimeout(timeout);
           this.logger.debug('All tracks mixed', { outputPath });
@@ -576,6 +648,11 @@ export class FFmpegMixerService {
         })
         .on('error', (err: Error) => {
           clearTimeout(timeout);
+          this.logger.error('FFmpeg mixAllTracks failed', {
+            error: err.message,
+            stderr: ffmpegStderr,
+            filterGraph
+          });
           reject(
             new AppError(ErrorCodes.FFmpegMixingFailed, {
               diagnoses: [
@@ -593,6 +670,11 @@ export class FFmpegMixerService {
                   name: 'filterGraph',
                   message: filterGraph,
                   severity: DiagnoseSeverity.Info
+                },
+                {
+                  name: 'stderr',
+                  message: ffmpegStderr.slice(-1000),
+                  severity: DiagnoseSeverity.Error
                 }
               ]
             })

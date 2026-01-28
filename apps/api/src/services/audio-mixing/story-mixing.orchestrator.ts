@@ -12,12 +12,11 @@ import 'reflect-metadata';
 
 import { inject, injectable } from 'inversify';
 
-import type { StoryScript, TimelineSegment } from '@mio/shared/types';
+import type { ComputedSegment, ComputedTimeline } from '@mio/shared/types';
 
-import type { AudioAssetsService } from '../stories/audio-assets.service';
 import type { AudioFile, MixStoryInput } from './ffmpeg-mixer.service.types';
 import type { FFmpegMixerService } from './ffmpeg-mixer.service';
-import type { LoadedAudioAsset, StoryMixingInput, StoryMixingResult } from './story-mixing.orchestrator.types';
+import type { StoryMixingInputV3, StoryMixingResult, VolumeSettings } from './story-mixing.orchestrator.types';
 import { IocService } from '../../ioc/ioc.types';
 import { AbstractService } from '../service.abstract';
 
@@ -35,41 +34,32 @@ const DEFAULT_VOLUMES = {
 /**
  * Story Mixing Orchestrator
  *
- * Coordinates loading assets from DB, building mixer input, and uploading results.
+ * Coordinates building mixer input from computed timeline, invoking FFmpeg mixer,
+ * and uploading results to S3.
  */
 @injectable()
 export class StoryMixingOrchestrator extends AbstractService {
-  constructor(
-    @inject(IocService.FFMPEG_MIXER) private readonly mixerService: FFmpegMixerService,
-    @inject(IocService.AUDIO_ASSETS) private readonly audioAssetsService: AudioAssetsService
-  ) {
+  constructor(@inject(IocService.FFMPEG_MIXER) private readonly mixerService: FFmpegMixerService) {
     super();
   }
 
   /**
-   * Mix a story by loading assets and invoking the FFmpeg mixer
+   * Mix a story using ComputedTimeline (V3)
+   *
+   * This method uses absolute times from ComputedTimeline which are based on
+   * real TTS durations, resulting in accurate timing for the final mix.
    */
-  async mixStory(input: StoryMixingInput): Promise<StoryMixingResult> {
-    const { storyId, script, voiceAssetIds, sfxAssetIds = [], musicAssetIds = [], ambianceAssetIds = [], volumeSettings } = input;
+  async mixStoryV3(input: StoryMixingInputV3): Promise<StoryMixingResult> {
+    const { storyId, computedTimeline, volumeSettings } = input;
 
-    this.logger.info('Starting story mixing', {
+    this.logger.info('Starting story mixing (V3)', {
       storyId,
-      voiceAssets: voiceAssetIds.length,
-      sfxAssets: sfxAssetIds.length,
-      musicAssets: musicAssetIds.length,
-      ambianceAssets: ambianceAssetIds.length
+      totalDuration: computedTimeline.metadata.totalDuration,
+      trackCount: computedTimeline.tracks.length
     });
 
-    // Load all audio assets from DB
-    const [voiceAssets, sfxAssets, musicAssets, ambianceAssets] = await Promise.all([
-      this.loadAssets(voiceAssetIds),
-      this.loadAssets(sfxAssetIds),
-      this.loadAssets(musicAssetIds),
-      this.loadAssets(ambianceAssetIds)
-    ]);
-
-    // Build mixer input
-    const mixInput = this.buildMixInput(storyId, script, voiceAssets, sfxAssets, musicAssets, ambianceAssets, volumeSettings);
+    // Build mixer input directly from computed timeline
+    const mixInput = this.buildMixInputFromTimeline(storyId, computedTimeline, volumeSettings);
 
     // Mix audio
     const result = await this.mixerService.mixStory(mixInput);
@@ -78,7 +68,7 @@ export class StoryMixingOrchestrator extends AbstractService {
     const tempPath = getTempMixPath(storyId);
     const uploadResult = await this.storageService.upload(result.audio, tempPath, { contentType: 'audio/mpeg' });
 
-    this.logger.info('Story mixed and uploaded to temp location', {
+    this.logger.info('Story mixed (V3) and uploaded to temp location', {
       storyId,
       tempUrl: uploadResult.url,
       durationSeconds: result.duration
@@ -92,75 +82,88 @@ export class StoryMixingOrchestrator extends AbstractService {
   }
 
   /**
-   * Build the MixStoryInput from script and loaded assets
+   * Build MixStoryInput from ComputedTimeline
+   *
+   * All times are already absolute and based on real durations.
    */
-  buildMixInput(
+  buildMixInputFromTimeline(
     storyId: string,
-    script: StoryScript,
-    voiceAssets: LoadedAudioAsset[],
-    sfxAssets: LoadedAudioAsset[],
-    musicAssets: LoadedAudioAsset[],
-    ambianceAssets: LoadedAudioAsset[],
-    volumeSettings?: StoryMixingInput['volumeSettings']
+    timeline: ComputedTimeline,
+    volumeSettings?: VolumeSettings
   ): MixStoryInput {
     const volumes = { ...DEFAULT_VOLUMES, ...volumeSettings };
 
-    // Build asset maps for efficient lookup by segment ID
-    // Cache keys are in format: {type}_{storyId}_{segmentId} or {type}_{hash}_{duration}
-    const voiceAssetMap = this.buildAssetMap(voiceAssets);
-    const sfxAssetMap = this.buildAssetMap(sfxAssets);
+    // Get tracks by type
+    const voiceTrack = timeline.tracks.find((t) => t.type === 'voice');
+    const sfxTrack = timeline.tracks.find((t) => t.type === 'sfx');
+    const musicTrack = timeline.tracks.find((t) => t.type === 'music');
+    const ambianceTrack = timeline.tracks.find((t) => t.type === 'ambiance');
 
-    // Build voice track input
-    const voiceTrack = script.tracks.find((t) => t.type === 'voice');
-    const voiceSegments = voiceTrack?.segments ?? [];
-    const voiceAudioFiles = this.buildVoiceAudioFiles(voiceSegments, voiceAssetMap, volumes.voice);
+    // Build voice audio files (sorted by startTime)
+    const voiceSegments = [...(voiceTrack?.segments ?? [])].sort(
+      (a, b) => a.startTime - b.startTime
+    );
+    const voiceAudioFiles = this.buildAudioFilesFromComputedSegments(
+      voiceSegments,
+      volumes.voice
+    );
 
-    // Build SFX track input
-    const sfxTrack = script.tracks.find((t) => t.type === 'sfx');
-    const sfxSegments = sfxTrack?.segments ?? [];
-    const sfxAudioFiles = this.buildSfxAudioFiles(sfxSegments, sfxAssetMap, volumes.sfx);
+    // Build pauses map from voice segment timing gaps
+    // Each pause entry is: index i -> pause duration after segment i
+    const voicePauses = new Map<number, number>();
+    for (let i = 0; i < voiceSegments.length - 1; i++) {
+      const currentSegment = voiceSegments[i];
+      const nextSegment = voiceSegments[i + 1];
+      if (currentSegment && nextSegment) {
+        const currentEndTime = currentSegment.startTime + currentSegment.duration;
+        const pauseDuration = nextSegment.startTime - currentEndTime;
+        if (pauseDuration > 0) {
+          voicePauses.set(i, pauseDuration);
+        }
+      }
+    }
 
-    // Build music track input (use first asset/segment)
-    const musicTrack = script.tracks.find((t) => t.type === 'music');
-    const musicSegments = musicTrack?.segments ?? [];
-    const firstMusicAsset = musicAssets[0];
-    const firstMusicSegment = musicSegments[0];
+    this.logger.debug('Built voice pauses from timeline', {
+      segmentCount: voiceSegments.length,
+      pauseCount: voicePauses.size,
+      pauses: Array.from(voicePauses.entries())
+    });
 
-    // Build ambiance track input (use first asset/segment)
-    const ambianceTrack = script.tracks.find((t) => t.type === 'ambiance');
-    const ambianceSegments = ambianceTrack?.segments ?? [];
-    const firstAmbianceAsset = ambianceAssets[0];
-    const firstAmbianceSegment = ambianceSegments[0];
+    // Build SFX audio files
+    const sfxAudioFiles = this.buildAudioFilesFromComputedSegments(
+      sfxTrack?.segments ?? [],
+      volumes.sfx
+    );
 
     const mixInput: MixStoryInput = {
       storyId,
       voice: {
         segments: voiceAudioFiles,
-        pauses: new Map() // No inter-segment pauses for now
+        pauses: voicePauses
       }
     };
 
-    // Add music if available
-    if (firstMusicAsset && firstMusicSegment) {
+    // Add music if available (all segments)
+    const musicAudioFiles = this.buildAudioFilesFromComputedSegments(
+      musicTrack?.segments ?? [],
+      volumes.music
+    );
+    if (musicAudioFiles.length > 0) {
       mixInput.music = {
-        file: {
-          path: firstMusicAsset.url,
-          duration: firstMusicSegment.duration,
-          startTime: firstMusicSegment.startTime
-        },
+        files: musicAudioFiles,
         volume: volumes.music,
         enableDucking: true
       };
     }
 
-    // Add ambiance if available
-    if (firstAmbianceAsset && firstAmbianceSegment) {
+    // Add ambiance if available (all segments)
+    const ambianceAudioFiles = this.buildAudioFilesFromComputedSegments(
+      ambianceTrack?.segments ?? [],
+      volumes.ambiance
+    );
+    if (ambianceAudioFiles.length > 0) {
       mixInput.ambiance = {
-        file: {
-          path: firstAmbianceAsset.url,
-          duration: firstAmbianceSegment.duration,
-          startTime: firstAmbianceSegment.startTime
-        },
+        files: ambianceAudioFiles,
         volume: volumes.ambiance,
         loop: true
       };
@@ -178,62 +181,22 @@ export class StoryMixingOrchestrator extends AbstractService {
   }
 
   /**
-   * Load assets from database by IDs
+   * Build AudioFile array from ComputedSegments
    */
-  private async loadAssets(assetIds: string[]): Promise<LoadedAudioAsset[]> {
-    if (assetIds.length === 0) {
-      return [];
-    }
-
-    const assets = await Promise.all(assetIds.map((id) => this.audioAssetsService.findById(id)));
-
-    return assets
-      .filter((a): a is NonNullable<typeof a> => a !== null)
-      .map((a) => ({
-        id: a.id,
-        url: a.url,
-        duration: a.duration,
-        cacheKey: a.cacheKey
-      }));
-  }
-
-  /**
-   * Build a map of segment ID to asset for efficient lookup
-   *
-   * Cache keys are in format: {type}_{storyId}_{segmentId}
-   */
-  private buildAssetMap(assets: LoadedAudioAsset[]): Map<string, LoadedAudioAsset> {
-    const map = new Map<string, LoadedAudioAsset>();
-
-    for (const asset of assets) {
-      if (asset.cacheKey) {
-        // Extract segment ID from cache key (last part after underscore)
-        const parts = asset.cacheKey.split('_');
-        const segmentId = parts[parts.length - 1];
-        if (segmentId) {
-          map.set(segmentId, asset);
-        }
-      }
-    }
-
-    return map;
-  }
-
-  /**
-   * Build voice audio files from segments and asset map
-   */
-  private buildVoiceAudioFiles(segments: TimelineSegment[], assetMap: Map<string, LoadedAudioAsset>, volume: number): AudioFile[] {
+  private buildAudioFilesFromComputedSegments(
+    segments: ComputedSegment[],
+    volume: number
+  ): AudioFile[] {
     const audioFiles: AudioFile[] = [];
 
     for (const segment of segments) {
-      const asset = assetMap.get(segment.id);
-      if (!asset) {
-        this.logger.warn('Missing voice asset for segment', { segmentId: segment.id });
+      if (!segment.audioUrl) {
+        this.logger.warn('Missing audio URL for computed segment', { segmentId: segment.id });
         continue;
       }
 
       audioFiles.push({
-        path: asset.url,
+        path: segment.audioUrl,
         duration: segment.duration,
         startTime: segment.startTime,
         volume
@@ -243,27 +206,4 @@ export class StoryMixingOrchestrator extends AbstractService {
     return audioFiles;
   }
 
-  /**
-   * Build SFX audio files from segments and asset map
-   */
-  private buildSfxAudioFiles(segments: TimelineSegment[], assetMap: Map<string, LoadedAudioAsset>, volume: number): AudioFile[] {
-    const audioFiles: AudioFile[] = [];
-
-    for (const segment of segments) {
-      const asset = assetMap.get(segment.id);
-      if (!asset) {
-        this.logger.warn('Missing SFX asset for segment', { segmentId: segment.id });
-        continue;
-      }
-
-      audioFiles.push({
-        path: asset.url,
-        duration: segment.duration,
-        startTime: segment.startTime,
-        volume
-      });
-    }
-
-    return audioFiles;
-  }
 }

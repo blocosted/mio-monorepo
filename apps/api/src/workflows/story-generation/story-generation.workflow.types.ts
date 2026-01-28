@@ -4,7 +4,7 @@
  * Defines the context and types used throughout the workflow execution.
  */
 
-import type { StoryScript } from '@mio/shared/types';
+import type { ComputedTimeline, StoryScript } from '@mio/shared/types';
 
 import type { EnrichedConcept } from '../../services/stories/stories.service.types';
 
@@ -28,7 +28,7 @@ export interface StoryGenerationWorkflowContext {
   /** Enriched concept (after step 1) */
   enrichedConcept?: EnrichedConcept;
 
-  /** Story script (after step 2) */
+  /** Story script V3 with relative timing (after step 2) */
   script?: StoryScript;
 
   /** Voice asset IDs (after step 3) */
@@ -42,6 +42,9 @@ export interface StoryGenerationWorkflowContext {
 
   /** Ambiance asset IDs (after step 6) */
   ambianceAssetIds?: string[];
+
+  /** Computed timeline with real durations (after timeline computation step) */
+  computedTimeline?: ComputedTimeline;
 
   /** Temp mixed audio URL in S3 (after step 7) */
   tempMixedAudioUrl?: string;
@@ -64,6 +67,7 @@ export const WORKFLOW_STEPS = {
   SFX_GENERATION: 'sfx_generation',
   MUSIC_GENERATION: 'music_generation',
   AMBIANCE_GENERATION: 'ambiance_generation',
+  TIMELINE_COMPUTATION: 'timeline_computation',
   MIXING: 'mixing',
   UPLOAD: 'upload',
   FINALIZATION: 'finalization'

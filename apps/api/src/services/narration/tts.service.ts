@@ -35,6 +35,7 @@ import {
   EMOTION_VOICE_SETTINGS,
   RATE_LIMIT_CONFIG
 } from './tts.service.constants';
+import { extractTTSText } from './tts-text-extractor';
 
 /**
  * Cached audio metadata with full details
@@ -85,11 +86,30 @@ export class TTSService extends AbstractService {
    * Generate speech from text
    */
   async generateSpeech(input: GenerateSpeechInput): Promise<GenerateSpeechResult> {
-    const { text, voiceId, emotion, voiceSettings, characterName } = input;
+    const { text, voiceId, segmentType = 'narration', emotion, voiceSettings, characterName } = input;
+
+    // Extract TTS text based on segment type
+    // For dialogue: extracts only quoted text (e.g., "REGARDE!" from '[excited] "REGARDE!" s\'ecria-t-il')
+    // For narration: uses full text
+    const extraction = extractTTSText(text, segmentType);
+
+    // Log if text was extracted (dialogue with narrative description)
+    if (extraction.ttsText !== text.trim()) {
+      this.logger.debug('TTS text extracted from dialogue', {
+        originalLength: text.length,
+        extractedLength: extraction.ttsText.length,
+        quotedSections: extraction.quotedSections.length,
+        spokenWordCount: extraction.spokenWordCount
+      });
+    }
+
+    // Use extracted text for TTS
+    const ttsText = extraction.ttsText;
 
     // Apply audio tag for emotion (eleven_v3 best practice)
-    const audioTag = emotion ? EMOTION_AUDIO_TAGS[emotion] : null;
-    const textWithEmotion = audioTag ? `${audioTag} ${text}` : text;
+    // Note: If extractTTSText already found an emotion tag, don't duplicate it
+    const audioTag = emotion && !extraction.emotionTag ? EMOTION_AUDIO_TAGS[emotion] : null;
+    const textWithEmotion = audioTag ? `${audioTag} ${ttsText}` : ttsText;
 
     // Merge voice settings with emotion settings (needed for both cache key and generation)
     const mergedSettings = this.mergeVoiceSettings(emotion, voiceSettings);
@@ -195,6 +215,7 @@ export class TTSService extends AbstractService {
           const result = await this.generateSpeech({
             text: segment.text,
             voiceId: segment.voiceId,
+            segmentType: segment.segmentType,
             emotion: segment.emotion,
             voiceSettings: segment.voiceSettings,
             characterName: segment.characterName

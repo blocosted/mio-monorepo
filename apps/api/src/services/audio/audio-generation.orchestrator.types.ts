@@ -12,7 +12,7 @@ import type { AudioAssetType, StoryScript } from '@mio/shared/types';
 export interface AudioGenerationBaseInput {
   /** Story ID for asset storage */
   storyId: string;
-  /** Script containing audio segments */
+  /** Script containing audio segments (V3 format with relative timing) */
   script: StoryScript;
   /** Progress callback */
   onProgress?: (completed: number, total: number) => void;
@@ -75,4 +75,3 @@ export interface AudioGenerationResult {
   /** Total duration in seconds */
   totalDurationSeconds: number;
 }
-
