@@ -364,7 +364,8 @@ export class VoiceRegistryService {
       apiVoices = userVoices.map((voice) => ({
         voiceId: voice.voiceId,
         name: voice.name,
-        labels: voice.labels
+        labels: voice.labels,
+        previewUrl: voice.previewUrl
       }));
     }
 
@@ -390,11 +391,9 @@ export class VoiceRegistryService {
     const existingVoices = await this.db.select({ voiceId: elevenLabsVoices.voiceId }).from(elevenLabsVoices);
 
     const existingVoiceIds = new Set(existingVoices.map((v) => v.voiceId));
-    const apiVoiceIds = new Set(parsedVoices.map((v) => v.voiceId));
 
     let added = 0;
     let updated = 0;
-    let removed = 0;
 
     // Upsert voices from API
     for (const voice of parsedVoices) {
@@ -445,18 +444,10 @@ export class VoiceRegistryService {
       }
     }
 
-    // Remove voices no longer in API
-    for (const existing of existingVoices) {
-      if (!apiVoiceIds.has(existing.voiceId)) {
-        await this.db.delete(elevenLabsVoices).where(eq(elevenLabsVoices.voiceId, existing.voiceId));
-        removed++;
-      }
-    }
-
     const result: SyncResult = {
       added,
       updated,
-      removed,
+      removed: 0,
       total: parsedVoices.length
     };
 

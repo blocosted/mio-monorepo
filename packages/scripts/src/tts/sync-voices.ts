@@ -24,9 +24,12 @@ function loadEnv(envFile?: string): void {
   loadEnvironmentFromProcessEnv({ override: true });
 }
 
+export type VoiceLibrarySource = 'shared' | 'personal';
+
 export interface SyncVoicesArgs {
   envFile?: string;
   json?: boolean;
+  source?: VoiceLibrarySource;
 }
 
 export async function runSyncVoicesCommand(args: SyncVoicesArgs): Promise<void> {
@@ -38,27 +41,32 @@ export async function runSyncVoicesCommand(args: SyncVoicesArgs): Promise<void> 
   // Get VoiceRegistry service
   const voiceRegistry = getInstance<VoiceRegistryService>(IocService.VOICE_REGISTRY);
 
+  // Determine source
+  const useSharedLibrary = args.source !== 'personal';
+  const sourceName = useSharedLibrary ? 'shared library' : 'personal library';
+
   // Check last sync time
   const lastSync = await voiceRegistry.getLastSyncTime();
   if (lastSync) {
+    console.log(`Last sync: ${lastSync.toISOString()}`);
   } else {
+    console.log('No previous sync found');
   }
 
+  console.log(`\nSyncing voices from ${sourceName}...`);
+
   // Sync voices
-  const _result = await voiceRegistry.syncFromApi();
+  const result = await voiceRegistry.syncFromApi({ useSharedLibrary });
 
   if (args.json) {
+    console.log(JSON.stringify(result, null, 2));
     return;
   }
 
-  // List all synced voices
-  const voices = await voiceRegistry.getAllVoices();
-
-  for (const voice of voices) {
-    const _labels = voice.labels
-      ? Object.entries(voice.labels)
-          .map(([k, v]) => `${k}:${v}`)
-          .join(', ')
-      : '';
-  }
+  // Display result
+  console.log(`\nSync complete:`);
+  console.log(`  Added:   ${result.added}`);
+  console.log(`  Updated: ${result.updated}`);
+  console.log(`  Removed: ${result.removed}`);
+  console.log(`  Total:   ${result.total}`);
 }

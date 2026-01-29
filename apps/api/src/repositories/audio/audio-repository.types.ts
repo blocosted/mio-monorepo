@@ -114,7 +114,7 @@ export interface IAudioRepository {
   /**
    * List available voices
    */
-  listVoices(): Promise<Array<{ voiceId: string; name: string; labels?: Record<string, string> }>>;
+  listVoices(): Promise<Array<{ voiceId: string; name: string; labels?: Record<string, string>; previewUrl?: string }>>;
 }
 
 // ===== Sound Effects Repository Types =====

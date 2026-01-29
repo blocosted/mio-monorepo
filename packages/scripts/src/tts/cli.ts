@@ -200,6 +200,13 @@ yargs(hideBin(process.argv))
     'Sync ElevenLabs voices from API to database',
     (y) =>
       y
+        .option('source', {
+          type: 'string',
+          alias: 's',
+          description: 'Voice library source to sync from',
+          default: 'shared',
+          choices: ['shared', 'personal']
+        })
         .option('json', {
           type: 'boolean',
           alias: 'j',
@@ -213,6 +220,7 @@ yargs(hideBin(process.argv))
     async (argv) => {
       try {
         await runSyncVoicesCommand({
+          source: argv.source as 'shared' | 'personal',
           json: argv.json,
           envFile: argv.envFile
         });

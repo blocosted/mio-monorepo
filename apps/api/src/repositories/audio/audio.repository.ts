@@ -243,7 +243,7 @@ export class AudioRepository implements IAudioRepository, ISoundEffectsRepositor
   /**
    * List available voices
    */
-  async listVoices(): Promise<Array<{ voiceId: string; name: string; labels?: Record<string, string> }>> {
+  async listVoices(): Promise<Array<{ voiceId: string; name: string; labels?: Record<string, string>; previewUrl?: string }>> {
     try {
       const response = await this.client.voices.getAll();
 
@@ -252,7 +252,8 @@ export class AudioRepository implements IAudioRepository, ISoundEffectsRepositor
         .map((voice) => ({
           voiceId: voice.voice_id,
           name: voice.name,
-          labels: voice.labels
+          labels: voice.labels,
+          previewUrl: voice.preview_url
         }));
     } catch (error) {
       this.logger.error('Failed to list voices', error);
