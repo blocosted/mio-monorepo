@@ -14,6 +14,7 @@ export function mapRowToStory(row: StoryRow): Story {
     id: row.id,
     childProfileId: row.childProfileId,
     initialPrompt: row.initialPrompt,
+    targetDurationMinutes: row.targetDurationMinutes,
     enrichedConcept: row.enrichedConcept,
     script: row.script,
     answers: row.answers,

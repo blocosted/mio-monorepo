@@ -52,7 +52,23 @@ export {
   type ComputedTimelineResponse,
   type ComputedSegmentClient,
   type ComputedTrackClient,
-  type ComputedTimelineMetadataClient
+  type ComputedTimelineMetadataClient,
+  // Phase execution types
+  PhaseStateSchema,
+  type PhaseState,
+  type StepProgress,
+  type WorkflowPhase,
+  type PhaseStatus,
+  PhaseStatesResponseSchema,
+  type PhaseStatesResponse,
+  ExecutePhaseBodySchema,
+  type ExecutePhaseBody,
+  ExecutePhaseResponseSchema,
+  type ExecutePhaseResponse,
+  ResetToPhaseResponseSchema,
+  type ResetToPhaseResponse,
+  WorkflowPhaseValues,
+  PhaseStatusValues
 } from './stories';
 
 // Profiles

@@ -59,6 +59,7 @@ export const AdminStorySchema = t.Object({
   id: t.String({ format: 'uuid' }),
   childProfileId: t.String({ format: 'uuid' }),
   initialPrompt: t.String(),
+  targetDurationMinutes: t.Number(),
   enrichedConcept: t.Nullable(EnrichedConceptSchema),
   script: t.Nullable(t.Unknown()),
   answers: t.Nullable(t.Unknown()),
@@ -235,3 +236,86 @@ export const RemixStoryResponseSchema = t.Object({
 });
 
 export type RemixStoryResponse = typeof RemixStoryResponseSchema.static;
+
+// =============================================================================
+// Phase Execution (Step Execution)
+// =============================================================================
+
+export const WorkflowPhaseValues = ['concept', 'voices', 'audio', 'mix', 'final'] as const;
+export type WorkflowPhase = (typeof WorkflowPhaseValues)[number];
+
+export const PhaseStatusValues = ['pending', 'in_progress', 'completed', 'failed'] as const;
+export type PhaseStatus = (typeof PhaseStatusValues)[number];
+
+export const StepProgressSchema = t.Object({
+  name: t.String(),
+  status: enumValues(PhaseStatusValues),
+  progress: t.Optional(t.Number()),
+  completedAt: t.Optional(t.String()),
+  error: t.Optional(t.String())
+});
+
+export type StepProgress = typeof StepProgressSchema.static;
+
+export const PhaseStateSchema = t.Object({
+  phase: enumValues(WorkflowPhaseValues),
+  label: t.String(),
+  description: t.String(),
+  status: enumValues(PhaseStatusValues),
+  progress: t.Optional(t.Number()),
+  completedAt: t.Optional(t.String()),
+  error: t.Optional(t.String()),
+  canExecute: t.Boolean(),
+  steps: t.Array(StepProgressSchema),
+  output: t.Optional(t.Unknown())
+});
+
+export type PhaseState = typeof PhaseStateSchema.static;
+
+export const PhaseStatesResponseSchema = t.Object({
+  data: t.Array(PhaseStateSchema)
+});
+
+export type PhaseStatesResponse = typeof PhaseStatesResponseSchema.static;
+
+export const ExecutePhaseBodySchema = t.Object({
+  targetDurationMinutes: t.Optional(t.Number({ minimum: 0.1, maximum: 30 }))
+});
+
+export type ExecutePhaseBody = typeof ExecutePhaseBodySchema.static;
+
+export const ExecutePhaseResponseSchema = t.Object({
+  success: t.Boolean(),
+  phase: enumValues(WorkflowPhaseValues),
+  nextPhase: t.Optional(enumValues(WorkflowPhaseValues)),
+  stepsCompleted: t.Array(t.String()),
+  output: t.Optional(t.Unknown()),
+  error: t.Optional(t.String())
+});
+
+export type ExecutePhaseResponse = typeof ExecutePhaseResponseSchema.static;
+
+export const ResetToPhaseResponseSchema = t.Object({
+  success: t.Boolean(),
+  phase: enumValues(WorkflowPhaseValues),
+  phasesReset: t.Array(enumValues(WorkflowPhaseValues))
+});
+
+export type ResetToPhaseResponse = typeof ResetToPhaseResponseSchema.static;
+
+// =============================================================================
+// Update Story Settings
+// =============================================================================
+
+export const UpdateStorySettingsBodySchema = t.Object({
+  targetDurationMinutes: t.Optional(t.Number({ minimum: 0.1, maximum: 30 }))
+});
+
+export type UpdateStorySettingsBody = typeof UpdateStorySettingsBodySchema.static;
+
+export const UpdateStorySettingsResponseSchema = t.Object({
+  success: t.Boolean(),
+  targetDurationMinutes: t.Optional(t.Number())
+});
+
+export type UpdateStorySettingsResponse = typeof UpdateStorySettingsResponseSchema.static;

@@ -33,6 +33,22 @@ export { GenerationJobsStore } from './generation-jobs.store';
 export { StoriesService } from './stories.service';
 export { mapRowToStory } from './stories.service.map';
 export { StoriesStore } from './stories.service.store';
+export { StepExecutionService } from './step-execution.service';
+export type {
+  AudioPhaseOutput,
+  ConceptPhaseOutput,
+  ExecutePhaseInput,
+  FinalPhaseOutput,
+  MixPhaseOutput,
+  PhaseExecutionResult,
+  PhaseState,
+  ResetToPhaseInput,
+  ResetToPhaseResult,
+  StepProgress,
+  VoicesPhaseOutput,
+  WorkflowPhase
+} from './step-execution.service.types';
+export { PHASE_CONFIGS, PHASE_ORDER, WORKFLOW_PHASES } from './step-execution.service.types';
 export { StoryContextService } from './story-context.service';
 export { StoryFinalizationService } from './story-finalization.service';
 export { StorySegmentsService } from './story-segments.service';

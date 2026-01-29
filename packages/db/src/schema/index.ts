@@ -114,6 +114,8 @@ export const stories = pgTable('stories', {
     .notNull()
     .references(() => childProfiles.id, { onDelete: 'cascade' }),
   initialPrompt: text('initial_prompt').notNull(),
+  /** Target duration in minutes for story generation */
+  targetDurationMinutes: real('target_duration_minutes').default(5).notNull(),
   enrichedConcept: jsonb('enriched_concept').$type<EnrichedConceptDb>(),
   script: jsonb('script').$type<StoryScript>(),
   answers: jsonb('answers').$type<StoryAnswerDb[]>(),

@@ -145,6 +145,13 @@ export class AudioAssetsStore {
   }
 
   /**
+   * Delete all audio assets for a story by type
+   */
+  async deleteByStoryIdAndType(storyId: string, type: AudioAssetType): Promise<void> {
+    await this.db.delete(audioAssets).where(and(eq(audioAssets.storyId, storyId), eq(audioAssets.type, type)));
+  }
+
+  /**
    * Count audio assets for a story
    */
   async countByStoryId(storyId: string): Promise<number> {

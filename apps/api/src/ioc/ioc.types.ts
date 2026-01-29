@@ -86,7 +86,8 @@ export enum IocService {
   AUDIO_GENERATION_ORCHESTRATOR = 'AudioGenerationOrchestrator',
   STORY_MIXING_ORCHESTRATOR = 'StoryMixingOrchestrator',
   STORY_FINALIZATION = 'StoryFinalizationService',
-  TIMELINE_COMPUTATION = 'TimelineComputationService'
+  TIMELINE_COMPUTATION = 'TimelineComputationService',
+  STEP_EXECUTION = 'StepExecutionService'
 }
 
 /**

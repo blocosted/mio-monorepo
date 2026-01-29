@@ -67,6 +67,7 @@ export interface Story {
   id: string;
   childProfileId: string;
   initialPrompt: string;
+  targetDurationMinutes: number;
   enrichedConcept: EnrichedConcept | null;
   script: StoryScript | null;
   answers: StoryAnswer[] | null;
@@ -83,6 +84,7 @@ export interface Story {
 export interface CreateStoryInput {
   childProfileId: string;
   prompt: string;
+  targetDurationMinutes?: number;
 }
 
 /**
@@ -91,6 +93,7 @@ export interface CreateStoryInput {
 export interface CreateStoryRowInput {
   childProfileId: string;
   initialPrompt: string;
+  targetDurationMinutes?: number;
 }
 
 /**
@@ -100,6 +103,7 @@ export interface StoryRow {
   id: string;
   childProfileId: string;
   initialPrompt: string;
+  targetDurationMinutes: number;
   enrichedConcept: EnrichedConcept | null;
   script: StoryScript | null;
   answers: StoryAnswer[] | null;

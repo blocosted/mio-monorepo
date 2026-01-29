@@ -64,7 +64,8 @@ export const storiesHandlers = new Elysia({ tags: ['admin'] })
       // 1. Create story
       const story = await storiesService.create({
         childProfileId: body.childProfileId,
-        prompt: body.prompt
+        prompt: body.prompt,
+        targetDurationMinutes: body.targetDurationMinutes
       });
 
       // 2. Create generation job

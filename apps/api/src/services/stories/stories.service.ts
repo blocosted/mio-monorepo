@@ -60,7 +60,8 @@ export class StoriesService {
 
     const row = await this.store.insert({
       childProfileId: input.childProfileId,
-      initialPrompt: input.prompt
+      initialPrompt: input.prompt,
+      targetDurationMinutes: input.targetDurationMinutes
     });
 
     return mapRowToStory(row);

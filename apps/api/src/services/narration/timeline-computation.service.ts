@@ -175,6 +175,14 @@ export class TimelineComputationService extends AbstractService {
   }
 
   /**
+   * Delete computed timeline from database
+   */
+  async deleteTimeline(storyId: string): Promise<void> {
+    await this.database.delete(computedTimelines).where(eq(computedTimelines.storyId, storyId));
+    this.logger.info('Timeline deleted', { storyId });
+  }
+
+  /**
    * Build voice timeline with real durations (sequential)
    *
    * Uses contextual pause computation for natural rhythm.

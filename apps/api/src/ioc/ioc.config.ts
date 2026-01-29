@@ -65,6 +65,7 @@ import {
   AudioAssetsStore,
   GenerationJobsService,
   GenerationJobsStore,
+  StepExecutionService,
   StoriesService,
   StoriesStore,
   StoryContextService,
@@ -153,7 +154,8 @@ export async function initializeContainer(): Promise<void> {
     [IocService.AUDIO_GENERATION_ORCHESTRATOR]: () => container.get(AudioGenerationOrchestrator, { autobind: true }),
     [IocService.STORY_MIXING_ORCHESTRATOR]: () => container.get(StoryMixingOrchestrator, { autobind: true }),
     [IocService.STORY_FINALIZATION]: () => container.get(StoryFinalizationService, { autobind: true }),
-    [IocService.TIMELINE_COMPUTATION]: () => container.get(TimelineComputationService, { autobind: true })
+    [IocService.TIMELINE_COMPUTATION]: () => container.get(TimelineComputationService, { autobind: true }),
+    [IocService.STEP_EXECUTION]: () => container.get(StepExecutionService, { autobind: true })
   } as const;
 
   // Register all factories

@@ -17,7 +17,14 @@ import type {
   RegenerateStoryBody,
   RegenerateStoryResponse,
   ComputedTimelineResponse,
-  RemixStoryResponse
+  RemixStoryResponse,
+  PhaseStatesResponse,
+  ExecutePhaseBody,
+  ExecutePhaseResponse,
+  ResetToPhaseResponse,
+  WorkflowPhase,
+  UpdateStorySettingsBody,
+  UpdateStorySettingsResponse
 } from './stories.client.types';
 
 const DEFAULT_LIMIT = 20;
@@ -180,5 +187,91 @@ export class StoriesAdminClient {
     }
 
     throw new Error(`Failed to remix story: ${res.status}`);
+  }
+
+  /**
+   * Get all phase states for a story
+   */
+  public async getPhaseStates(storyId: string): Promise<PhaseStatesResponse> {
+    const res = await this.client.api.admin.stories({ id: storyId }).phases.get({
+      headers: this.client.headers
+    });
+
+    if (res.status === 200 && res.data) {
+      return res.data as unknown as PhaseStatesResponse;
+    }
+
+    if (res.error) {
+      this.client.throwFromTreatyError(res.error);
+    }
+
+    throw new Error(`Failed to get phase states: ${res.status}`);
+  }
+
+  /**
+   * Execute a specific phase
+   */
+  public async executePhase(
+    storyId: string,
+    phase: WorkflowPhase,
+    body?: ExecutePhaseBody
+  ): Promise<ExecutePhaseResponse> {
+    const res = await this.client.api.admin.stories({ id: storyId }).phases({ phase }).execute.post(
+      body ?? {},
+      { headers: this.client.headers }
+    );
+
+    if ((res.status === 200 || res.status === 202) && res.data) {
+      return res.data as unknown as ExecutePhaseResponse;
+    }
+
+    if (res.error) {
+      this.client.throwFromTreatyError(res.error);
+    }
+
+    throw new Error(`Failed to execute phase: ${res.status}`);
+  }
+
+  /**
+   * Reset story to a specific phase
+   */
+  public async resetToPhase(storyId: string, phase: WorkflowPhase): Promise<ResetToPhaseResponse> {
+    const res = await this.client.api.admin.stories({ id: storyId }).phases({ phase }).reset.post(
+      {},
+      { headers: this.client.headers }
+    );
+
+    if (res.status === 200 && res.data) {
+      return res.data as unknown as ResetToPhaseResponse;
+    }
+
+    if (res.error) {
+      this.client.throwFromTreatyError(res.error);
+    }
+
+    throw new Error(`Failed to reset to phase: ${res.status}`);
+  }
+
+  /**
+   * Update story settings (targetDurationMinutes, etc.)
+   */
+  public async updateStorySettings(
+    storyId: string,
+    body: UpdateStorySettingsBody
+  ): Promise<UpdateStorySettingsResponse> {
+    const res = await this.client.api.admin.stories({ id: storyId }).settings.patch(
+      body,
+      { headers: this.client.headers }
+    );
+
+    if (res.status === 200 && res.data) {
+      return res.data as unknown as UpdateStorySettingsResponse;
+    }
+
+    if (res.error) {
+      this.client.throwFromTreatyError(res.error);
+    }
+
+    throw new Error(`Failed to update story settings: ${res.status}`);
   }
 }

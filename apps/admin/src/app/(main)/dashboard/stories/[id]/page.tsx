@@ -75,6 +75,7 @@ import {
   useRegenerateStory,
   useRemixStory,
 } from "@/hooks/mutations/use-story-mutations";
+import { StoryStepperView } from "./_components/story-stepper-view";
 
 const statusConfig: Record<string, { color: string; label: string; description: string }> = {
   draft: {
@@ -374,8 +375,9 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
       <Separator />
 
       {/* Tabs */}
-      <Tabs defaultValue="overview" className="min-w-0 flex-1">
+      <Tabs defaultValue="workflow" className="min-w-0 flex-1">
         <TabsList>
+          <TabsTrigger value="workflow">Workflow</TabsTrigger>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="script" disabled={!story.script}>
             Script {getScriptSegmentCount(story.script) > 0 && `(${getScriptSegmentCount(story.script)})`}
@@ -387,6 +389,11 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
             Timeline
           </TabsTrigger>
         </TabsList>
+
+        {/* Workflow Tab */}
+        <TabsContent value="workflow" className="min-w-0">
+          <StoryStepperView storyId={id} storyTitle={title} />
+        </TabsContent>
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="min-w-0 space-y-6">

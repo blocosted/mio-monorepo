@@ -31,7 +31,8 @@ export class StoriesStore {
       .insert(stories)
       .values({
         childProfileId: input.childProfileId,
-        initialPrompt: input.initialPrompt
+        initialPrompt: input.initialPrompt,
+        targetDurationMinutes: input.targetDurationMinutes ?? 5
       })
       .returning();
 
@@ -44,6 +45,7 @@ export class StoriesStore {
       id: row.id,
       childProfileId: row.childProfileId,
       initialPrompt: row.initialPrompt,
+      targetDurationMinutes: row.targetDurationMinutes,
       enrichedConcept: row.enrichedConcept as StoryRow['enrichedConcept'],
       script: row.script as StoryRow['script'],
       answers: row.answers as StoryRow['answers'],
@@ -69,6 +71,7 @@ export class StoriesStore {
       id: row.id,
       childProfileId: row.childProfileId,
       initialPrompt: row.initialPrompt,
+      targetDurationMinutes: row.targetDurationMinutes,
       enrichedConcept: row.enrichedConcept as StoryRow['enrichedConcept'],
       script: row.script as StoryRow['script'],
       answers: row.answers as StoryRow['answers'],
@@ -137,6 +140,19 @@ export class StoriesStore {
   }
 
   /**
+   * Update story status
+   */
+  async updateStatus(id: string, status: StoryStatus): Promise<void> {
+    await this.db
+      .update(stories)
+      .set({
+        status,
+        updatedAt: new Date()
+      })
+      .where(eq(stories.id, id));
+  }
+
+  /**
    * Find all stories for a child profile
    */
   async findByChildProfileId(childProfileId: string): Promise<StoryRow[]> {
@@ -150,6 +166,7 @@ export class StoriesStore {
       id: row.id,
       childProfileId: row.childProfileId,
       initialPrompt: row.initialPrompt,
+      targetDurationMinutes: row.targetDurationMinutes,
       enrichedConcept: row.enrichedConcept as StoryRow['enrichedConcept'],
       script: row.script as StoryRow['script'],
       answers: row.answers as StoryRow['answers'],
@@ -227,6 +244,7 @@ export class StoriesStore {
         id: row.id,
         childProfileId: row.childProfileId,
         initialPrompt: row.initialPrompt,
+        targetDurationMinutes: row.targetDurationMinutes,
         enrichedConcept: row.enrichedConcept as StoryRow['enrichedConcept'],
         script: row.script as StoryRow['script'],
         answers: row.answers as StoryRow['answers'],
@@ -239,5 +257,39 @@ export class StoriesStore {
       nextCursor: hasMore && lastRow ? lastRow.id : null,
       hasMore
     };
+  }
+
+  /**
+   * Update target duration for a story
+   */
+  async updateTargetDuration(id: string, targetDurationMinutes: number): Promise<void> {
+    await this.db
+      .update(stories)
+      .set({
+        targetDurationMinutes,
+        updatedAt: new Date()
+      })
+      .where(eq(stories.id, id));
+  }
+
+  /**
+   * Clear generated data (enrichedConcept, script, finalAudioUrl)
+   * Used when resetting phases
+   */
+  async clearGeneratedData(id: string, fields: { enrichedConcept?: boolean; script?: boolean; finalAudioUrl?: boolean }): Promise<void> {
+    const updates: Record<string, unknown> = { updatedAt: new Date() };
+
+    if (fields.enrichedConcept) {
+      updates.enrichedConcept = null;
+    }
+    if (fields.script) {
+      updates.script = null;
+    }
+    if (fields.finalAudioUrl) {
+      updates.finalAudioUrl = null;
+      updates.duration = null;
+    }
+
+    await this.db.update(stories).set(updates).where(eq(stories.id, id));
   }
 }

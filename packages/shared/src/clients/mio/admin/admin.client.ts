@@ -23,7 +23,14 @@ import type {
   RegenerateStoryBody,
   RegenerateStoryResponse,
   ComputedTimelineResponse,
-  RemixStoryResponse
+  RemixStoryResponse,
+  PhaseStatesResponse,
+  ExecutePhaseBody,
+  ExecutePhaseResponse,
+  ResetToPhaseResponse,
+  WorkflowPhase,
+  UpdateStorySettingsBody,
+  UpdateStorySettingsResponse
 } from './stories';
 import { ProfilesAdminClient } from './profiles';
 import type { ProfileFilters, AdminProfile, CreateAdminProfileBody } from './profiles';
@@ -120,6 +127,33 @@ export class MioApiAdminClient {
 
   public async remixStory(storyId: string): Promise<RemixStoryResponse> {
     return this.stories.remixStory(storyId);
+  }
+
+  // ===========================================================================
+  // Phase Execution
+  // ===========================================================================
+
+  public async getPhaseStates(storyId: string): Promise<PhaseStatesResponse> {
+    return this.stories.getPhaseStates(storyId);
+  }
+
+  public async executePhase(
+    storyId: string,
+    phase: WorkflowPhase,
+    body?: ExecutePhaseBody
+  ): Promise<ExecutePhaseResponse> {
+    return this.stories.executePhase(storyId, phase, body);
+  }
+
+  public async resetToPhase(storyId: string, phase: WorkflowPhase): Promise<ResetToPhaseResponse> {
+    return this.stories.resetToPhase(storyId, phase);
+  }
+
+  public async updateStorySettings(
+    storyId: string,
+    body: UpdateStorySettingsBody
+  ): Promise<UpdateStorySettingsResponse> {
+    return this.stories.updateStorySettings(storyId, body);
   }
 
   // ===========================================================================

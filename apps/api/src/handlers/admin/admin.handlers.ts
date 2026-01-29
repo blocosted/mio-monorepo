@@ -9,11 +9,12 @@ import { Elysia } from 'elysia';
 
 import { voicesHandlers } from './voices';
 import { audioLibraryHandlers } from './audio-library';
-import { storiesHandlers } from './stories';
+import { stepExecutionHandlers, storiesHandlers } from './stories';
 import { profilesHandlers } from './profiles';
 
 export const adminHandlers = new Elysia({ prefix: '/admin', tags: ['admin'] })
   .use(voicesHandlers)
   .use(audioLibraryHandlers)
   .use(storiesHandlers)
+  .use(stepExecutionHandlers)
   .use(profilesHandlers);
