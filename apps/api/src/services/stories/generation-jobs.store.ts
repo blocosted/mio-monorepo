@@ -51,10 +51,10 @@ export interface CreateGenerationJobInput {
 export interface UpdateGenerationJobInput {
   status?: JobStatus;
   progress?: number;
-  currentStep?: JobStep;
+  currentStep?: JobStep | null;
   steps?: JobStepProgress[];
   result?: { audioUrl: string; duration: number };
-  error?: string;
+  error?: string | null;
 }
 
 /**

@@ -319,3 +319,73 @@ export const UpdateStorySettingsResponseSchema = t.Object({
 });
 
 export type UpdateStorySettingsResponse = typeof UpdateStorySettingsResponseSchema.static;
+
+// =============================================================================
+// Voice Selection
+// =============================================================================
+
+export const VoiceInfoSchema = t.Object({
+  voiceId: t.String(),
+  name: t.String(),
+  previewUrl: t.Nullable(t.Optional(t.String())),
+  gender: t.Nullable(t.Optional(t.String())),
+  age: t.Nullable(t.Optional(t.String())),
+  language: t.Nullable(t.Optional(t.String())),
+  description: t.Nullable(t.Optional(t.String()))
+});
+
+export type VoiceInfo = typeof VoiceInfoSchema.static;
+
+export const VoiceRecommendationSchema = t.Object({
+  voiceId: t.String(),
+  name: t.String(),
+  previewUrl: t.Nullable(t.Optional(t.String())),
+  gender: t.Nullable(t.Optional(t.String())),
+  age: t.Nullable(t.Optional(t.String())),
+  language: t.Nullable(t.Optional(t.String())),
+  matchScore: t.Number()
+});
+
+export type VoiceRecommendation = typeof VoiceRecommendationSchema.static;
+
+export const CharacterWithVoiceRecommendationsSchema = t.Object({
+  characterName: t.String(),
+  voiceDescription: t.String(),
+  currentVoiceId: t.Optional(t.String()),
+  currentVoice: t.Optional(VoiceInfoSchema),
+  recommendedVoices: t.Array(VoiceRecommendationSchema)
+});
+
+export type CharacterWithVoiceRecommendations = typeof CharacterWithVoiceRecommendationsSchema.static;
+
+export const GetStoryCharactersResponseSchema = t.Object({
+  data: t.Array(CharacterWithVoiceRecommendationsSchema),
+  storyLanguage: t.String()
+});
+
+export type GetStoryCharactersResponse = typeof GetStoryCharactersResponseSchema.static;
+
+export const VoiceAssignmentEntrySchema = t.Object({
+  characterName: t.String(),
+  voiceId: t.String()
+});
+
+export type VoiceAssignmentEntry = typeof VoiceAssignmentEntrySchema.static;
+
+export const UpdateVoiceAssignmentsBodySchema = t.Object({
+  voiceAssignments: t.Array(VoiceAssignmentEntrySchema)
+});
+
+export type UpdateVoiceAssignmentsBody = typeof UpdateVoiceAssignmentsBodySchema.static;
+
+export const UpdateVoiceAssignmentsResponseSchema = t.Object({
+  success: t.Boolean(),
+  updatedCount: t.Number(),
+  characters: t.Array(t.Object({
+    characterName: t.String(),
+    voiceId: t.String(),
+    voiceName: t.String()
+  }))
+});
+
+export type UpdateVoiceAssignmentsResponse = typeof UpdateVoiceAssignmentsResponseSchema.static;

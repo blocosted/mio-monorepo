@@ -12,12 +12,13 @@ import type {
   AdminStory,
   StorySegment,
   AudioAsset,
-  ComputedTimelineResponse
+  ComputedTimelineResponse,
+  GetStoryCharactersResponse
 } from '@mio/shared/clients/mio';
 
 import { getMioApiClient } from '@/lib/api/mio-client';
 
-export type { AdminStory as StoryDetail, StorySegment, AudioAsset, ComputedTimelineResponse };
+export type { AdminStory as StoryDetail, StorySegment, AudioAsset, ComputedTimelineResponse, GetStoryCharactersResponse };
 
 export function useStory(id: string) {
   return useQuery({
@@ -58,6 +59,17 @@ export function useStoryComputedTimeline(id: string) {
     queryFn: async () => {
       const client = getMioApiClient();
       return client.admin.getStoryComputedTimeline(id);
+    },
+    enabled: !!id
+  });
+}
+
+export function useStoryCharacters(id: string) {
+  return useQuery({
+    queryKey: ['admin', 'stories', id, 'characters'],
+    queryFn: async () => {
+      const client = getMioApiClient();
+      return client.admin.getStoryCharacters(id);
     },
     enabled: !!id
   });

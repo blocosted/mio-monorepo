@@ -111,3 +111,50 @@ export function useUpdateStorySettings() {
     },
   });
 }
+
+interface VoiceAssignmentEntry {
+  characterName: string;
+  voiceId: string;
+}
+
+interface UpdateVoiceAssignmentsInput {
+  storyId: string;
+  voiceAssignments: VoiceAssignmentEntry[];
+}
+
+export interface UpdateVoiceAssignmentsResponse {
+  success: boolean;
+  updatedCount: number;
+  characters: Array<{
+    characterName: string;
+    voiceId: string;
+    voiceName: string;
+  }>;
+}
+
+export function useUpdateVoiceAssignments() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: UpdateVoiceAssignmentsInput) => {
+      const client = getMioApiClient();
+      return client.admin.updateVoiceAssignments(input.storyId, {
+        voiceAssignments: input.voiceAssignments,
+      });
+    },
+    onSuccess: (_data, variables) => {
+      // Invalidate characters data to refresh
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "stories", variables.storyId, "characters"],
+      });
+      // Invalidate story data as script has changed
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "stories", variables.storyId],
+      });
+      // Invalidate phase states
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "stories", variables.storyId, "phases"],
+      });
+    },
+  });
+}

@@ -30,7 +30,10 @@ import type {
   ResetToPhaseResponse,
   WorkflowPhase,
   UpdateStorySettingsBody,
-  UpdateStorySettingsResponse
+  UpdateStorySettingsResponse,
+  GetStoryCharactersResponse,
+  UpdateVoiceAssignmentsBody,
+  UpdateVoiceAssignmentsResponse
 } from './stories';
 import { ProfilesAdminClient } from './profiles';
 import type { ProfileFilters, AdminProfile, CreateAdminProfileBody } from './profiles';
@@ -154,6 +157,21 @@ export class MioApiAdminClient {
     body: UpdateStorySettingsBody
   ): Promise<UpdateStorySettingsResponse> {
     return this.stories.updateStorySettings(storyId, body);
+  }
+
+  // ===========================================================================
+  // Voice Selection
+  // ===========================================================================
+
+  public async getStoryCharacters(storyId: string): Promise<GetStoryCharactersResponse> {
+    return this.stories.getStoryCharacters(storyId);
+  }
+
+  public async updateVoiceAssignments(
+    storyId: string,
+    body: UpdateVoiceAssignmentsBody
+  ): Promise<UpdateVoiceAssignmentsResponse> {
+    return this.stories.updateVoiceAssignments(storyId, body);
   }
 
   // ===========================================================================

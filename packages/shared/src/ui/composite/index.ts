@@ -26,3 +26,4 @@ export * from "./tabs";
 export * from "./tooltip";
 export * from "./audio-player";
 export * from "./data-table";
+export * from "./selectable-card";

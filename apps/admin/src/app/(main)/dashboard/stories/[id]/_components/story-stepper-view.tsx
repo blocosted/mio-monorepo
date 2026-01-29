@@ -20,6 +20,7 @@ import {
   FinalOutput,
   MixOutput,
   VoicesOutput,
+  VoiceSelectionPanel,
 } from "./phase-outputs";
 
 interface StoryStepperViewProps {
@@ -202,6 +203,13 @@ export function StoryStepperView({ storyId, storyTitle }: StoryStepperViewProps)
                 }}
                 isSaving={updateSettings.isPending}
               />
+            )}
+
+            {/* Voice Selection Panel (before voice generation) */}
+            {activePhase === "voices" && (
+              <div className="mb-4">
+                <VoiceSelectionPanel storyId={storyId} />
+              </div>
             )}
 
             {/* Phase-specific Output */}

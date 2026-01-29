@@ -82,6 +82,7 @@ export enum IocService {
   // Story generation orchestration services
   STORY_CONTEXT = 'StoryContextService',
   VOICE_ASSIGNMENT = 'VoiceAssignmentService',
+  VOICE_SELECTION = 'VoiceSelectionService',
   VOICE_GENERATION_ORCHESTRATOR = 'VoiceGenerationOrchestrator',
   AUDIO_GENERATION_ORCHESTRATOR = 'AudioGenerationOrchestrator',
   STORY_MIXING_ORCHESTRATOR = 'StoryMixingOrchestrator',

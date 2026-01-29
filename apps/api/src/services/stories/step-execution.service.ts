@@ -327,17 +327,14 @@ export class StepExecutionService {
       }
     }
 
-    // Reset job to processing state
+    // Reset job to pending state so phase can be re-executed
     const job = await this.jobsStore.findByStoryId(storyId);
     if (job) {
-      // Calculate progress based on completed phases
-      const completedPhases = PHASE_ORDER.slice(0, PHASE_ORDER.indexOf(phase));
-      const progressPerPhase = 100 / PHASE_ORDER.length;
-      const newProgress = Math.round(completedPhases.length * progressPerPhase);
-
       await this.jobsStore.update(job.id, {
-        status: JobStatus.Processing,
-        progress: newProgress
+        status: JobStatus.Pending,
+        currentStep: null,
+        progress: 0,
+        error: null
       });
     }
 

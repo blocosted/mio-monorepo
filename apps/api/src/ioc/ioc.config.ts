@@ -53,7 +53,8 @@ import {
   VoiceAssignmentService,
   VoiceGenerationOrchestrator,
   VoiceRegistryService,
-  VoiceRegistryStore
+  VoiceRegistryStore,
+  VoiceSelectionService
 } from '../services/narration';
 import { ProfilesService, ProfilesStore } from '../services/profiles';
 // Sound Design Services
@@ -150,6 +151,7 @@ export async function initializeContainer(): Promise<void> {
     // Story generation orchestration services
     [IocService.STORY_CONTEXT]: () => container.get(StoryContextService, { autobind: true }),
     [IocService.VOICE_ASSIGNMENT]: () => container.get(VoiceAssignmentService, { autobind: true }),
+    [IocService.VOICE_SELECTION]: () => container.get(VoiceSelectionService, { autobind: true }),
     [IocService.VOICE_GENERATION_ORCHESTRATOR]: () => container.get(VoiceGenerationOrchestrator, { autobind: true }),
     [IocService.AUDIO_GENERATION_ORCHESTRATOR]: () => container.get(AudioGenerationOrchestrator, { autobind: true }),
     [IocService.STORY_MIXING_ORCHESTRATOR]: () => container.get(StoryMixingOrchestrator, { autobind: true }),

@@ -56,8 +56,8 @@ export const PHASE_CONFIGS: Record<WorkflowPhase, PhaseMetadata> = {
   [WORKFLOW_PHASES.VOICES]: {
     phase: WORKFLOW_PHASES.VOICES,
     label: 'Voices',
-    description: 'Assign voices to characters and generate voice audio',
-    steps: ['voice_assignment', 'voice_generation']
+    description: 'Select voices, assign to characters, and generate voice audio',
+    steps: ['voice_selection', 'voice_assignment', 'voice_generation']
   },
   [WORKFLOW_PHASES.AUDIO]: {
     phase: WORKFLOW_PHASES.AUDIO,

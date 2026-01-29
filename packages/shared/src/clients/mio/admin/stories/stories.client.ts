@@ -24,7 +24,10 @@ import type {
   ResetToPhaseResponse,
   WorkflowPhase,
   UpdateStorySettingsBody,
-  UpdateStorySettingsResponse
+  UpdateStorySettingsResponse,
+  GetStoryCharactersResponse,
+  UpdateVoiceAssignmentsBody,
+  UpdateVoiceAssignmentsResponse
 } from './stories.client.types';
 
 const DEFAULT_LIMIT = 20;
@@ -273,5 +276,47 @@ export class StoriesAdminClient {
     }
 
     throw new Error(`Failed to update story settings: ${res.status}`);
+  }
+
+  /**
+   * Get story characters with voice recommendations
+   */
+  public async getStoryCharacters(storyId: string): Promise<GetStoryCharactersResponse> {
+    const res = await this.client.api.admin.stories({ id: storyId }).characters.get({
+      headers: this.client.headers
+    });
+
+    if (res.status === 200 && res.data) {
+      return res.data as unknown as GetStoryCharactersResponse;
+    }
+
+    if (res.error) {
+      this.client.throwFromTreatyError(res.error);
+    }
+
+    throw new Error(`Failed to get story characters: ${res.status}`);
+  }
+
+  /**
+   * Update voice assignments for story characters
+   */
+  public async updateVoiceAssignments(
+    storyId: string,
+    body: UpdateVoiceAssignmentsBody
+  ): Promise<UpdateVoiceAssignmentsResponse> {
+    const res = await this.client.api.admin.stories({ id: storyId }).voices.patch(
+      body,
+      { headers: this.client.headers }
+    );
+
+    if (res.status === 200 && res.data) {
+      return res.data as unknown as UpdateVoiceAssignmentsResponse;
+    }
+
+    if (res.error) {
+      this.client.throwFromTreatyError(res.error);
+    }
+
+    throw new Error(`Failed to update voice assignments: ${res.status}`);
   }
 }

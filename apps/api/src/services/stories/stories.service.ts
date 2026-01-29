@@ -9,7 +9,7 @@ import 'reflect-metadata';
 import { inject, injectable } from 'inversify';
 
 import { AppError, ErrorCodes } from '@mio/shared';
-import { JobStatus } from '@mio/shared/types';
+import { type StoryScript, JobStatus } from '@mio/shared/types';
 
 import type { EnrichmentService } from '../llm';
 import type { ProfilesService } from '../profiles';
@@ -195,5 +195,16 @@ export class StoriesService {
       throw new AppError(ErrorCodes.ValidationError, { name: 'StoryNotDraft' });
     }
     await this.store.updatePrompt(id, prompt);
+  }
+
+  /**
+   * Update the script for a story
+   */
+  async updateScript(id: string, script: StoryScript): Promise<void> {
+    const story = await this.store.findById(id);
+    if (!story) {
+      throw new AppError(ErrorCodes.NotFound, { name: 'StoryNotFound' });
+    }
+    await this.store.updateScript(id, script);
   }
 }

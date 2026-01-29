@@ -7,3 +7,5 @@ export { ConceptOutput } from "./concept-output";
 export { FinalOutput } from "./final-output";
 export { MixOutput } from "./mix-output";
 export { VoicesOutput } from "./voices-output";
+export { VoiceSelectionPanel } from "./voice-selection-panel";
+export { VoiceSelectionModal } from "./voice-selection-modal";

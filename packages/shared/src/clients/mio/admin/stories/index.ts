@@ -51,5 +51,19 @@ export {
   UpdateStorySettingsBodySchema,
   type UpdateStorySettingsBody,
   UpdateStorySettingsResponseSchema,
-  type UpdateStorySettingsResponse
+  type UpdateStorySettingsResponse,
+  VoiceInfoSchema,
+  type VoiceInfo,
+  VoiceRecommendationSchema,
+  type VoiceRecommendation,
+  CharacterWithVoiceRecommendationsSchema,
+  type CharacterWithVoiceRecommendations,
+  GetStoryCharactersResponseSchema,
+  type GetStoryCharactersResponse,
+  VoiceAssignmentEntrySchema,
+  type VoiceAssignmentEntry,
+  UpdateVoiceAssignmentsBodySchema,
+  type UpdateVoiceAssignmentsBody,
+  UpdateVoiceAssignmentsResponseSchema,
+  type UpdateVoiceAssignmentsResponse
 } from './stories.client.types';

@@ -7,9 +7,10 @@ import { type AudioTrack, useAudioPlayer } from "@/contexts/audio-player-context
 
 interface PlayButtonProps {
   track: AudioTrack;
+  size?: "sm" | "icon";
 }
 
-export function PlayButton({ track }: PlayButtonProps) {
+export function PlayButton({ track, size = "sm" }: PlayButtonProps) {
   const { track: currentTrack, isPlaying, isLoading, play, pause } = useAudioPlayer();
 
   const isCurrentTrack = currentTrack?.id === track.id && currentTrack?.url === track.url;
@@ -24,19 +25,21 @@ export function PlayButton({ track }: PlayButtonProps) {
     }
   };
 
+  const iconSize = size === "icon" ? "h-3 w-3" : "h-4 w-4";
+
   return (
     <Button
       variant="ghost"
-      size="sm"
+      size={size}
       onClick={handleClick}
       disabled={isThisLoading}
     >
       {isThisLoading ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
+        <Loader2 className={`${iconSize} animate-spin`} />
       ) : isThisPlaying ? (
-        <Pause className="h-4 w-4" />
+        <Pause className={iconSize} />
       ) : (
-        <Play className="h-4 w-4" />
+        <Play className={iconSize} />
       )}
     </Button>
   );

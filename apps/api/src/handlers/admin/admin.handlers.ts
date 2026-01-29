@@ -9,7 +9,7 @@ import { Elysia } from 'elysia';
 
 import { voicesHandlers } from './voices';
 import { audioLibraryHandlers } from './audio-library';
-import { stepExecutionHandlers, storiesHandlers } from './stories';
+import { stepExecutionHandlers, storiesHandlers, voiceSelectionHandlers } from './stories';
 import { profilesHandlers } from './profiles';
 
 export const adminHandlers = new Elysia({ prefix: '/admin', tags: ['admin'] })
@@ -17,4 +17,5 @@ export const adminHandlers = new Elysia({ prefix: '/admin', tags: ['admin'] })
   .use(audioLibraryHandlers)
   .use(storiesHandlers)
   .use(stepExecutionHandlers)
+  .use(voiceSelectionHandlers)
   .use(profilesHandlers);

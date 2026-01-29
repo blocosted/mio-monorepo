@@ -53,6 +53,17 @@ export type {
   VoiceTone
 } from './voice-assignment.service.types';
 export type {
+  CharacterWithVoiceRecommendations,
+  GetCharactersInput,
+  GetCharactersResult,
+  GetRecommendedVoicesOptions,
+  UpdateVoiceAssignmentsInput,
+  UpdateVoiceAssignmentsResult,
+  VoiceAssignmentEntry,
+  VoiceInfo,
+  VoiceRecommendation
+} from './voice-selection.service.types';
+export type {
   TTSSegmentInput,
   TTSBatchedSegment,
   TTSSplitResult
@@ -65,6 +76,7 @@ export { TimelineComputationService } from './timeline-computation.service';
 export { PauseComputationService } from './pause-computation.service';
 export { VoiceMatchingService } from './voice-matching.service';
 export { VoiceAssignmentService } from './voice-assignment.service';
+export { VoiceSelectionService } from './voice-selection.service';
 export { VoiceGenerationOrchestrator } from './voice-generation.orchestrator';
 export { VoiceRegistryService } from './voice-registry.service';
 
