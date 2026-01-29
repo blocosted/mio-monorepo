@@ -662,6 +662,8 @@ export async function finalizationStep(context: StoryGenerationWorkflowContext):
       await helper.updateProgress(context.jobId, config.startProgress, config.name);
 
       // Use StoryFinalizationService for DB updates
+      // Note: finalizeStory() already sets job status to Completed and progress to 100%
+      // Do NOT call updateProgress() after this - it would overwrite status back to Processing
       await finalizationService.finalizeStory({
         storyId: context.storyId,
         jobId: context.jobId,
@@ -674,8 +676,6 @@ export async function finalizationStep(context: StoryGenerationWorkflowContext):
         storyId: context.storyId,
         finalAudioUrl: context.finalAudioUrl
       });
-
-      await helper.updateProgress(context.jobId, config.endProgress, config.name);
 
       return context;
     },

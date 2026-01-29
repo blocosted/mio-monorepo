@@ -11,7 +11,7 @@ import { inject, injectable } from 'inversify';
 
 import type { Logger } from '@mio/shared/server/logger/Logger';
 import { AppError, ErrorCodes } from '@mio/shared';
-import { AudioAssetType, JobStatus, StoryStatus, type AudioAssetWithDuration, type ComputedTimeline, type StoryScript } from '@mio/shared/types';
+import { AudioAssetType, JobStatus, JobStep, StoryStatus, type AudioAssetWithDuration, type ComputedTimeline, type StoryScript } from '@mio/shared/types';
 
 import type { AudioAssetsStore } from './audio-assets.store';
 import type { GenerationJobsStore } from './generation-jobs.store';
@@ -189,6 +189,20 @@ export class StepExecutionService {
   }
 
   /**
+   * Map a workflow phase to its corresponding job step
+   */
+  private phaseToJobStep(phase: WorkflowPhase): JobStep {
+    const phaseToStep: Record<WorkflowPhase, JobStep> = {
+      [WORKFLOW_PHASES.CONCEPT]: JobStep.Enrichment,
+      [WORKFLOW_PHASES.VOICES]: JobStep.GeneratingVoice,
+      [WORKFLOW_PHASES.AUDIO]: JobStep.GeneratingSfx,
+      [WORKFLOW_PHASES.MIX]: JobStep.Mixing,
+      [WORKFLOW_PHASES.FINAL]: JobStep.Finalizing
+    };
+    return phaseToStep[phase];
+  }
+
+  /**
    * Execute a specific phase
    */
   async executePhase(input: ExecutePhaseInput): Promise<PhaseExecutionResult> {
@@ -227,6 +241,13 @@ export class StepExecutionService {
     if (!job) {
       job = await this.jobsStore.create({ storyId, status: JobStatus.Pending });
     }
+
+    // Set job to processing before execution
+    await this.jobsStore.update(job.id, {
+      status: JobStatus.Processing,
+      currentStep: this.phaseToJobStep(phase),
+      error: null
+    });
 
     // Build execution context from DB
     const context = await this.buildExecutionContext(storyId, job.id, effectiveDuration);
@@ -281,17 +302,26 @@ export class StepExecutionService {
         output
       };
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+
       this.logger.error('Phase execution failed', {
         storyId,
         phase,
-        error: error instanceof Error ? error.message : String(error)
+        error: errorMessage
+      });
+
+      // Reset job to pending so phase can be retried
+      await this.jobsStore.update(job.id, {
+        status: JobStatus.Pending,
+        currentStep: null,
+        error: errorMessage
       });
 
       return {
         success: false,
         phase,
         stepsCompleted: [],
-        error: error instanceof Error ? error.message : String(error)
+        error: errorMessage
       };
     }
   }
@@ -307,9 +337,16 @@ export class StepExecutionService {
     const phaseIndex = PHASE_ORDER.indexOf(phase);
     const phasesToReset = PHASE_ORDER.slice(phaseIndex);
 
-    // Delete audio assets based on which phases we're resetting
+    // Delete data based on which phases we're resetting
     for (const phaseToReset of phasesToReset) {
       switch (phaseToReset) {
+        case WORKFLOW_PHASES.CONCEPT:
+          // Clear enrichedConcept and script so phase can be re-executed
+          await this.storiesStore.clearGeneratedData(storyId, {
+            enrichedConcept: true,
+            script: true
+          });
+          break;
         case WORKFLOW_PHASES.VOICES:
           await this.audioAssetsStore.deleteByStoryIdAndType(storyId, AudioAssetType.Voice);
           break;
@@ -323,6 +360,12 @@ export class StepExecutionService {
           // Also delete computed timeline
           const timelineService = getInstance<TimelineComputationService>(IocService.TIMELINE_COMPUTATION);
           await timelineService.deleteTimeline(storyId);
+          break;
+        case WORKFLOW_PHASES.FINAL:
+          // Clear finalAudioUrl and duration from story
+          await this.storiesStore.clearGeneratedData(storyId, {
+            finalAudioUrl: true
+          });
           break;
       }
     }
