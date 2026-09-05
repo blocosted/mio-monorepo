@@ -63,7 +63,7 @@ Rien n'est bloqué : aucun epic n'est commencé.
 
 | Décision | Bloque | Qui tranche |
 |----------|--------|-------------|
-| **ADR-0001** — qui porte le temps dans le pipeline audio | E02, E03, E04 | Découle du verdict de S01 |
+| **ADR-0001** — qui porte le temps dans le pipeline audio | E01, E02, E03, E04 | **Rédigé, statut `propose`.** Attend ta validation ; l'axe A de S01 le confirme ou le réfute |
 | Refuser ou non l'entraînement du fournisseur sur les données envoyées | E02, E06 | Produit, par ADR |
 | Accepter ou non l'hébergement des données hors Union européenne | E02, E08 | Produit, par ADR |
 | Supprimer `fluent-ffmpeg`, déprécié et non maintenu, au profit d'un appel direct | E04 | Technique, à T0401 |
@@ -83,7 +83,7 @@ tableau ne garde que ce qui reste ouvert.
 
 | Constat | Nature | Action |
 |---------|--------|--------|
-| E02, E03, E04 référencent `ADR-0001` qui n'existe pas | attendu | L'ADR naîtra du verdict de S01, avant la spécification de T0201. |
+| ~~`ADR-0001` référencé mais absent~~ | résolu | Rédigé en statut `propose`. |
 | E03 critère 4 : l'éditeur déconseille les tags de bruitage dans son propre outil de production | à traiter | Le repli est identifié et propre (placement sur `voiceSegments[]`, bornes issues de l'audio réel). S01 mesure s'il reste un usage marginal aux tags. |
 | `analyse-audio.ts` : le critère d'écrêtage est inopérant et les seuils de la charte y sont recopiés | à traiter | T0101, avant tout étalonnage. Le second point viole la règle de source unique. |
 | La cible de masterisation du code (−16 LUFS) contredit la charte (−19 à −17) | à traiter | T0404. Tant qu'elle tient, le critère 1 de E04 est inatteignable. |
@@ -95,7 +95,8 @@ tableau ne garde que ce qui reste ouvert.
 
 ## Repères
 
-- Décisions : `decisions/` — 0 ADR, 1 attendu (ADR-0001)
+- Décisions : `decisions/` — 1 ADR (`ADR-0001`, `propose`), 3 attendus : refus de
+  l'entraînement sur les données, modèle de propriété des données, frontière moteur / univers
 - Veille : `research/` — 1 note (`2026-09-05-elevenlabs-refonte-audio`, révision 2), fraîche.
   La plupart des faits sont désormais *vérifiés* sur les types du SDK officiel. Restent non
   vérifiés : les tarifs, la politique d'usage interdit, et le comportement réel des tags.

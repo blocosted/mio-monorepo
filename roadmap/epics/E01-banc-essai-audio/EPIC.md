@@ -3,7 +3,7 @@ id: E01
 titre: Banc d'essai audio
 statut: a-faire
 depend_de: []
-adr: []
+adr: [ADR-0001]
 objectif_mesurable: "Je génère une scène, je la mesure et je la compare à une autre version en moins d'une heure, sans lancer le workflow complet"
 ---
 
