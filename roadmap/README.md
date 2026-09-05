@@ -14,7 +14,7 @@ Aucun epic commencé. 12 epics, 49 tâches pressenties, 0 spécifiée.
 
 | Epic | Titre | Statut | Tâches | Objectif mesurable |
 |------|-------|--------|--------|--------------------|
-| E01 | Banc d'essai audio | a-faire | 0/6 | Générer, mesurer et comparer une scène en moins d'une heure, hors workflow |
+| E01 | Banc d'essai audio | a-faire | 0/6 (1 spécifiée) | Générer, mesurer et comparer une scène en moins d'une heure, hors workflow |
 | E02 | Le script parle | a-faire | 0/7 | Blancs conformes à la charte, voix distinctes et stables |
 | E03 | Lit sonore | a-faire | 0/4 | Une ambiance à la fois, musique continue sans couture |
 | E04 | Mixage et masterisation | a-faire | 0/5 | Dix histoires conformes à la charte sans intervention |
@@ -51,7 +51,7 @@ qu'une personne extérieure doit écouter.
 | Prochaine action | Objet | Pourquoi maintenant |
 |------------------|-------|---------------------|
 | **Exécuter S01** | `spikes/S01-synthese-dialogue-et-stems/` — protocole écrit, critère de décision figé | Décide l'architecture de E02 à E04. Prêt à lancer : demande `ffmpeg`, une clé d'API sur offre payante, et le stem voix d'une histoire existante. |
-| Lancer `task-specifier` | **T0101** — fiabiliser la mesure | Indépendant du spike, débloque le jugement de tout le reste. |
+| **Implémenter T0101** | `epics/E01-banc-essai-audio/T0101-fiabiliser-la-mesure/SPEC.md` | **Spécifiée.** Prochaine étape : `implementation-planner`. Bloque T0102 : étalonner avec un instrument faux propagerait l'erreur dans la charte. |
 | Lancer `task-specifier` | **T0102** — étalonner la charte | Nécessite des références commerciales fournies de l'extérieur du dépôt. |
 | Lancer `task-specifier` | **T0801** — modèle de propriété | E08 n'a aucune dépendance ; utile si besoin de changer de sujet. |
 

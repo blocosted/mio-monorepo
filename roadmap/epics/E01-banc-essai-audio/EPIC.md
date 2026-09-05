@@ -73,7 +73,7 @@ mal.
 
 | Id | Titre | Intention | Effort |
 |----|-------|-----------|--------|
-| T0101 | Fiabiliser la mesure | Confronter le parsing `ebur128` / `astats` / `silencedetect` à de vraies sorties et corriger. Remplacer le critère d'écrêtage, inopérant. Supprimer la copie des seuils de la charte. Ajouter les cas dégradés : fichier muet, mono, très court. | M |
+| T0101 ✔spécifiée | Fiabiliser la mesure | Confronter le parsing `ebur128` / `astats` / `silencedetect` à de vraies sorties et corriger. Remplacer le critère d'écrêtage, inopérant. Supprimer la copie des seuils de la charte. Ajouter les cas dégradés : fichier muet, mono, très court. | M |
 | T0102 | Étalonner la charte | Mesurer des références commerciales, comparer aux seuils actuels, réviser et justifier les écarts. | S |
 | T0103 | Resserrer la génération hors workflow | Le chemin existe (`packages/scripts/src/pipeline/full-story.ts`) mais instancie les services par `new`, hors conteneur — il diverge donc du chemin de production. Le faire passer par le conteneur et le ramener à l'échelle d'une scène. | M |
 | T0104 | Compléter le magasin de runs | Les stems sont déjà écrits par étape ; ajouter le script utilisé et les mesures sous le même identifiant de rendu. | S |
