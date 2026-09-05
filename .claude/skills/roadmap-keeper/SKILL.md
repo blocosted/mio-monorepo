@@ -50,6 +50,13 @@ réponse : les tâches dont toutes les dépendances sont livrées, ordonnées pa
 - Signale les specs qui contiennent des adjectifs d'appréciation sans mesure
   (*fluide*, *naturel*, *propre*, *performant*, *amélioré*, *robuste*) — c'est le signal le
   plus fiable d'un critère non falsifiable.
+- Signale toute information sur les personnes plutôt que sur le projet (`CONVENTIONS.md` §5) :
+  situation professionnelle, contraintes personnelles, disponibilité, historique individuel,
+  ou une décision attribuée à une personne nommée plutôt qu'à « décision produit en attente ».
+  C'est le seul contrôle où **corriger toi-même fait partie du travail** : ne te contente pas
+  de signaler, réécris en gardant la conséquence et en supprimant la cause personnelle, puis
+  dis ce que tu as changé. Une occurrence signalée mais laissée en place finit par être
+  publiée.
 
 ### Fraîcheur et orphelins
 - Note de `roadmap/research/` de plus de 90 jours encore citée par une spec `a-faire` ou

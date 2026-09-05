@@ -134,6 +134,21 @@ concerne: [E02]
 
 ## 5. Règles de fond
 
+**Les documents ne décrivent que le projet.** Aucune information sur les personnes qui y
+travaillent — situation professionnelle, contraintes personnelles, disponibilité, historique
+individuel — n'a sa place dans `roadmap/`, dans `.claude/`, dans un message de commit ou dans
+un commentaire de code. Cela vaut pour tout ce qui est versionné, y compris ce qui semble
+anodin ou purement contextuel.
+
+Ce n'est pas une question de confidentialité seulement : une contrainte est utile pour le
+projet dans sa *conséquence*, jamais dans sa cause personnelle. « Un epic doit être livrable
+en 1 à 3 semaines » est une règle exploitable ; la raison pour laquelle la capacité est ce
+qu'elle est ne regarde pas le dépôt et n'apporte rien à qui lit la règle. Écris donc la
+conséquence, jamais la cause.
+
+Quand une décision revient à quelqu'un plutôt qu'au projet, écris **« décision produit en
+attente »** — pas qui décide.
+
 **Tout critère d'acceptation est falsifiable.** « L'audio est de bonne qualité » n'est pas un
 critère. « Le LUFS intégré du mix final est entre −19 et −17, mesuré par
 `audio-qa` » en est un. Si tu ne sais pas comment prouver qu'un critère est faux, il n'est
