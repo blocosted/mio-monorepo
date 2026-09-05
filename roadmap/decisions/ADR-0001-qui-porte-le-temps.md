@@ -1,7 +1,7 @@
 ---
 id: ADR-0001
 titre: Faire porter le temps de la voix par le fournisseur, et placer le reste sur des bornes mesurées
-statut: propose
+statut: accepte
 date: 2026-09-05
 concerne: [E01, E02, E03, E04]
 sources: [2026-09-05-elevenlabs-refonte-audio, S01-synthese-dialogue-et-stems]
@@ -11,10 +11,12 @@ sources: [2026-09-05-elevenlabs-refonte-audio, S01-synthese-dialogue-et-stems]
 
 ## Statut
 
-**propose** — 5 septembre 2026.
+**accepté** — 5 septembre 2026.
 
-Cette décision est proposée sur preuve documentaire. **L'axe A du spike S01 la confirme ou
-la réfute** ; elle ne passe en `accepte` qu'après son verdict.
+Accepté sur preuve documentaire, avant exécution du spike. **L'axe A de S01 reste le test de
+cette décision** : s'il est rejeté, cet ADR devient obsolète et l'option B s'applique. Le
+paragraphe « Ce qui nous ferait revenir dessus » est donc actif dès maintenant, et non
+seulement à terme.
 
 ## Contexte
 

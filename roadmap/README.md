@@ -63,7 +63,7 @@ Rien n'est bloqué : aucun epic n'est commencé.
 
 | Décision | Bloque | Qui tranche |
 |----------|--------|-------------|
-| **ADR-0001** — qui porte le temps dans le pipeline audio | E01, E02, E03, E04 | **Rédigé, statut `propose`.** Attend ta validation ; l'axe A de S01 le confirme ou le réfute |
+| ~~ADR-0001~~ | — | **Accepté.** L'axe A de S01 reste son test : un rejet le rendrait obsolète |
 | Refuser ou non l'entraînement du fournisseur sur les données envoyées | E02, E06 | Produit, par ADR |
 | Accepter ou non l'hébergement des données hors Union européenne | E02, E08 | Produit, par ADR |
 | Supprimer `fluent-ffmpeg`, déprécié et non maintenu, au profit d'un appel direct | E04 | Technique, à T0401 |
@@ -95,7 +95,7 @@ tableau ne garde que ce qui reste ouvert.
 
 ## Repères
 
-- Décisions : `decisions/` — 1 ADR (`ADR-0001`, `propose`), 3 attendus : refus de
+- Décisions : `decisions/` — 1 ADR (`ADR-0001`, **accepté**), 3 attendus : refus de
   l'entraînement sur les données, modèle de propriété des données, frontière moteur / univers
 - Veille : `research/` — 1 note (`2026-09-05-elevenlabs-refonte-audio`, révision 2), fraîche.
   La plupart des faits sont désormais *vérifiés* sur les types du SDK officiel. Restent non
