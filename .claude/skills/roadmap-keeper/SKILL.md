@@ -64,6 +64,12 @@ réponse : les tâches dont toutes les dépendances sont livrées, ordonnées pa
 - ADR `propose` depuis plus de deux semaines : une décision en attente bloque probablement
   quelque chose.
 - Spike `en-cours` sans `VERDICT.md` au-delà de sa time-box.
+- Spec portant un champ `hypotheses` non vide dont l'hypothèse est désormais levée — le spike
+  a rendu, la décision est prise, la mesure existe. La spec doit être relue avant
+  implémentation : c'est le signalement le plus utile de ce contrôle, parce que personne ne
+  pense à revenir sur une spec écrite il y a six semaines.
+- Spec au statut `planifiee` ou au-delà portant encore une hypothèse non levée : c'est une
+  erreur d'ordre, on implémente sur du sable.
 - Tâche rattachée à un epic inexistant, ADR référencé nulle part, fiche d'écoute orpheline.
 
 ## L'index

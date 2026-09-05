@@ -115,9 +115,17 @@ type: refonte             # feature | fix | refonte | spike | chore | dette
 depend_de: [T0201]
 adr: [ADR-0002]
 research: [2026-09-05-elevenlabs-music-api]
+hypotheses: [S01-axe-A]   # ce dont la validité de cette spec dépend, et qui n'est pas encore établi
 effort: M                 # S (< 1j) | M (1-3j) | L (3-8j) | XL (à découper)
 ---
 ```
+
+Le champ `hypotheses` est vide dans le cas courant. Il ne se remplit que lorsqu'une spec est
+écrite **avant** que ce sur quoi elle repose soit établi — un verdict de spike, une décision
+produit, une mesure à venir. C'est ce qui permet de savoir quoi relire quand l'hypothèse est
+levée, au lieu de découvrir à l'implémentation qu'une spec parlait d'un monde qui n'existe
+pas. Une spec portant des hypothèses non levées ne doit pas être implémentée sans les avoir
+revues.
 
 **ADR-XXXX.md**
 ```yaml
