@@ -52,6 +52,7 @@
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
     "drizzle-orm": "^0.38.4",
+    "@elevenlabs/elevenlabs-js": "^2.66.0",
     "elevenlabs": "^1.59.0",
     "elysia": "^1.4.22",
     "embla-carousel-react": "^8.6.0",
