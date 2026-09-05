@@ -52,7 +52,7 @@ qu'une personne extérieure doit écouter.
 |------------------|-------|---------------------|
 | **Exécuter S01** | `spikes/S01-synthese-dialogue-et-stems/` — protocole écrit, critère de décision figé | Décide l'architecture de E02 à E04. Prêt à lancer : demande `ffmpeg`, une clé d'API sur offre payante, et le stem voix d'une histoire existante. |
 | **Implémenter T0101** | `epics/E01-banc-essai-audio/T0101-fiabiliser-la-mesure/SPEC.md` | **Spécifiée.** Prochaine étape : `implementation-planner`. Bloque T0102 : étalonner avec un instrument faux propagerait l'erreur dans la charte. |
-| **Implémenter T0200** | `epics/E02-le-script-parle/T0200-migrer-sdk/SPEC.md` | Préalable bloquant de E02, E03 et E04. Quatre appels, aucune hypothèse en suspens, entièrement faisable. |
+| **Implémenter T0200** | `epics/E02-le-script-parle/T0200-migrer-sdk/` — **planifiée** | Préalable bloquant de E02, E03 et E04. 3 étapes réalisables ici ; la 4ᵉ (comparaison réelle) exige un accès au fournisseur, bloqué dans cet environnement. |
 | **Implémenter T0101** | `epics/E01-banc-essai-audio/T0101-fiabiliser-la-mesure/SPEC.md` | Demande `ffmpeg`. Bloque l'étalonnage de la charte. |
 
 ## Bloqué

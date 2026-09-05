@@ -2,7 +2,7 @@
 id: T0200
 epic: E02
 titre: Migrer vers le SDK courant du fournisseur audio
-statut: specifiee
+statut: planifiee
 type: dette
 depend_de: []
 adr: [ADR-0001]
