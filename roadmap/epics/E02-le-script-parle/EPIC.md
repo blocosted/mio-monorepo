@@ -66,13 +66,13 @@ aucune prédiction.
 
 | Id | Titre | Intention | Effort |
 |----|-------|-----------|--------|
-| T0200 | Migrer le SDK du fournisseur | Passer du paquet déprécié au paquet courant et migrer les appels existants. Préalable bloquant : sans lui, ni dialogue ni musique n'existent. | M |
-| T0201 | Format de script | Définir le nouveau contrat : tours de parole, tags en ligne, plus de timing relatif. C'est la tâche pivot de l'epic. | M |
-| T0202 | Validation d'exécution | Valider le script du LLM à l'exécution — énumérations, références, bornes — avec rejet et retour d'erreur exploitable pour la reprise. | M |
-| T0203 | Synthèse multi-voix | Remplacer la synthèse segment par segment par une génération en une passe. | L |
-| T0204 | Découpage en blocs | Découper aux frontières de scène pour tenir la limite de caractères, avec cache par bloc. | M |
-| T0205 | Attribution des voix | Narrateur explicite, unicité, normalisation des accents, correction des collisions de mots-clés. | M |
-| T0206 | Nettoyage narration | Supprimer les services de narration injoignables et le calcul de pauses devenu sans objet. | S |
+| T0200 ✔spécifiée | Migrer le SDK du fournisseur | Passer du paquet déprécié au paquet courant. Quatre appels seulement, tous présents sous le même nom : le risque est la forme des réponses, pas les noms. Préalable bloquant. | S |
+| T0201 ✔spécifiée | Format de script | Définir le nouveau contrat : tours de parole, tags en ligne, plus de timing relatif. C'est la tâche pivot de l'epic. | M |
+| T0202 ✔spécifiée | Validation d'exécution | Valider le script du LLM à l'exécution — énumérations, références, bornes — avec rejet et retour d'erreur exploitable pour la reprise. | M |
+| T0203 ✔spécifiée | Synthèse multi-voix | Remplacer la synthèse segment par segment par une génération en une passe. | L |
+| T0204 ✔spécifiée | Découpage en blocs | Découper aux frontières de scène pour tenir la limite de caractères, avec cache par bloc. | M |
+| T0205 ✔spécifiée | Attribution des voix | Narrateur explicite, unicité, normalisation des accents, correction des collisions de mots-clés. | M |
+| T0206 ✔spécifiée | Nettoyage narration | Supprimer les services de narration injoignables et le calcul de pauses devenu sans objet. | S |
 
 ## Dépendances et risques
 

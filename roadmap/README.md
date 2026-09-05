@@ -15,7 +15,7 @@ Aucun epic commencé. 12 epics, 49 tâches pressenties, 0 spécifiée.
 | Epic | Titre | Statut | Tâches | Objectif mesurable |
 |------|-------|--------|--------|--------------------|
 | E01 | Banc d'essai audio | a-faire | 0/6 (**6 spécifiées**) | Générer, mesurer et comparer une scène en moins d'une heure, hors workflow |
-| E02 | Le script parle | a-faire | 0/7 | Blancs conformes à la charte, voix distinctes et stables |
+| E02 | Le script parle | a-faire | 0/7 (**7 spécifiées**) | Blancs conformes à la charte, voix distinctes et stables |
 | E03 | Lit sonore | a-faire | 0/4 | Une ambiance à la fois, musique continue sans couture |
 | E04 | Mixage et masterisation | a-faire | 0/5 | Dix histoires conformes à la charte sans intervention |
 | E05 | Texte qui tient debout | a-faire | 0/5 | 8 scripts sur 10 tiennent la grille d'évaluation |
@@ -52,8 +52,8 @@ qu'une personne extérieure doit écouter.
 |------------------|-------|---------------------|
 | **Exécuter S01** | `spikes/S01-synthese-dialogue-et-stems/` — protocole écrit, critère de décision figé | Décide l'architecture de E02 à E04. Prêt à lancer : demande `ffmpeg`, une clé d'API sur offre payante, et le stem voix d'une histoire existante. |
 | **Implémenter T0101** | `epics/E01-banc-essai-audio/T0101-fiabiliser-la-mesure/SPEC.md` | **Spécifiée.** Prochaine étape : `implementation-planner`. Bloque T0102 : étalonner avec un instrument faux propagerait l'erreur dans la charte. |
-| Spécifier E02 | 7 tâches | Suite du chantier de spécification. |
-| Spécifier E03 à E09 | 37 tâches | Idem. |
+| **Implémenter T0200** | `epics/E02-le-script-parle/T0200-migrer-sdk/SPEC.md` | Préalable bloquant de E02, E03 et E04. Quatre appels, aucune hypothèse en suspens, entièrement faisable. |
+| **Implémenter T0101** | `epics/E01-banc-essai-audio/T0101-fiabiliser-la-mesure/SPEC.md` | Demande `ffmpeg`. Bloque l'étalonnage de la charte. |
 
 ## Bloqué
 
@@ -83,6 +83,7 @@ tableau ne garde que ce qui reste ouvert.
 
 | Constat | Nature | Action |
 |---------|--------|--------|
+| Trois specs de E02 portent `hypotheses: [S01-axe-A]` | attendu | T0201, T0203 et T0204 sont taillées pour une synthèse en une passe. Un rejet de l'axe A de S01 rendrait ADR-0001 obsolète et ces trois specs avec lui. À relire dès le verdict, avant toute implémentation. |
 | ~~`ADR-0001` référencé mais absent~~ | résolu | Rédigé en statut `propose`. |
 | E03 critère 4 : l'éditeur déconseille les tags de bruitage dans son propre outil de production | à traiter | Le repli est identifié et propre (placement sur `voiceSegments[]`, bornes issues de l'audio réel). S01 mesure s'il reste un usage marginal aux tags. |
 | `analyse-audio.ts` : le critère d'écrêtage est inopérant et les seuils de la charte y sont recopiés | à traiter | T0101, avant tout étalonnage. Le second point viole la règle de source unique. |
