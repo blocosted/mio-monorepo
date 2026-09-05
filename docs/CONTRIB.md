@@ -10,8 +10,12 @@ Ce guide couvre le workflow de développement pour contribuer au projet Mio.
 
 - **Bun** v1.2+ (runtime + package manager)
 - **Node.js** v20+ (pour certains outils Nx)
+- **FFmpeg** avec `ffprobe` (mixage audio, et mesure via le skill `audio-qa`)
 - **Docker** (optionnel, pour services locaux)
 - **Git**
+
+Vérifier FFmpeg : `ffmpeg -version && ffprobe -version`. Sans lui, la génération audio et
+toute mesure de qualité sonore sont impossibles — c'est un prérequis, pas une option.
 
 ---
 
