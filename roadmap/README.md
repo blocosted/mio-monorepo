@@ -63,6 +63,7 @@ Rien n'est bloqué : aucun epic n'est commencé.
 | Décision | Bloque | Qui tranche |
 |----------|--------|-------------|
 | **ADR-0001** — qui porte le temps dans le pipeline audio | E02, E03, E04 | Découle du verdict de S01 |
+| Journalisation activée (continuité prosodique entre blocs) ou mode sans rétention (minimisation des données) | E02 | Produit, par ADR |
 | Références commerciales pour étalonner la charte | T0102, donc la validité de toutes les mesures | Produit |
 | Sort des histoires déjà générées à la suppression du moteur de timeline | T0405 | Produit |
 | Curseur entre protection et richesse narrative | E06 | Produit, à écrire dans `PRODUIT.md` |
@@ -73,6 +74,7 @@ Rien n'est bloqué : aucun epic n'est commencé.
 
 | Constat | Nature | Action |
 |---------|--------|--------|
+| E03 critère 4 menacé : les bruitages en ligne sont rapportés peu fiables (`research/2026-09-05-elevenlabs-refonte-audio`) | à traiter | Mesurer le taux de déclenchement dans S01 avant de spécifier E03. Repli identifié : piste de bruitages placée par Mio, adossée à l'alignement réel. |
 | E02, E03, E04 référencent `ADR-0001` qui n'existe pas | attendu | L'ADR naîtra du verdict de S01. À créer avant de spécifier T0201. |
 | E02 emploie « naturellement » sans mesure | acceptable | Dans la section narrative, pas dans un critère de sortie. Le critère 1 renvoie à `charte.json`. |
 | E02 emploie « propre » | faux positif | « sa voix propre », possessif, pas l'adjectif d'appréciation. Le contrôle sera affiné. |
@@ -80,7 +82,8 @@ Rien n'est bloqué : aucun epic n'est commencé.
 ## Repères
 
 - Décisions : `decisions/` — 0 ADR, 1 attendu (ADR-0001)
-- Veille : `research/` — 0 note. Les constats ElevenLabs de cette session sont à formaliser
-  par `tech-scout` avant de servir de base à une spec.
+- Veille : `research/` — 1 note (`2026-09-05-elevenlabs-refonte-audio`), fraîche. Aucun fait
+  n'atteint le niveau *vérifié* : le domaine du fournisseur est bloqué par le proxy réseau,
+  tout est à reconfirmer par appel réel dans S01.
 - Spikes : `spikes/` — 0, 1 à lancer (S01)
 - Écoutes : `audio/` — charte v0.1.0 non étalonnée, 0 référence, 0 fiche
