@@ -201,8 +201,10 @@ mio/
 │   ├── helpers/       # Env loader + utilities
 │   └── scripts/       # CLI tools
 ├── docs/              # Documentation
-├── backlog.md         # User stories
-├── roadmap.md         # Planning
+├── roadmap/           # Méthode, epics, specs, décisions, veille, écoutes
+│   ├── CONVENTIONS.md # Méthode de travail (référence unique)
+│   ├── PRODUIT.md     # Vision + charte sonore
+│   └── archive/       # Ancienne planification (janvier 2026)
 └── CLAUDE.md          # Contexte projet
 ```
 
@@ -465,8 +467,10 @@ Tester tous les endpoints manuellement.
 
 ## Ressources
 
-- **Backlog:** `backlog.md` (toutes les US)
-- **Roadmap:** `roadmap.md` (planning)
+- **Méthode:** `roadmap/CONVENTIONS.md`
+- **Produit et charte sonore:** `roadmap/PRODUIT.md`
+- **Index de la roadmap:** `roadmap/README.md` (régénéré par le skill `roadmap-keeper`)
+- **Ancienne planification:** `roadmap/archive/` (voir `TRI-EXISTANT.md` pour ce qui a été conservé)
 - **PRD:** `story-app-prd.md` (spec produit)
 - **Docs:** `docs/` (référence)
 - **CLAUDE.md:** Contexte pour Claude AI

@@ -108,14 +108,15 @@ Backend production-ready:
 
 **Prochaine étape:** Frontend Next.js (Phase 2)
 
-Voir `../backlog.md` et `../roadmap.md` pour détails.
+Voir `../roadmap/` pour détails (`PRODUIT.md`, `epics/`).
 
 ---
 
 ## 🔗 Ressources
 
-- **Backlog:** `../backlog.md` (User Stories)
-- **Roadmap:** `../roadmap.md` (Planning)
+- **Méthode:** `../roadmap/CONVENTIONS.md`
+- **Produit et charte sonore:** `../roadmap/PRODUIT.md`
+- **Ancienne planification:** `../roadmap/archive/`
 - **PRD:** `../story-app-prd.md` (Spec produit)
 - **CLAUDE.md:** `../CLAUDE.md` (Contexte IA)
 

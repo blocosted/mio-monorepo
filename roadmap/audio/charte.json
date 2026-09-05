@@ -1,0 +1,26 @@
+{
+  "_note": "Seuils faisant autorité pour audio-qa. Justification dans roadmap/PRODUIT.md §7. Hypothèses à valider à l'oreille et à étaloner sur roadmap/audio/references/ — ne pas traiter comme des vérités.",
+  "_version": "0.1.0-hypothese",
+  "_revu_le": "2026-09-05",
+
+  "lufsIntegre": [-19, -17],
+  "truePeakMax": -1.5,
+  "lraMax": 8,
+  "margeSursautMax": 5,
+
+  "silenceTeteSec": [0.2, 1.0],
+  "silenceQueueSec": [1.0, 3.0],
+  "blancMedianSec": [0.25, 0.5],
+  "blancP90MaxSec": 0.9,
+  "blancMaxSec": 2.5,
+
+  "seuilSilenceDb": -40,
+  "dureeMinSilenceSec": 0.25,
+
+  "_equilibreStems": {
+    "_note": "Écarts de LUFS intégré par rapport au stem voix, mesurés stem par stem isolément. Non calculés par analyse-audio.ts : le skill audio-qa compare les mesures individuelles.",
+    "musiqueSousVoixLu": [14, 20],
+    "ambianceSousVoixLu": [18, 26],
+    "sfxSousVoixLu": [4, 10]
+  }
+}
