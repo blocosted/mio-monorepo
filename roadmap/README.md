@@ -49,7 +49,7 @@ qu'une personne extérieure doit écouter.
 
 | Prochaine action | Objet | Pourquoi maintenant |
 |------------------|-------|---------------------|
-| Lancer `spike-runner` | **S01** — synthèse multi-voix, musique, mixage 3 stems | Décide l'architecture de E02 à E04. Rien de lourd ne doit démarrer avant son verdict. |
+| **Exécuter S01** | `spikes/S01-synthese-dialogue-et-stems/` — protocole écrit, critère de décision figé | Décide l'architecture de E02 à E04. Prêt à lancer : demande `ffmpeg`, une clé d'API sur offre payante, et le stem voix d'une histoire existante. |
 | Lancer `task-specifier` | **T0101** — fiabiliser la mesure | Indépendant du spike, débloque le jugement de tout le reste. |
 | Lancer `task-specifier` | **T0102** — étalonner la charte | Nécessite des références commerciales fournies de l'extérieur du dépôt. |
 | Lancer `task-specifier` | **T0801** — modèle de propriété | E08 n'a aucune dépendance ; utile si besoin de changer de sujet. |
@@ -85,5 +85,5 @@ Rien n'est bloqué : aucun epic n'est commencé.
 - Veille : `research/` — 1 note (`2026-09-05-elevenlabs-refonte-audio`), fraîche. Aucun fait
   n'atteint le niveau *vérifié* : le domaine du fournisseur est bloqué par le proxy réseau,
   tout est à reconfirmer par appel réel dans S01.
-- Spikes : `spikes/` — 0, 1 à lancer (S01)
+- Spikes : `spikes/` — 1 (S01, protocole écrit, en attente d'exécution)
 - Écoutes : `audio/` — charte v0.1.0 non étalonnée, 0 référence, 0 fiche
