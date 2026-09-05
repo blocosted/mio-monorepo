@@ -25,9 +25,12 @@ C'est le deuxième symptôme le plus audible après la voix, et il dépend d'ell
 d'accompagnement se calent sur la durée réelle de la piste voix, qui n'est connue qu'une fois
 E02 livré.
 
-Le repousser laisse en place deux défauts structurels : une musique fabriquée en bouclant un
-clip court issu de l'API d'effets sonores, et des ambiances qui s'empilent au lieu de se
-succéder — après le troisième changement de lieu, les trois jouent ensemble jusqu'à la fin.
+Le repousser laisse en place deux défauts structurels. Une musique fabriquée en bouclant un
+clip court issu de l'API d'effets sonores, d'abord. Et une ambiance qui n'existe pas : la
+piste n'étant jamais demandée au LLM, l'étape de génération d'ambiance du workflow **ne
+produit jamais rien** — elle consomme un aller-retour de file de messages, un créneau de
+progression et deux reprises configurées pour rien. Le mécanisme d'empilement de N ambiances
+jusqu'à la fin existe bien dans le mixeur, mais il ne s'est jamais déclenché en production.
 
 ## Périmètre
 
@@ -63,16 +66,20 @@ succéder — après le troisième changement de lieu, les trois jouent ensemble
 | T0301 | Stem musique | Générer la musique comme morceau unique à la longueur mesurée du stem voix. | M |
 | T0302 | Stem ambiance exclusif | Une ambiance à la fois, séquencée avec fondus croisés aux changements de lieu, sur toute la durée. | M |
 | T0303 | Bruitages portés par le script | Faire porter les bruitages ponctuels par le script de dialogue plutôt que par une piste séparée à placer. | M |
-| T0304 | Nettoyage sound-design | Supprimer le placement de bruitages, les bibliothèques musique et effets devenues sans usage, et les constantes orphelines. | S |
+| T0304 | Nettoyage sound-design | Supprimer le placement de bruitages, les bibliothèques musique et effets devenues sans usage, et les constantes orphelines. Supprimer aussi l'étape de workflow qui ne produit rien. | S |
 
 ## Dépendances et risques
 
 Dépend de **E02** : la durée réelle de la voix est l'entrée de tout le reste.
 
-**Risque principal :** les bruitages portés par le script sont moins contrôlables qu'un
-fichier placé à la main — on ne choisit plus le son, on le décrit. Si le résultat est trop
-aléatoire pour un usage enfant, il faut revenir à une piste séparée, et la mesure du
-critère 4 devient inatteignable telle quelle. Signal d'alerte : à évaluer dès S01.
+**Risque principal — désormais quasi certain.** La veille a établi que l'éditeur documente
+les tags de bruitage tout en les **déconseillant explicitement dans son propre outil de
+production**, et qu'ils sont dépendants de la voix et à tester avant tout usage réel. Le
+critère 4 est donc probablement inatteignable tel qu'écrit. Le repli est identifié et propre :
+une piste de bruitages placée par Mio sur les bornes de `voiceSegments[]` — l'API renvoie,
+pour chaque tour du script, la voix et ses bornes en secondes issues de l'audio réellement
+produit. Placer redevient sûr, puisqu'on place sur du mesuré. S01 mesure le taux de
+déclenchement pour savoir s'il reste un usage marginal aux tags.
 
 **Risque secondaire :** la génération musicale est réservée aux comptes payants et son coût
 n'est pas connu. À chiffrer avant T0301.

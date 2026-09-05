@@ -36,10 +36,17 @@ mal.
 
 **Dans :**
 - Fiabiliser `analyse-audio.ts` sur de vraies sorties `ffmpeg` (le script compile mais n'a
-  jamais tourné de bout en bout)
+  jamais tourné de bout en bout), et corriger deux défauts déjà identifiés statiquement :
+  le critère d'écrêtage teste `Peak count === 0`, or cette mesure vaut au moins 1 sur tout
+  fichier non silencieux — le verdict sera systématiquement en échec ; et le script **recopie
+  les seuils de la charte** au lieu de s'y référer, ce qui contredit la règle de source unique
 - Étalonner la charte sur des références commerciales
-- Un chemin de génération d'une scène isolée, hors workflow Upstash
-- La conservation systématique des stems et du script à côté du mix
+- **Fiabiliser et resserrer le chemin de génération hors workflow qui existe déjà**
+  (`nx run scripts:pipeline -- full-story --scriptFile …`,
+  `packages/scripts/src/pipeline/full-story.ts`) pour le ramener à l'échelle d'une scène
+- **Compléter le magasin de runs existant** (`packages/scripts/src/_local-run-store/`) pour
+  qu'il conserve le script et les mesures à côté du mix — les stems y sont déjà écrits par
+  étape
 - La comparaison outillée de deux rendus
 - Le suivi du coût et de la durée par génération
 
@@ -66,10 +73,10 @@ mal.
 
 | Id | Titre | Intention | Effort |
 |----|-------|-----------|--------|
-| T0101 | Fiabiliser la mesure | Confronter le parsing `ebur128` / `astats` / `silencedetect` à de vraies sorties et corriger. Ajouter les cas dégradés : fichier muet, mono, très court. | S |
+| T0101 | Fiabiliser la mesure | Confronter le parsing `ebur128` / `astats` / `silencedetect` à de vraies sorties et corriger. Remplacer le critère d'écrêtage, inopérant. Supprimer la copie des seuils de la charte. Ajouter les cas dégradés : fichier muet, mono, très court. | M |
 | T0102 | Étalonner la charte | Mesurer des références commerciales, comparer aux seuils actuels, réviser et justifier les écarts. | S |
-| T0103 | Générer une scène isolée | Un chemin de génération hors workflow, prenant un script figé en entrée, pour supprimer QStash de la boucle de retour. | M |
-| T0104 | Conserver les stems | Systématiser la conservation du mix, des stems, du script et des métadonnées sous un identifiant de rendu. | S |
+| T0103 | Resserrer la génération hors workflow | Le chemin existe (`packages/scripts/src/pipeline/full-story.ts`) mais instancie les services par `new`, hors conteneur — il diverge donc du chemin de production. Le faire passer par le conteneur et le ramener à l'échelle d'une scène. | M |
+| T0104 | Compléter le magasin de runs | Les stems sont déjà écrits par étape ; ajouter le script utilisé et les mesures sous le même identifiant de rendu. | S |
 | T0105 | Comparer deux rendus | Écart mesure par mesure entre deux rendus, et fiche de comparaison. | S |
 | T0106 | Compter le coût | Enregistrer appels d'API, caractères consommés et durée pour chaque génération. | S |
 
@@ -82,9 +89,10 @@ la charte — c'est le but, mais il faut accepter de réécrire les seuils plut�
 défendre. Signal d'alerte : si l'écart est important sur plus de trois critères, c'est le
 raisonnement de `PRODUIT.md` §7 qu'il faut revoir, pas seulement les chiffres.
 
-**Risque secondaire :** la génération hors workflow peut diverger du chemin de production et
-mesurer autre chose que ce qui sort réellement. Le même code de génération doit être appelé,
-seul l'orchestrateur change.
+**Risque secondaire — déjà réalisé.** La génération hors workflow existante instancie les
+services directement (`packages/scripts/src/pipeline/full-story.ts`), hors conteneur : elle
+mesure donc potentiellement autre chose que ce qui sort en production. C'est l'objet de T0103,
+et c'est à corriger avant d'étalonner quoi que ce soit.
 
 ## Questions ouvertes
 

@@ -31,6 +31,9 @@ aucune prédiction.
 ## Périmètre
 
 **Dans :**
+- **La migration du SDK du fournisseur.** Le paquet épinglé est déprécié et n'expose ni la
+  synthèse de dialogue ni la génération musicale : c'est un préalable bloquant à E02, E03 et
+  E04, pas une tâche de confort
 - Le nouveau format de script : des tours de parole, des tags audio en ligne, plus de
   `timingHint`
 - La validation d'exécution du script produit par le LLM
@@ -63,6 +66,7 @@ aucune prédiction.
 
 | Id | Titre | Intention | Effort |
 |----|-------|-----------|--------|
+| T0200 | Migrer le SDK du fournisseur | Passer du paquet déprécié au paquet courant et migrer les appels existants. Préalable bloquant : sans lui, ni dialogue ni musique n'existent. | M |
 | T0201 | Format de script | Définir le nouveau contrat : tours de parole, tags en ligne, plus de timing relatif. C'est la tâche pivot de l'epic. | M |
 | T0202 | Validation d'exécution | Valider le script du LLM à l'exécution — énumérations, références, bornes — avec rejet et retour d'erreur exploitable pour la reprise. | M |
 | T0203 | Synthèse multi-voix | Remplacer la synthèse segment par segment par une génération en une passe. | L |
@@ -75,6 +79,7 @@ aucune prédiction.
 Dépend de **E01** : sans banc d'essai, on ne saura pas si le changement améliore.
 Dépend du **spike S01**, dont le verdict détermine si cette architecture est retenue.
 Dépend d'un **ADR** actant la délégation du timing.
+T0200 conditionne tout le reste de l'epic, et aussi E03 et E04.
 
 **Risque principal :** la granularité de reprise diminue. Aujourd'hui un segment raté se
 régénère seul ; demain c'est un bloc entier, et le modèle n'étant pas déterministe, le reste

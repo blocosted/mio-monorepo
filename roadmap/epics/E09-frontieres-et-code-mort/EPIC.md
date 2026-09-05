@@ -18,10 +18,12 @@ voir, et savoir qu'aucun code du dépôt n'est écrit sans être appelé.
 
 Ce n'est pas un epic de rangement : chacun de ces défauts a un effet observé. Le cycle entre
 le package partagé et l'application serveur fait que toute application front tire le graphe
-complet du serveur. L'absence de manifestes de packages rend inopérant le contrôle
-automatique des frontières. Et plus de mille lignes de services soignés n'ont jamais été
-appelées — le pipeline empruntait systématiquement le chemin le plus naïf, sans que rien ne
-le signale.
+complet du serveur — et plus lourd encore, dix-sept fichiers de `packages/scripts` importent
+l'application serveur **à l'exécution**, pas seulement en type. Le contrôle automatique des
+frontières n'est pas neutralisé par l'absence de manifestes : il n'est pas installé du tout,
+aucune configuration ESLint n'existant dans le dépôt. Et 748 lignes de services soignés n'ont
+jamais été appelées — le pipeline empruntait systématiquement le chemin le plus naïf, sans que
+rien ne le signale.
 
 Il vient après E04 parce que les epics audio suppriment eux-mêmes une grande partie du code
 mort : le faire avant reviendrait à ranger une pièce qu'on va vider.
@@ -49,10 +51,10 @@ fichiers pour la beauté du geste.
 
 | Id | Titre | Intention | Effort |
 |----|-------|-----------|--------|
-| T0901 | Package de contrats | Extraire les schémas d'API dans un package sans dépendance vers une application, pour rompre le cycle. | M |
+| T0901 | Package de contrats | Extraire les schémas d'API dans un package sans dépendance vers une application, pour rompre le cycle de type. Ne règle pas les imports d'exécution de `packages/scripts` : trancher si les scripts sont une application ou un package est une décision à part. | M |
 | T0902 | Manifestes de packages | Manifestes et points d'entrée explicites, pour rendre le contrôle des frontières opérant. | M |
 | T0903 | Protection serveur | Empêcher qu'un module serveur soit importé côté client. | S |
-| T0904 | Contrôle des frontières | Automatiser la vérification et la brancher sur la vérification locale. | S |
+| T0904 | Contrôle des frontières | **Installer** un mécanisme de contrôle des frontières — il n'en existe aucun — et le brancher sur la vérification locale. | M |
 | T0905 | Chasse au code mort | Détecter et supprimer les exports injoignables. | M |
 | T0906 | Documentation à jour | Aligner `CLAUDE.md` sur la réalité. | S |
 

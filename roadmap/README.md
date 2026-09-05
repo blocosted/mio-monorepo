@@ -1,6 +1,7 @@
 # Roadmap Mio
 
-*Index régénéré le 5 septembre 2026 par `roadmap-keeper`. Ne pas éditer à la main.*
+*Index régénéré le 5 septembre 2026 par `roadmap-keeper`, après vérification indépendante des
+affirmations de l'audit et de la veille. Ne pas éditer à la main.*
 
 Méthode : `CONVENTIONS.md` · Produit et charte sonore : `PRODUIT.md` ·
 Ancienne planification : `archive/TRI-EXISTANT.md`
@@ -14,7 +15,7 @@ Aucun epic commencé. 12 epics, 49 tâches pressenties, 0 spécifiée.
 | Epic | Titre | Statut | Tâches | Objectif mesurable |
 |------|-------|--------|--------|--------------------|
 | E01 | Banc d'essai audio | a-faire | 0/6 | Générer, mesurer et comparer une scène en moins d'une heure, hors workflow |
-| E02 | Le script parle | a-faire | 0/6 | Blancs conformes à la charte, voix distinctes et stables |
+| E02 | Le script parle | a-faire | 0/7 | Blancs conformes à la charte, voix distinctes et stables |
 | E03 | Lit sonore | a-faire | 0/4 | Une ambiance à la fois, musique continue sans couture |
 | E04 | Mixage et masterisation | a-faire | 0/5 | Dix histoires conformes à la charte sans intervention |
 | E05 | Texte qui tient debout | a-faire | 0/5 | 8 scripts sur 10 tiennent la grille d'évaluation |
@@ -63,7 +64,10 @@ Rien n'est bloqué : aucun epic n'est commencé.
 | Décision | Bloque | Qui tranche |
 |----------|--------|-------------|
 | **ADR-0001** — qui porte le temps dans le pipeline audio | E02, E03, E04 | Découle du verdict de S01 |
-| Journalisation activée (continuité prosodique entre blocs) ou mode sans rétention (minimisation des données) | E02 | Produit, par ADR |
+| Refuser ou non l'entraînement du fournisseur sur les données envoyées | E02, E06 | Produit, par ADR |
+| Accepter ou non l'hébergement des données hors Union européenne | E02, E08 | Produit, par ADR |
+| Supprimer `fluent-ffmpeg`, déprécié et non maintenu, au profit d'un appel direct | E04 | Technique, à T0401 |
+| Les scripts sont-ils une application ou un package ? | E09 | Technique, par ADR |
 | Références commerciales pour étalonner la charte | T0102, donc la validité de toutes les mesures | Produit |
 | Sort des histoires déjà générées à la suppression du moteur de timeline | T0405 | Produit |
 | Curseur entre protection et richesse narrative | E06 | Produit, à écrire dans `PRODUIT.md` |
@@ -72,18 +76,28 @@ Rien n'est bloqué : aucun epic n'est commencé.
 
 ## Incohérences détectées
 
+Deux vérifications indépendantes ont été passées sur ce corpus : les affirmations sur le code
+et les faits de veille. **85 affirmations contrôlées : 69 confirmées, 12 imprécises, 2 fausses,
+2 non vérifiables.** Toutes les erreurs relevées ont été corrigées dans les documents ; ce
+tableau ne garde que ce qui reste ouvert.
+
 | Constat | Nature | Action |
 |---------|--------|--------|
-| E03 critère 4 menacé : les bruitages en ligne sont rapportés peu fiables (`research/2026-09-05-elevenlabs-refonte-audio`) | à traiter | Mesurer le taux de déclenchement dans S01 avant de spécifier E03. Repli identifié : piste de bruitages placée par Mio, adossée à l'alignement réel. |
-| E02, E03, E04 référencent `ADR-0001` qui n'existe pas | attendu | L'ADR naîtra du verdict de S01. À créer avant de spécifier T0201. |
-| E02 emploie « naturellement » sans mesure | acceptable | Dans la section narrative, pas dans un critère de sortie. Le critère 1 renvoie à `charte.json`. |
-| E02 emploie « propre » | faux positif | « sa voix propre », possessif, pas l'adjectif d'appréciation. Le contrôle sera affiné. |
+| E02, E03, E04 référencent `ADR-0001` qui n'existe pas | attendu | L'ADR naîtra du verdict de S01, avant la spécification de T0201. |
+| E03 critère 4 : l'éditeur déconseille les tags de bruitage dans son propre outil de production | à traiter | Le repli est identifié et propre (placement sur `voiceSegments[]`, bornes issues de l'audio réel). S01 mesure s'il reste un usage marginal aux tags. |
+| `analyse-audio.ts` : le critère d'écrêtage est inopérant et les seuils de la charte y sont recopiés | à traiter | T0101, avant tout étalonnage. Le second point viole la règle de source unique. |
+| La cible de masterisation du code (−16 LUFS) contredit la charte (−19 à −17) | à traiter | T0404. Tant qu'elle tient, le critère 1 de E04 est inatteignable. |
+| Une étape du workflow ne produit jamais rien | à traiter | T0304. |
+| `packages/scripts` importe l'application serveur à l'exécution dans 17 fichiers | à traiter | E09. T0901 ne le règle pas : c'est une décision d'architecture à part. |
+| `elevenlabs@1.59.0` déprécié, sans dialogue ni musique | **bloquant** | T0200, préalable à E02, E03 et E04. Le paquet courant est installé à côté ; les appels restent à migrer. |
+| `fluent-ffmpeg` déprécié et figé, non actualisable | à trancher | E04, question ouverte. |
+| E02 emploie « naturellement » sans mesure | acceptable | Section narrative, pas un critère. |
 
 ## Repères
 
 - Décisions : `decisions/` — 0 ADR, 1 attendu (ADR-0001)
-- Veille : `research/` — 1 note (`2026-09-05-elevenlabs-refonte-audio`), fraîche. Aucun fait
-  n'atteint le niveau *vérifié* : le domaine du fournisseur est bloqué par le proxy réseau,
-  tout est à reconfirmer par appel réel dans S01.
+- Veille : `research/` — 1 note (`2026-09-05-elevenlabs-refonte-audio`, révision 2), fraîche.
+  La plupart des faits sont désormais *vérifiés* sur les types du SDK officiel. Restent non
+  vérifiés : les tarifs, la politique d'usage interdit, et le comportement réel des tags.
 - Spikes : `spikes/` — 1 (S01, protocole écrit, en attente d'exécution)
 - Écoutes : `audio/` — charte v0.1.0 non étalonnée, 0 référence, 0 fiche

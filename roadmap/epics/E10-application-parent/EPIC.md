@@ -38,9 +38,12 @@ langage clair.
 **Hors :** l'enfant comme source d'entrée — E11. Ici le parent reste aux commandes, comme
 aujourd'hui, mais dans une vraie application.
 
-**Réutilisable :** l'ancienne planification contient treize interfaces déjà décrites
-(profils, saisie initiale, lecteur, bibliothèque, suivi de génération) reportées à ce stade
-— voir `roadmap/archive/TRI-EXISTANT.md`. Leurs critères d'acceptation sont réutilisables.
+**Réutilisable :** l'ancienne planification contient douze US front reportées à ce stade,
+dont neuf sont des écrans (profils, saisie initiale, lecteur, bibliothèque, suivi de
+génération) et trois des chantiers transverses (états d'erreur, application installable,
+squelettes de chargement) — voir `roadmap/archive/TRI-EXISTANT.md`. Leurs critères
+d'acceptation sont réutilisables. La treizième US reportée, la page de questions guidées,
+relève de E11.
 
 ## Critères de sortie
 

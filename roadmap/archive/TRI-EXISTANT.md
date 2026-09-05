@@ -16,11 +16,11 @@ absents** de l'ancienne planification.
 
 | US | Titre | Décision | Motif |
 |----|-------|----------|-------|
-| 001 | Monorepo Nx ✅ | reformuler | Acquis, mais l'audit révèle un cycle `shared → api`, l'absence de `package.json` dans les packages (donc `enforce-module-boundaries` inopérant) et aucun garde `server-only`. À reprendre comme dette. |
+| 001 | Monorepo Nx ✅ | reformuler | Acquis, mais l'audit révèle un cycle `shared → api`, l'absence de `package.json` dans les packages, et aucun garde `server-only`. Surtout : **il n'existe aucune configuration ESLint** — le contrôle des frontières n'est pas neutralisé, il n'est pas installé. Le lint est Biome, qui n'a aucune règle de frontière d'import. À reprendre comme dette. |
 | 002 | Base Supabase ✅ | garder | Acquis. |
 | 003 | Supabase Storage ✅ | reformuler | Le bucket audio est **public** en lecture anonyme. À reprendre en privé + URL signées. |
 | 004 | Redis ✅ | garder | Acquis. |
-| 005 | Upstash Workflow ✅ | reformuler | La signature QStash n'est jamais vérifiée alors que la clé est déclarée. Et le workflow passe de 9 étapes à ~4 avec la refonte. |
+| 005 | Upstash Workflow ✅ | reformuler | La signature QStash n'est jamais vérifiée alors que la clé est déclarée. Le workflow compte **11** étapes (les commentaires du code annoncent 9, à tort) et passe à ~4 avec la refonte. Une de ces étapes ne produit jamais rien. |
 | 006 | Docker Scaleway | garder | Toujours pertinent, toujours pas fait. |
 | 007 | API Elysia ✅ | reformuler | Acquis, mais **aucune authentification** n'est montée. |
 | 008 | Client Eden type-safe ✅ | reformuler | Fonctionne, mais c'est lui qui porte le cycle `shared → api` : le contrat HTTP vit dans le package du client, qui importe le type de l'app Elysia. À scinder en `@mio/contracts`. |
@@ -40,7 +40,7 @@ absents** de l'ancienne planification.
 | US | Titre | Décision | Motif |
 |----|-------|----------|-------|
 | 020 | Histoire depuis prompt initial ✅ | garder | Acquis. |
-| 022 | Enrichissement LLM ✅ | reformuler | Aucune consigne de sécurité dans le prompt système ; l'univers est une chaîne libre ; les 8 ambiances sont codées en dur à trois endroits avec repli silencieux sur `forest`. |
+| 022 | Enrichissement LLM ✅ | reformuler | Les seules consignes de contenu dérivent des préférences parentales et du niveau de vocabulaire ; aucune règle de sécurité indépendante. L'univers est une chaîne libre ; les 8 ambiances sont codées en dur à trois endroits avec repli silencieux sur `forest` — et le ton a le même repli muet, sur `adventurous`. |
 | 023 | Endpoint enrichissement ✅ | garder | Acquis. Le corps de requête accepte un champ `duration` jamais lu — détail à nettoyer. |
 | 021 | Page input initial (front) | reporter | Idem pages profil. |
 | 024 | Page d'enrichissement (front) | **jeter** | L'enrichissement est une étape interne du pipeline, pas un écran. En faire une page expose une mécanique que l'utilisateur n'a pas à voir. |
@@ -71,7 +71,7 @@ absents** de l'ancienne planification.
 | 053 | Step voix ✅ | reformuler | Absorbé par la génération en une passe. |
 | 054 | Step SFX ✅ | **jeter** | Absorbé par la piste voix. |
 | 055 | Step musique ✅ | reformuler | Un stem pleine longueur au lieu d'une boucle. |
-| 056 | Ambiance ✅ | reformuler | Un stem pleine longueur, exclusif, au lieu de N segments empilés qui jouent tous simultanément jusqu'à la fin. |
+| 056 | Ambiance ✅ | reformuler | Un stem pleine longueur et exclusif. L'empilement de N ambiances jusqu'à la fin est réel dans le mixeur et dans les scripts locaux, mais **ne se produit jamais en production** : la piste ambiance n'étant jamais demandée au LLM, l'étape sort immédiatement. Le workflow paie une étape qui ne produit rien. |
 | 060 | FFmpeg Mixer ✅ | reformuler | De 880 lignes de moteur de timeline à ~150 lignes de mixage de stems. FFmpeg reste, sa mission change. |
 | 061 | Timeline vocale ✅ | **jeter** | `TimelineComputationService` et la table `computed_timelines` disparaissent : le temps n'est plus prédit. |
 | 062 | Step mixage ✅ | reformuler | Simplifié en conséquence. |
@@ -127,12 +127,12 @@ plus important de ce tri : les trous comptent plus que les redites.
 | **Authentification et modèle de propriété** | Aucune table utilisateur, aucun propriétaire de profil enfant, aucun plugin d'auth sur l'API — et **aucune US** ne les prévoit. Bloquant absolu avant tout utilisateur externe. |
 | **Vérification de signature QStash** | L'endpoint de workflow est ouvert : n'importe qui peut déclencher ou rejouer une génération, donc brûler du crédit LLM et TTS. |
 | **Stockage privé** | Bucket public en lecture anonyme, URL déterministe. Combiné à l'API ouverte, l'audio des histoires est énumérable. |
-| **Frontières de packages** | Cycle `shared → api`, aucun `package.json` dans les packages, aucun garde `server-only`. |
+| **Frontières de packages** | Cycle `shared → api` en import de type, mais surtout **17 fichiers de `packages/scripts` important `apps/api` à l'exécution**. Aucun `package.json` dans les packages, aucun garde `server-only`, et aucun outil de contrôle des frontières installé. |
 | **Charte sonore et outillage de mesure** | La qualité audio n'était mesurée par rien. C'est désormais couvert par `audio-qa` et `roadmap/audio/charte.json`. |
 | **Entité univers** | Aucune entité monde / trame / personnage réutilisable. Sans elle, la place de marché est inatteignable. |
 | **Chemin de détresse vers le parent** | Rien n'est prévu si un enfant exprime quelque chose d'inquiétant. |
 | **RGPD, rétention, minimisation** | Aucune mention de consentement, de durée de conservation ni de suppression, pour un produit traitant des données de mineurs. |
-| **Suppression de code mort** | Plus de 1 000 lignes de services soignés jamais appelés (matching de voix, batching TTS, stratégie musicale). Ce n'est pas une US, mais c'est un livrable de la refonte. |
+| **Suppression de code mort** | 748 lignes de services soignés jamais appelés : matching de voix et batching TTS. La stratégie musicale, elle, est vivante côté scripts mais absente du chemin de production — à brancher, pas à supprimer. Ce n'est pas une US, mais c'est un livrable de la refonte. |
 
 ---
 

@@ -21,7 +21,7 @@ données — n'existe que pour servir ce qui sort du haut-parleur.
 
 Écrit sans complaisance, parce que les décisions de roadmap en dépendent.
 
-**Ce qui existe et fonctionne :** un pipeline de génération en 9 étapes piloté par Upstash
+**Ce qui existe et fonctionne :** un pipeline de génération en 11 étapes piloté par Upstash
 Workflow, un backoffice d'administration, des bibliothèques audio persistantes, une
 infrastructure de test avec conteneurs. C'est du travail sérieux.
 
@@ -36,7 +36,10 @@ d'effets sonores. La cause racine est un modèle temporel inversé : le système
 durées puis fabrique de l'audio censé y correspondre.
 
 **Ce qui manque structurellement :** aucune authentification sur l'API, aucune table
-d'utilisateurs, aucune notion de propriétaire d'un profil enfant, aucun garde-fou de contenu.
+d'utilisateurs, aucune notion de propriétaire d'un profil enfant. Les seules contraintes de
+contenu des prompts sont dérivées des préférences parentales et du niveau de vocabulaire par
+âge — aucune règle de sécurité indépendante de ces préférences, et rien du tout sur le prompt
+de génération de script.
 
 ---
 

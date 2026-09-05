@@ -29,9 +29,15 @@ Tout service, module ou fonction exportée introduit par la tâche doit être at
 un handler, un workflow, un script ou un test d'intégration. Vérifie-le par recherche, pas
 par intuition.
 
-*Historique : plus de 1 000 lignes de services soignés (matching de voix, batching TTS,
-stratégie musicale) n'étaient jamais appelées. Le pipeline en production empruntait
-systématiquement le chemin le plus naïf.*
+*Historique : 748 lignes de services soignés n'étaient jamais appelées — le matching de voix
+(403 l.) et le batching TTS (345 l.), seulement ré-exportés et couverts par un test unitaire.
+Le pipeline en production empruntait systématiquement le chemin le plus naïf.*
+
+*Attention au faux positif symétrique : la stratégie musicale (304 l.) semblait morte au même
+titre, mais elle est instanciée par les scripts (`packages/scripts/src/mix/mix-story.ts:264`)
+et liée dans le conteneur. Elle est absente du chemin de production de l'API, ce qui est un
+autre défaut et appelle une autre correction — brancher, pas supprimer. Vérifie toujours les
+scripts et les liaisons du conteneur avant de conclure à du code mort.*
 
 ## 4. Aucun échec silencieux
 
@@ -44,8 +50,19 @@ Cherche spécifiquement : les `?? 0`, les `?? valeurDefaut`, les `catch` qui ren
 valeur, les accès à un dictionnaire par clé dynamique sans vérification d'existence.
 
 *Historique : une ancre de timing introuvable renvoyait `0` (tous les sons s'empilaient au
-début), une ambiance inconnue retombait sur `forest`, une émotion non reconnue devenait
-`neutral`. Trois défauts invisibles dans les logs et parfaitement audibles.*
+début), une ambiance inconnue retombait sur `forest`, une émotion non reconnue perdait son
+tag et ses réglages. Trois défauts parfaitement audibles, dont deux muets : seule l'ancre
+introuvable était journalisée en `warn` (`timeline-computation.service.ts:414`) — ce qui n'a
+servi à rien, personne ne lisant le journal. Un `warn` que personne ne lit n'est pas une
+alerte ; ne t'en contente pas pour un repli qui s'entend.*
+
+*Autres replis muets recensés dans le même dépôt, à ne pas rejouer : un ton inconnu qui
+retombe sur `Tone.Adventurous` (`llm.service.parser.ts:188`), un texte de dialogue sans
+guillemets reconnus dont la didascalie part telle quelle à la synthèse
+(`tts-text-extractor.ts:141`), un segment vocal sans timing placé à 0 s
+(`timeline-computation.service.ts:332`), un asset de bruitage introuvable silencieusement
+retiré du mix (`story-generation.workflow.steps.ts:459`) alors que le même cas sur la voix
+lève une erreur.*
 
 ## 5. Une seule source de vérité par donnée
 
@@ -53,8 +70,12 @@ Pas deux tables de constantes pour la même chose, pas deux calculs du même tem
 définitions du même niveau sonore. Si la tâche introduit une valeur qui existe déjà ailleurs,
 elle doit référencer l'existante ou supprimer l'ancienne.
 
-*Historique : deux tables `DEFAULT_VOLUMES` contradictoires ; le volume appliqué deux fois
-(au rendu puis au mixage) donnant une musique à −21 dB au lieu de −10.*
+*Historique : **quatre** sources de volume par défaut, contradictoires deux à deux — deux
+tables `DEFAULT_VOLUMES` (`ffmpeg-mixer.service.constants.ts:25`,
+`story-mixing.orchestrator.ts:27`) et deux jeux de valeurs par défaut dans les générateurs
+(`audio-generation.orchestrator.ts:88`, `music-generator.service.ts:56`). Le volume appliqué
+deux fois, au rendu puis au mixage, donnait une musique à −21 dB au lieu de −10. Quand tu
+cherches une valeur dupliquée, ne t'arrête pas à la deuxième occurrence.*
 
 ## 6. L'audio fait foi
 

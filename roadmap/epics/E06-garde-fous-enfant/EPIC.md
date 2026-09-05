@@ -18,10 +18,12 @@ pas, et le lui montrer dans le code, pas dans un prompt.
 
 ## Pourquoi maintenant
 
-C'est la condition pour que quelqu'un d'autre que moi écoute. Aucun garde-fou n'existe
-aujourd'hui : les prompts système ne contiennent aucune contrainte de contenu, et la seule
-validation porte sur la forme du JSON et le nombre de mots. Rien ne regarde ce que l'enfant
-va entendre.
+C'est la condition pour qu'une personne extérieure écoute. Aucun garde-fou digne de ce nom
+n'existe aujourd'hui : les seules contraintes de contenu des prompts dérivent des préférences
+parentales et du niveau de vocabulaire par âge, aucune n'est indépendante de ces préférences,
+et le prompt de génération de script n'en contient aucune. La validation contrôle la forme du
+JSON, le nombre de mots, le nombre de segments par type et leur ordre — jamais ce que
+l'histoire raconte. Rien ne regarde ce que l'enfant va entendre.
 
 C'est aussi le premier scénario que testera un tiers hostile — journaliste, concurrent, ou
 simplement un parent curieux.

@@ -48,8 +48,10 @@ qui est un échec produit aussi certain qu'un mauvais mixage.
    cohérence — avec pour chaque axe ce qui distingue un bon d'un mauvais script.
 2. Un harnais génère N scripts sur un jeu de cas fixé et les note sur cette grille.
 3. Sur dix scripts générés, au moins huit obtiennent la note visée sur chaque axe.
-4. Le nombre de mots validé correspond au texte réellement prononcé, et non au texte
-   incluant les didascalies.
+4. La cible de mots annoncée au modèle et le décompte de validation portent sur la même
+   grandeur. Aujourd'hui le prompt réclame jusqu'à 1,8 fois la cible tout en demandant des
+   didascalies, tandis que la validation compare au simple, en ne comptant que le texte
+   prononcé — l'écart est structurel et rend le critère de longueur ininterprétable.
 5. Sur trois tranches d'âge, le vocabulaire produit est distinguable — vérifié sur des
    indicateurs simples : longueur de phrase, fréquence des mots.
 
@@ -61,7 +63,7 @@ qui est un échec produit aussi certain qu'un mauvais mixage.
 | T0502 | Harnais d'évaluation | Générer N scripts sur des cas fixés et les noter, pour comparer deux versions de prompt. | M |
 | T0503 | Refonte du prompt d'enrichissement | Reprendre l'enrichissement : univers, personnages, ton, en cohérence avec le nouveau format. | M |
 | T0504 | Refonte du prompt de script | Reprendre la génération : structure en actes, dialogues, rythme, vocabulaire par âge. | L |
-| T0505 | Cohérence du décompte | Aligner le nombre de mots validé sur le texte réellement prononcé. | S |
+| T0505 | Cohérence du décompte | Aligner la cible annoncée au modèle et le décompte de validation sur la même grandeur. Aligner aussi la liste d'émotions du prompt sur le type partagé : deux valeurs supportées par le code sont absentes du prompt. | S |
 
 ## Dépendances et risques
 
